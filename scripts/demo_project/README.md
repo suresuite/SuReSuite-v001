@@ -108,6 +108,10 @@ What a demo session does and does not do:
   API page only Quickstart and Notebook are shown, and no API key can be created.
   The AI chat bubble is not drawn, and the recalculation buttons are off: the demo shows
   what the seed stored and computes nothing.
+- **Previewing while signed in.** A person who is signed in is not given the demo session
+  automatically: `/demo` asks whether to open the app or **view the demo as a visitor**. The
+  preview hides their own session for that tab only and does not end it; "Exit preview"
+  brings it back. (A private window gives the visitor view without any of this.)
 - The session lives in the tab (`sessionStorage`), and its project selection has its own
   key, so it never touches what a signed-in person last had open in the same browser. A
   real sign-in ends it.

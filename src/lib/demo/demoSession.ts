@@ -33,6 +33,11 @@ export const DEMO_PATHS = [
 export const DEMO_HOME = DEMO_PATHS[0];
 
 const FLAG = "suresuite_demo_session";
+
+/** `visitor`: nobody is signed in, and the demo account is the user. `preview`: a person
+ *  who IS signed in looks at the demo as a visitor would, in this tab only; their own
+ *  session is left alone and comes back when the preview ends. */
+export type DemoMode = "visitor" | "preview";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface DemoIdentity {
@@ -57,21 +62,32 @@ export function demoConfigured(env?: Record<string, string | undefined>): boolea
 // sessionStorage, not localStorage: a demo ends with its tab and never outlives into a
 // later real sign-in on the same browser. Every access is guarded — storage can throw
 // (private windows, blocked site data) and a demo that cannot persist is simply off.
+export function demoSessionMode(
+  env?: Record<string, string | undefined>,
+  storage: Pick<Storage, "getItem"> | null = safeStorage(),
+): DemoMode | null {
+  if (!demoConfigured(env)) return null;
+  try {
+    const v = storage?.getItem(FLAG);
+    return v === "1" ? "visitor" : v === "preview" ? "preview" : null;
+  } catch {
+    return null;
+  }
+}
+
 export function isDemoSession(
   env?: Record<string, string | undefined>,
   storage: Pick<Storage, "getItem"> | null = safeStorage(),
 ): boolean {
-  if (!demoConfigured(env)) return false;
-  try {
-    return storage?.getItem(FLAG) === "1";
-  } catch {
-    return false;
-  }
+  return demoSessionMode(env, storage) !== null;
 }
 
-export function startDemoSession(storage: Pick<Storage, "setItem"> | null = safeStorage()): void {
+export function startDemoSession(
+  mode: DemoMode = "visitor",
+  storage: Pick<Storage, "setItem"> | null = safeStorage(),
+): void {
   try {
-    storage?.setItem(FLAG, "1");
+    storage?.setItem(FLAG, mode === "preview" ? "preview" : "1");
   } catch {
     /* nothing to persist to: the demo stays off */
   }

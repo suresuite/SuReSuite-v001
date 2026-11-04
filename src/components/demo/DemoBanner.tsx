@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
 export function DemoBanner() {
-  const { demo, logout } = useAuth();
+  const { demo, preview, logout } = useAuth();
   const navigate = useNavigate();
   if (!demo) return null;
 
@@ -16,17 +16,20 @@ export function DemoBanner() {
     >
       <span>
         <span className="font-semibold text-[#18181b]">Demo.</span> Read-only, with fictional data.
-        Nothing you do here is saved.
+        {preview
+          ? ' You are previewing it as a visitor; your own session returns when you exit.'
+          : ' Nothing you do here is saved.'}
       </span>
       <Button
         size="sm"
         variant="outline"
         className="h-7 text-xs"
         onClick={() => {
-          void logout().then(() => navigate('/auth'));
+          // A preview ends back in the app; a visitor's demo ends at the sign-in page.
+          void logout().then(() => navigate(preview ? '/network/product-level' : '/auth'));
         }}
       >
-        Sign in
+        {preview ? 'Exit preview' : 'Sign in'}
       </Button>
     </div>
   );

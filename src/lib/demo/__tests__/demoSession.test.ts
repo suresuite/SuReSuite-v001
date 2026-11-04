@@ -6,6 +6,7 @@ import {
   demoGuestUser,
   demoIdentity,
   demoPathAllowed,
+  demoSessionMode,
   endDemoSession,
   isDemoSession,
   startDemoSession,
@@ -45,15 +46,33 @@ describe("the session flag", () => {
   it("starts, reads back and ends", () => {
     const s = memoryStorage();
     expect(isDemoSession(ENV, s)).toBe(false);
-    startDemoSession(s);
+    startDemoSession("visitor", s);
     expect(isDemoSession(ENV, s)).toBe(true);
     endDemoSession(s);
     expect(isDemoSession(ENV, s)).toBe(false);
   });
 
+  it("records whether it is a visitor's demo or a signed-in person's preview", () => {
+    const s = memoryStorage();
+    expect(demoSessionMode(ENV, s)).toBeNull();
+    startDemoSession("visitor", s);
+    expect(demoSessionMode(ENV, s)).toBe("visitor");
+    startDemoSession("preview", s);
+    expect(demoSessionMode(ENV, s)).toBe("preview");
+    expect(isDemoSession(ENV, s)).toBe(true);
+    endDemoSession(s);
+    expect(demoSessionMode(ENV, s)).toBeNull();
+  });
+
+  it("ignores a flag value it does not know", () => {
+    const s = memoryStorage();
+    s.setItem("suresuite_demo_session", "maybe");
+    expect(demoSessionMode(ENV, s)).toBeNull();
+  });
+
   it("is never on when the demo is not configured, whatever storage says", () => {
     const s = memoryStorage();
-    startDemoSession(s);
+    startDemoSession('visitor', s);
     expect(isDemoSession({}, s)).toBe(false);
   });
 
@@ -64,7 +83,7 @@ describe("the session flag", () => {
       removeItem: () => { throw new Error("blocked"); },
     };
     expect(isDemoSession(ENV, broken)).toBe(false);
-    expect(() => startDemoSession(broken)).not.toThrow();
+    expect(() => startDemoSession('visitor', broken)).not.toThrow();
     expect(() => endDemoSession(broken)).not.toThrow();
     expect(isDemoSession(ENV, null)).toBe(false);
   });

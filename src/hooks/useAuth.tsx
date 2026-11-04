@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { mintAndVerifySession } from '@/lib/auth/sessionMint';
 import { roleChangeNotice, watchProfileFreshness } from '@/lib/auth/sessionRefresh';
 import { toast } from 'sonner';
-import { demoGuestUser, demoIdentity, endDemoSession, isDemoSession } from '@/lib/demo/demoSession';
+import { demoGuestUser, demoIdentity, demoSessionMode, endDemoSession } from '@/lib/demo/demoSession';
 
 interface User {
   id: string;
@@ -91,6 +91,9 @@ interface AuthContextType {
   loading: boolean;
   /** A demo session is on: `user` is the read-only demo account, not a person who signed in. */
   demo: boolean;
+  /** The demo is being PREVIEWED by a person who is signed in: their own session is
+   *  hidden for this tab, not ended, and returns when the preview does. */
+  preview: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -110,13 +113,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(false);
   // The demo session (src/lib/demo). A real sign-in always wins over it, and it is never
   // written to `auth_user`: the account the pages see is derived here, per render.
-  const [demoActive, setDemoActive] = useState<boolean>(() => {
-    const on = isDemoSession();
-    console.log('[DEMO] demo session on load:', on);
-    return on;
+  const [demoMode, setDemoMode] = useState<'visitor' | 'preview' | null>(() => {
+    const mode = demoSessionMode();
+    console.log('[DEMO] demo session on load:', mode);
+    return mode;
   });
-  const demoId = demoActive ? demoIdentity() : null;
+  const preview = demoMode === 'preview';
+  const demoId = demoMode ? demoIdentity() : null;
   const demoUser = demoId ? demoGuestUser(demoId) : null;
+  // A person's own session wins over a visitor demo — and loses to a preview they asked for.
+  const realUser = preview ? null : user;
 
   const login = async (email: string, password: string) => {
     try {
@@ -204,7 +210,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('[AUTH] User stored in localStorage');
       // Somebody real signed in: the demo session is over.
       endDemoSession();
-      setDemoActive(false);
+      setDemoMode(null);
 
       // WP 7.1 stage 1b — ask for a real session BESIDE the one above, never instead of it.
       //
@@ -246,6 +252,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    // Ending a PREVIEW is not signing out: the person's own session was only hidden.
+    if (preview) {
+      console.log('[DEMO] ending the preview; the signed-in session is untouched');
+      endDemoSession();
+      setDemoMode(null);
+      return;
+    }
     console.log('[AUTH] Logging out user');
     console.log('[DEMO] ending the demo session (if one is on)');
     setUser(null);
@@ -253,7 +266,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // "Exit demo" is this same call: the session ends, and the route guard sends the
     // visitor to /auth.
     endDemoSession();
-    setDemoActive(false);
+    setDemoMode(null);
   };
 
   const refreshProfile = async () => {
@@ -317,7 +330,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user?.id]);
 
   return (
-    <AuthContext.Provider value={{ user: user ?? demoUser, login, logout, refreshProfile, loading, demo: !user && !!demoUser }}>
+    <AuthContext.Provider value={{ user: realUser ?? demoUser, login, logout, refreshProfile, loading, demo: !realUser && !!demoUser, preview: preview && !!demoUser }}>
       {children}
     </AuthContext.Provider>
   );
