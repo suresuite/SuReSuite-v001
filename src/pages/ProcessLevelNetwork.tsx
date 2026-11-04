@@ -216,7 +216,7 @@ function depthBucketLabel(level: number): string {
 }
 
 export default function ProcessLevelNetwork({ isCollapsed, setIsCollapsed }: NetworkVisualizationProps) {
-  const { user } = useAuth();
+  const { user, demo } = useAuth();
   const isMobile = useIsMobile();
   const { globalSelectedProjectId, setGlobalSelectedProjectId } = useGlobalProject();
   const graphRef = useRef<GraphCardHandle>(null);
@@ -1073,13 +1073,15 @@ export default function ProcessLevelNetwork({ isCollapsed, setIsCollapsed }: Net
             />
           </LensSection>
 
-          <MobileGroup label="Prediction">
-            <MLPrediction skin selectedPlant={
-              globalSelectedProjectId
-                ? projects.find(p => p.id === globalSelectedProjectId)?.plant_name || null
-                : null
-            } />
-          </MobileGroup>
+          {!demo && (
+            <MobileGroup label="Prediction">
+              <MLPrediction skin selectedPlant={
+                globalSelectedProjectId
+                  ? projects.find(p => p.id === globalSelectedProjectId)?.plant_name || null
+                  : null
+              } />
+            </MobileGroup>
+          )}
 
         </div>
         {/* ── End mobile composition ── */}

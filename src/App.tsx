@@ -4,6 +4,7 @@ import { Suspense, useState, type ReactNode } from 'react';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { CapabilitiesProvider, useCapabilities } from '@/hooks/useCapabilities';
 import { GlobalProjectProvider } from '@/hooks/useGlobalProject';
+import { DemoProjectSelector } from '@/components/demo/DemoProjectSelector';
 import { ViewportProvider } from '@/hooks/useViewport';
 import { ConfirmProvider } from '@/components/shared/confirm/ConfirmProvider';
 import { ThemeProvider } from 'next-themes';
@@ -32,6 +33,7 @@ const FloatingChatBubble = lazyChunk(() =>
 // are paid for up front; the 25 pages behind the login are not.
 import Landing from './pages/Landing';
 import Auth from './pages/Auth';
+import DemoEntry from './pages/DemoEntry';
 
 const OrbitMrpCallback = lazyChunk(() => import('./pages/OrbitMrpCallback'));
 const DataManager = lazyChunk(() => import('./pages/DataManager'));
@@ -91,6 +93,12 @@ function DocsGate({ children }: { children: ReactNode }) {
   return <Navigate to="/forbidden" replace />;
 }
 
+/** Renders its children except during a demo session (src/lib/demo). */
+function HideInDemo({ children }: { children: ReactNode }) {
+  const { demo } = useAuth();
+  return demo ? null : <>{children}</>;
+}
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -124,6 +132,7 @@ function App() {
               <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/demo" element={<DemoEntry />} />
                 <Route path="/integrations/orbit-mrp/callback" element={<ProtectedRoute><OrbitMrpCallback /></ProtectedRoute>} />
               <Route path="/forbidden" element={<Forbidden isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />} />
                 <Route path="/" element={<Landing />} />
@@ -290,11 +299,15 @@ function App() {
                   Suspense too — the bubble arriving a beat late is invisible,
                   but sharing the route boundary would hold the whole page
                   behind it. */}
-              <RouteErrorBoundary fallback={null}>
-                <Suspense fallback={null}>
-                  <FloatingChatBubble />
-                </Suspense>
-              </RouteErrorBoundary>
+              {/* The demo shows the three network pages and nothing that costs money. */}
+              <HideInDemo>
+                <RouteErrorBoundary fallback={null}>
+                  <Suspense fallback={null}>
+                    <FloatingChatBubble />
+                  </Suspense>
+                </RouteErrorBoundary>
+              </HideInDemo>
+              <DemoProjectSelector />
               </ConfirmProvider>
             </Router>
           </GlobalProjectProvider>

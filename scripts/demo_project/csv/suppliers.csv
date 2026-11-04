@@ -1,0 +1,12 @@
+supplier_id,name,capacity_per_week,reliability_score
+S-PCB,Lumora Circuit Works,900,0.97
+S-MCU,Kestrel Microsystems,500,0.98
+S-MCU2,Orrin Semiconductor,300,0.94
+S-PASSIVE,Vantor Passive Components,1200,0.93
+S-CONN,Tessaro Connectors,800,0.95
+S-HARNESS,Halong Cable Systems,600,0.92
+S-SENS,Dorado Sensor Tech,400,0.96
+S-PLASTIC,Brannock Polymers,500,0.97
+S-SEAL,Moravia Rubber Seals,400,0.98
+S-FAST,Eisenau Fasteners,4000,0.99
+S-PRINT,Neckar Label Print,500,0.99

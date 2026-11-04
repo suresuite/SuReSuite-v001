@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PasswordExpiryBanner from '@/components/PasswordExpiryBanner';
+import { DemoBanner } from '@/components/demo/DemoBanner';
 import {
   MobileTabBar,
   MobileNavDrawer,
@@ -116,6 +117,7 @@ export function PageLayout({ children, isCollapsed, setIsCollapsed }: PageLayout
             : undefined
         }
       >
+        <DemoBanner />
         <PasswordExpiryBanner />
         {children}
       </div>

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { isDemoSession } from '@/lib/demo/demoSession';
 
 /** The project shape the global selection stores — and what list_projects
  * returns. Exported so callers that feed setSelectedProject can type their
@@ -33,22 +34,25 @@ const GlobalProjectContext = createContext<GlobalProjectContextType | undefined>
 export function GlobalProjectProvider({ children }: { children: ReactNode }) {
   const [globalSelectedProjectId, setGlobalSelectedProjectId] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  // A demo session keeps its own key: the visitor's choice must not overwrite the
+  // project a signed-in person last had open in this browser, nor read it.
+  const storageKey = isDemoSession() ? 'demoSelectedProjectId' : 'globalSelectedProjectId';
 
   // Persist global selection to localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('globalSelectedProjectId');
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       setGlobalSelectedProjectId(saved);
     }
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
     if (globalSelectedProjectId) {
-      localStorage.setItem('globalSelectedProjectId', globalSelectedProjectId);
+      localStorage.setItem(storageKey, globalSelectedProjectId);
     } else {
-      localStorage.removeItem('globalSelectedProjectId');
+      localStorage.removeItem(storageKey);
     }
-  }, [globalSelectedProjectId]);
+  }, [globalSelectedProjectId, storageKey]);
 
   return (
     <GlobalProjectContext.Provider

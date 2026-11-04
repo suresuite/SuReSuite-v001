@@ -1,0 +1,11 @@
+material_id,name,cost,holding_cost_pct,moq,initial_on_hand,lead_time_dist,lead_time_cv
+M-PCB,Printed circuit board,6.5,0.2,1,260,deterministic,0
+M-MCU,Microcontroller,4.2,0.2,1,260,deterministic,0
+M-CAP,Capacitor kit,0.8,0.2,1,260,deterministic,0
+M-CONNECTOR,Board connector,0.55,0.2,1,520,deterministic,0
+M-SENSOR,Temperature sensor,2.4,0.2,1,260,deterministic,0
+M-HARNESS,Wiring harness,3.1,0.2,1,260,deterministic,0
+M-SHELL,Plastic shell,1.9,0.2,1,260,deterministic,0
+M-SEAL,Gasket,0.35,0.2,1,260,deterministic,0
+M-SCREW,Fastener (each),0.04,0.2,1,1560,deterministic,0
+M-LABEL,Product label,0.05,0.2,1,260,deterministic,0

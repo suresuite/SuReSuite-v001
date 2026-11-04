@@ -1,0 +1,2 @@
+product_id,name,sell_price,production_capacity,fulfillment_mode,demand_distribution,demand_mean,demand_cv
+P-CONTROL,Control unit,60,150,mto,triangular,130,0.2

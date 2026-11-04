@@ -170,7 +170,7 @@ function productFocusSet(id: string, nodes: Node<NodeData>[], edges: Edge[]): Se
 }
 
 export default function NetworkVisualization({ isCollapsed, setIsCollapsed }: NetworkVisualizationProps) {
-  const { user } = useAuth();
+  const { user, demo } = useAuth();
   const isMobile = useIsMobile();
   const { globalSelectedProjectId, setGlobalSelectedProjectId } = useGlobalProject();
   const graphRef = useRef<GraphCardHandle>(null);
@@ -302,7 +302,9 @@ export default function NetworkVisualization({ isCollapsed, setIsCollapsed }: Ne
       let decision = storedMetricsDecision(rows);
       let outcome: MetricsOutcome = decision.state === 'current' ? 'reused' : null;
 
-      if (forceRecalculate || decision.invoke) {
+      // A demo reads what the seed stored and computes nothing: the analyzer writes
+      // tier 3 and a demo visitor is not who should be asking it to.
+      if ((forceRecalculate || decision.invoke) && !demo) {
         // WP 4.3 · the analyzer writes tier 3 through an RPC that takes the
         // actor, so the actor travels with the request (invariant audit-actor).
         const { data: calc, error: calcError } = await supabase.functions.invoke('calculate-network-science-metrics', {
@@ -668,7 +670,7 @@ export default function NetworkVisualization({ isCollapsed, setIsCollapsed }: Ne
 
   // Manual refresh function
   const handleRefreshMetrics = async () => {
-    if (!globalSelectedProjectId) return;
+    if (!globalSelectedProjectId || demo) return;
     await fetchNetworkMetrics(globalSelectedProjectId, true);
   };
 
@@ -851,7 +853,8 @@ export default function NetworkVisualization({ isCollapsed, setIsCollapsed }: Ne
                 size="sm"
                 className={cn('gap-1', HDR_GHOST_BUTTON)}
                 onClick={handleRefreshMetrics}
-                disabled={networkMetricsLoading}
+                disabled={networkMetricsLoading || demo}
+                title={demo ? 'Recalculation is switched off in the demo' : undefined}
               >
                 <RotateCcw className="h-4 w-4" />
                 Refresh
@@ -984,8 +987,8 @@ export default function NetworkVisualization({ isCollapsed, setIsCollapsed }: Ne
               action={
                 <LensAction
                   onClick={handleRefreshMetrics}
-                  disabled={networkMetricsLoading || !globalSelectedProjectId}
-                  disabledReason={!globalSelectedProjectId ? 'Select a project first' : 'Already calculating'}
+                  disabled={networkMetricsLoading || !globalSelectedProjectId || demo}
+                  disabledReason={demo ? 'Switched off in the demo' : !globalSelectedProjectId ? 'Select a project first' : 'Already calculating'}
                 >
                   <RotateCcw className={`h-3.5 w-3.5 ${networkMetricsLoading ? 'animate-spin' : ''}`} />
                   Calculate
@@ -994,13 +997,15 @@ export default function NetworkVisualization({ isCollapsed, setIsCollapsed }: Ne
             />
           </LensSection>
 
-          <MobileGroup label="Prediction">
-            <MLPrediction skin selectedPlant={
-              globalSelectedProjectId
-                ? projects.find(p => p.id === globalSelectedProjectId)?.plant_name || null
-                : null
-            } />
-          </MobileGroup>
+          {!demo && (
+            <MobileGroup label="Prediction">
+              <MLPrediction skin selectedPlant={
+                globalSelectedProjectId
+                  ? projects.find(p => p.id === globalSelectedProjectId)?.plant_name || null
+                  : null
+              } />
+            </MobileGroup>
+          )}
 
         </div>
         {/* ── End mobile composition ── */}

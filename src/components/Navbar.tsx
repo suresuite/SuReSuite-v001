@@ -155,7 +155,7 @@ export function filterVisibleSections(
 }
 
 const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
-  const { user, logout } = useAuth();
+  const { user, logout, demo } = useAuth();
   const { canAccessPage } = useCapabilities();
 
   const handleLogout = () => logout();
@@ -333,14 +333,18 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
                   <DropdownMenuSeparator />
                 </>
               )}
-              <DropdownMenuItem asChild>
-                <Link to="/profile">
-                  <User className="mr-2 h-4 w-4" /> My Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} title="Log out">
-                <LogOut className="mr-2 h-4 w-4" /> Logout
+              {!demo && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">
+                      <User className="mr-2 h-4 w-4" /> My Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem onClick={handleLogout} title={demo ? 'Leave the demo' : 'Log out'}>
+                <LogOut className="mr-2 h-4 w-4" /> {demo ? 'Exit demo' : 'Logout'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

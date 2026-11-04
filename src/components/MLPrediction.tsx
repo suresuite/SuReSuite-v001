@@ -58,7 +58,14 @@ const METHOD_NOTE =
  * duration and an Average, opened sorted by the Average — in a dialog. It computes
  * nothing and has no Run button.
  */
-export default function MLPrediction({ skin = false }: MLPredictionProps) {
+export default function MLPrediction(props: MLPredictionProps) {
+  // A demo session has no stress results to show and no right to read them: the card
+  // would only say it could not read anything, so it is not drawn (src/lib/demo).
+  const { demo } = useAuth();
+  return demo ? null : <NexusPredictionCard {...props} />;
+}
+
+function NexusPredictionCard({ skin = false }: MLPredictionProps) {
   const [result, setResult] = useState<StressResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);

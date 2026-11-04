@@ -260,7 +260,7 @@ function IdCell({ value }: { value: string }) {
 }
 
 export default function DeveloperApi({ isCollapsed, setIsCollapsed }: Props) {
-  const { user } = useAuth();
+  const { user, demo } = useAuth();
   const { toast } = useToast();
 
   const [keys, setKeys] = useState<ApiKeyRow[]>([]);
@@ -314,6 +314,14 @@ export default function DeveloperApi({ isCollapsed, setIsCollapsed }: Props) {
   const load = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
+    // A demo session reads the project list for the notebook tab and nothing about keys:
+    // the demo account has none, and the page must not invite a visitor to make one.
+    if (demo) {
+      const { data } = await db.rpc('list_projects', rpcAuth);
+      setProjects(((data ?? []) as any[]).map((p) => ({ id: p.id, name: p.name })));
+      setLoading(false);
+      return;
+    }
     const [keysRes, usageRes, projectsRes, callerRes] = await Promise.all([
       db.rpc('list_api_keys', rpcAuth),
       db.rpc('api_key_usage', rpcAuth),
@@ -349,7 +357,7 @@ export default function DeveloperApi({ isCollapsed, setIsCollapsed }: Props) {
       ((projectsRes.data ?? []) as any[]).map((p) => ({ id: p.id, name: p.name })),
     );
     setLoading(false);
-  }, [user?.id, rpcAuth, toast]);
+  }, [user?.id, rpcAuth, toast, demo]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -542,7 +550,7 @@ export default function DeveloperApi({ isCollapsed, setIsCollapsed }: Props) {
      `#F8D448` template download keeps its "begin here" fill, which is the one
      place in the skin that colour is allowed (§3). */
   const isMobile = useIsMobile();
-  const [tab, setTab] = useState<'keys' | 'quickstart' | 'notebook'>('keys');
+  const [tab, setTab] = useState<'keys' | 'quickstart' | 'notebook'>(demo ? 'quickstart' : 'keys');
   const [openKeyId, setOpenKeyId] = useState<string | null>(null);
   const [endpointsOpen, setEndpointsOpen] = useState(false);
   const endpointBudget = useRowBudget(4, 6, 9);
@@ -1203,7 +1211,7 @@ for kpi in ("fill_rate", "lost_units", "lost_sales_value", "max_backlog", "ttr_w
             value={tab}
             onChange={setTab}
             items={[
-              { value: 'keys', label: 'API keys', count: keys.length || undefined },
+              ...(demo ? [] : [{ value: 'keys', label: 'API keys', count: keys.length || undefined }]),
               { value: 'quickstart', label: 'Quickstart' },
               { value: 'notebook', label: 'Notebook' },
             ]}
@@ -1228,15 +1236,17 @@ for kpi in ("fill_rate", "lost_units", "lost_sales_value", "max_backlog", "ttr_w
       <div className={PAGE_GUTTER}>
         <PageHeader title="Developer API" onRefresh={load} refreshLoading={loading} />
 
-        <Tabs defaultValue="keys" className="space-y-4">
+        <Tabs defaultValue={demo ? 'quickstart' : 'keys'} className="space-y-4">
           {/* Black-pill active tab (bg-foreground text-background), sharp corners */}
           <TabsList className="inline-flex h-auto items-center gap-0.5 rounded-sm border border-[--hair-border] bg-white p-[3px]">
-            <TabsTrigger
-              value="keys"
-              className="rounded-[2px] px-[15px] py-[7px] text-[12.5px] font-medium text-muted-foreground data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-none"
-            >
-              API keys
-            </TabsTrigger>
+            {!demo && (
+              <TabsTrigger
+                value="keys"
+                className="rounded-[2px] px-[15px] py-[7px] text-[12.5px] font-medium text-muted-foreground data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-none"
+              >
+                API keys
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="quickstart"
               className="rounded-[2px] px-[15px] py-[7px] text-[12.5px] font-medium text-muted-foreground data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-none"

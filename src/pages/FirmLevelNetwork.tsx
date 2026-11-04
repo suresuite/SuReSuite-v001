@@ -180,7 +180,7 @@ function firmFocusSet(id: string, _nodes: Node<NodeData>[], edges: Edge[]): Set<
 const LEGEND_TIERS: TierKey[] = ['Plant', 'Tier 1', 'Tier 2', 'Tier 3'];
 
 export default function FirmLevelNetwork({ isCollapsed, setIsCollapsed }: FirmLevelNetworkProps) {
-  const { user } = useAuth();
+  const { user, demo } = useAuth();
   const isMobile = useIsMobile();
   const { globalSelectedProjectId, setGlobalSelectedProjectId } = useGlobalProject();
   const graphRef = useRef<GraphCardHandle>(null);
@@ -228,6 +228,7 @@ export default function FirmLevelNetwork({ isCollapsed, setIsCollapsed }: FirmLe
 
   // Function to recalculate prominence using edge function
   const recalculateProminence = async () => {
+    if (demo) return; // the demo shows what the seed stored; it computes nothing
     if (!user || !globalSelectedProjectId) {
       toast.error('No project selected');
       return;
@@ -1232,9 +1233,9 @@ export default function FirmLevelNetwork({ isCollapsed, setIsCollapsed }: FirmLe
                 size="icon"
                 className={HDR_ICON_BUTTON}
                 onClick={recalculateProminence}
-                disabled={loading || recalculatingProminence || !globalSelectedProjectId}
+                disabled={loading || recalculatingProminence || !globalSelectedProjectId || demo}
                 aria-label="Recalculate prominence"
-                title="Recalculate prominence"
+                title={demo ? 'Recalculation is switched off in the demo' : 'Recalculate prominence'}
               >
                 <RotateCcw className={`h-4 w-4 ${recalculatingProminence ? 'animate-spin' : ''}`} />
               </Button>
@@ -1383,13 +1384,15 @@ export default function FirmLevelNetwork({ isCollapsed, setIsCollapsed }: FirmLe
             />
           </LensSection>
 
-          <MobileGroup label="Prediction">
-            <MLPrediction skin selectedPlant={
-              globalSelectedProjectId
-                ? projects.find(p => p.id === globalSelectedProjectId)?.plant_name || null
-                : null
-            } />
-          </MobileGroup>
+          {!demo && (
+            <MobileGroup label="Prediction">
+              <MLPrediction skin selectedPlant={
+                globalSelectedProjectId
+                  ? projects.find(p => p.id === globalSelectedProjectId)?.plant_name || null
+                  : null
+              } />
+            </MobileGroup>
+          )}
 
         </div>
         {/* ── End mobile composition ── */}

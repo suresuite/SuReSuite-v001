@@ -30,7 +30,7 @@ const Auth = () => {
   const [signedIn, setSignedIn] = useState(false);
   // "Forgot password?" swaps the form for a request to a super admin (§4 D251).
   const [forgot, setForgot] = useState(false);
-  const { login, user } = useAuth();
+  const { login, user, demo } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { homePath, ready } = useCapabilities();
@@ -42,11 +42,13 @@ const Auth = () => {
   // Waits for `ready`: `homePath` is only this user's once their capability set
   // has been read. Before that it comes from the role fallback, which sends a
   // restricted account to /app and from there to /forbidden.
+  // A demo visitor is not signed in as anyone: this page is how they leave the demo, so
+  // it does not send them onward the way it sends a person who already has a session.
   useEffect(() => {
-    if (user && ready) {
+    if (user && !demo && ready) {
       navigate(redirectTo, { replace: true });
     }
-  }, [user, ready, navigate, redirectTo]);
+  }, [user, demo, ready, navigate, redirectTo]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),

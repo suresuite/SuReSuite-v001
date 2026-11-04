@@ -1,0 +1,1466 @@
+{
+  "_about": "Demo dataset for the product-, process- and firm-level network pages. Authored in build_dataset.py and generated; do not edit by hand. Every firm is fictional. Inbound lead_time and outbound expected_lead_time are in WEEKS.",
+  "project": {
+    "name": "Demo — Control Unit Supply Network",
+    "plant": "Stuttgart Plant",
+    "model": "Make-To-Order",
+    "bom_level": "multi"
+  },
+  "suppliers": [
+    {
+      "supplier_id": "S-PCB",
+      "name": "Lumora Circuit Works",
+      "capacity_per_week": 900,
+      "reliability_score": 0.97
+    },
+    {
+      "supplier_id": "S-MCU",
+      "name": "Kestrel Microsystems",
+      "capacity_per_week": 500,
+      "reliability_score": 0.98
+    },
+    {
+      "supplier_id": "S-MCU2",
+      "name": "Orrin Semiconductor",
+      "capacity_per_week": 300,
+      "reliability_score": 0.94
+    },
+    {
+      "supplier_id": "S-PASSIVE",
+      "name": "Vantor Passive Components",
+      "capacity_per_week": 1200,
+      "reliability_score": 0.93
+    },
+    {
+      "supplier_id": "S-CONN",
+      "name": "Tessaro Connectors",
+      "capacity_per_week": 800,
+      "reliability_score": 0.95
+    },
+    {
+      "supplier_id": "S-HARNESS",
+      "name": "Halong Cable Systems",
+      "capacity_per_week": 600,
+      "reliability_score": 0.92
+    },
+    {
+      "supplier_id": "S-SENS",
+      "name": "Dorado Sensor Tech",
+      "capacity_per_week": 400,
+      "reliability_score": 0.96
+    },
+    {
+      "supplier_id": "S-PLASTIC",
+      "name": "Brannock Polymers",
+      "capacity_per_week": 500,
+      "reliability_score": 0.97
+    },
+    {
+      "supplier_id": "S-SEAL",
+      "name": "Moravia Rubber Seals",
+      "capacity_per_week": 400,
+      "reliability_score": 0.98
+    },
+    {
+      "supplier_id": "S-FAST",
+      "name": "Eisenau Fasteners",
+      "capacity_per_week": 4000,
+      "reliability_score": 0.99
+    },
+    {
+      "supplier_id": "S-PRINT",
+      "name": "Neckar Label Print",
+      "capacity_per_week": 500,
+      "reliability_score": 0.99
+    }
+  ],
+  "materials": [
+    {
+      "material_id": "M-PCB",
+      "name": "Printed circuit board",
+      "cost": 6.5,
+      "holding_cost_pct": 0.2,
+      "moq": 1,
+      "initial_on_hand": 260,
+      "lead_time_dist": "deterministic",
+      "lead_time_cv": 0
+    },
+    {
+      "material_id": "M-MCU",
+      "name": "Microcontroller",
+      "cost": 4.2,
+      "holding_cost_pct": 0.2,
+      "moq": 1,
+      "initial_on_hand": 260,
+      "lead_time_dist": "deterministic",
+      "lead_time_cv": 0
+    },
+    {
+      "material_id": "M-CAP",
+      "name": "Capacitor kit",
+      "cost": 0.8,
+      "holding_cost_pct": 0.2,
+      "moq": 1,
+      "initial_on_hand": 260,
+      "lead_time_dist": "deterministic",
+      "lead_time_cv": 0
+    },
+    {
+      "material_id": "M-CONNECTOR",
+      "name": "Board connector",
+      "cost": 0.55,
+      "holding_cost_pct": 0.2,
+      "moq": 1,
+      "initial_on_hand": 520,
+      "lead_time_dist": "deterministic",
+      "lead_time_cv": 0
+    },
+    {
+      "material_id": "M-SENSOR",
+      "name": "Temperature sensor",
+      "cost": 2.4,
+      "holding_cost_pct": 0.2,
+      "moq": 1,
+      "initial_on_hand": 260,
+      "lead_time_dist": "deterministic",
+      "lead_time_cv": 0
+    },
+    {
+      "material_id": "M-HARNESS",
+      "name": "Wiring harness",
+      "cost": 3.1,
+      "holding_cost_pct": 0.2,
+      "moq": 1,
+      "initial_on_hand": 260,
+      "lead_time_dist": "deterministic",
+      "lead_time_cv": 0
+    },
+    {
+      "material_id": "M-SHELL",
+      "name": "Plastic shell",
+      "cost": 1.9,
+      "holding_cost_pct": 0.2,
+      "moq": 1,
+      "initial_on_hand": 260,
+      "lead_time_dist": "deterministic",
+      "lead_time_cv": 0
+    },
+    {
+      "material_id": "M-SEAL",
+      "name": "Gasket",
+      "cost": 0.35,
+      "holding_cost_pct": 0.2,
+      "moq": 1,
+      "initial_on_hand": 260,
+      "lead_time_dist": "deterministic",
+      "lead_time_cv": 0
+    },
+    {
+      "material_id": "M-SCREW",
+      "name": "Fastener (each)",
+      "cost": 0.04,
+      "holding_cost_pct": 0.2,
+      "moq": 1,
+      "initial_on_hand": 1560,
+      "lead_time_dist": "deterministic",
+      "lead_time_cv": 0
+    },
+    {
+      "material_id": "M-LABEL",
+      "name": "Product label",
+      "cost": 0.05,
+      "holding_cost_pct": 0.2,
+      "moq": 1,
+      "initial_on_hand": 260,
+      "lead_time_dist": "deterministic",
+      "lead_time_cv": 0
+    }
+  ],
+  "products": [
+    {
+      "product_id": "P-CONTROL",
+      "name": "Control unit",
+      "sell_price": 60,
+      "production_capacity": 150,
+      "fulfillment_mode": "mto",
+      "demand_distribution": "triangular",
+      "demand_mean": 130,
+      "demand_cv": 0.2
+    }
+  ],
+  "bom_multi_level": [
+    {
+      "material_id": "A-ELEC",
+      "level": 1,
+      "higher_level_component_id": "P-CONTROL",
+      "consumption_rate": 1
+    },
+    {
+      "material_id": "A-HOUSING",
+      "level": 1,
+      "higher_level_component_id": "P-CONTROL",
+      "consumption_rate": 1
+    },
+    {
+      "material_id": "M-HARNESS",
+      "level": 1,
+      "higher_level_component_id": "P-CONTROL",
+      "consumption_rate": 1
+    },
+    {
+      "material_id": "M-LABEL",
+      "level": 1,
+      "higher_level_component_id": "P-CONTROL",
+      "consumption_rate": 1
+    },
+    {
+      "material_id": "A-BOARD",
+      "level": 2,
+      "higher_level_component_id": "A-ELEC",
+      "consumption_rate": 1
+    },
+    {
+      "material_id": "M-CONNECTOR",
+      "level": 2,
+      "higher_level_component_id": "A-ELEC",
+      "consumption_rate": 2
+    },
+    {
+      "material_id": "M-SENSOR",
+      "level": 2,
+      "higher_level_component_id": "A-ELEC",
+      "consumption_rate": 1
+    },
+    {
+      "material_id": "M-SHELL",
+      "level": 2,
+      "higher_level_component_id": "A-HOUSING",
+      "consumption_rate": 1
+    },
+    {
+      "material_id": "M-SEAL",
+      "level": 2,
+      "higher_level_component_id": "A-HOUSING",
+      "consumption_rate": 1
+    },
+    {
+      "material_id": "M-SCREW",
+      "level": 2,
+      "higher_level_component_id": "A-HOUSING",
+      "consumption_rate": 6
+    },
+    {
+      "material_id": "M-PCB",
+      "level": 3,
+      "higher_level_component_id": "A-BOARD",
+      "consumption_rate": 1
+    },
+    {
+      "material_id": "M-MCU",
+      "level": 3,
+      "higher_level_component_id": "A-BOARD",
+      "consumption_rate": 1
+    },
+    {
+      "material_id": "M-CAP",
+      "level": 3,
+      "higher_level_component_id": "A-BOARD",
+      "consumption_rate": 1
+    }
+  ],
+  "inbound": [
+    {
+      "supplier_id": "S-PCB",
+      "material_id": "M-PCB",
+      "volume": 130,
+      "time_unit": "week",
+      "lead_time": 5,
+      "lead_time_unit": "week",
+      "unit_price": 6.5
+    },
+    {
+      "supplier_id": "S-MCU",
+      "material_id": "M-MCU",
+      "volume": 91,
+      "time_unit": "week",
+      "lead_time": 8,
+      "lead_time_unit": "week",
+      "unit_price": 4.2
+    },
+    {
+      "supplier_id": "S-MCU2",
+      "material_id": "M-MCU",
+      "volume": 39,
+      "time_unit": "week",
+      "lead_time": 6,
+      "lead_time_unit": "week",
+      "unit_price": 4.5
+    },
+    {
+      "supplier_id": "S-PASSIVE",
+      "material_id": "M-CAP",
+      "volume": 130,
+      "time_unit": "week",
+      "lead_time": 4,
+      "lead_time_unit": "week",
+      "unit_price": 0.8
+    },
+    {
+      "supplier_id": "S-CONN",
+      "material_id": "M-CONNECTOR",
+      "volume": 260,
+      "time_unit": "week",
+      "lead_time": 3,
+      "lead_time_unit": "week",
+      "unit_price": 0.55
+    },
+    {
+      "supplier_id": "S-SENS",
+      "material_id": "M-SENSOR",
+      "volume": 130,
+      "time_unit": "week",
+      "lead_time": 4,
+      "lead_time_unit": "week",
+      "unit_price": 2.4
+    },
+    {
+      "supplier_id": "S-HARNESS",
+      "material_id": "M-HARNESS",
+      "volume": 130,
+      "time_unit": "week",
+      "lead_time": 4,
+      "lead_time_unit": "week",
+      "unit_price": 3.1
+    },
+    {
+      "supplier_id": "S-PLASTIC",
+      "material_id": "M-SHELL",
+      "volume": 130,
+      "time_unit": "week",
+      "lead_time": 2,
+      "lead_time_unit": "week",
+      "unit_price": 1.9
+    },
+    {
+      "supplier_id": "S-SEAL",
+      "material_id": "M-SEAL",
+      "volume": 130,
+      "time_unit": "week",
+      "lead_time": 2,
+      "lead_time_unit": "week",
+      "unit_price": 0.35
+    },
+    {
+      "supplier_id": "S-FAST",
+      "material_id": "M-SCREW",
+      "volume": 780,
+      "time_unit": "week",
+      "lead_time": 1,
+      "lead_time_unit": "week",
+      "unit_price": 0.04
+    },
+    {
+      "supplier_id": "S-PRINT",
+      "material_id": "M-LABEL",
+      "volume": 130,
+      "time_unit": "week",
+      "lead_time": 1,
+      "lead_time_unit": "week",
+      "unit_price": 0.05
+    }
+  ],
+  "outbound": [
+    {
+      "customer_id": "C-ASSEMBLY",
+      "product_id": "P-CONTROL",
+      "volume": 100,
+      "time_unit": "week",
+      "expected_lead_time": 1,
+      "unit_price": 60
+    },
+    {
+      "customer_id": "C-SERVICE",
+      "product_id": "P-CONTROL",
+      "volume": 30,
+      "time_unit": "week",
+      "expected_lead_time": 2,
+      "unit_price": 72
+    }
+  ],
+  "node_list": [
+    {
+      "node_id": "S-PCB",
+      "description_text": "Printed Circuit Boards",
+      "location_text": "Taoyuan, Taiwan",
+      "latitude": 24.9936,
+      "longitude": 121.301
+    },
+    {
+      "node_id": "S-MCU",
+      "description_text": "Semiconductors",
+      "location_text": "Kyoto, Japan",
+      "latitude": 35.0116,
+      "longitude": 135.7681
+    },
+    {
+      "node_id": "S-MCU2",
+      "description_text": "Semiconductors",
+      "location_text": "Penang, Malaysia",
+      "latitude": 5.4164,
+      "longitude": 100.3327
+    },
+    {
+      "node_id": "S-PASSIVE",
+      "description_text": "Electronic Components",
+      "location_text": "Suzhou, China",
+      "latitude": 31.299,
+      "longitude": 120.5853
+    },
+    {
+      "node_id": "S-CONN",
+      "description_text": "Connectors",
+      "location_text": "Guadalajara, Mexico",
+      "latitude": 20.6597,
+      "longitude": -103.3496
+    },
+    {
+      "node_id": "S-HARNESS",
+      "description_text": "Wiring Harnesses",
+      "location_text": "Hanoi, Vietnam",
+      "latitude": 21.0278,
+      "longitude": 105.8342
+    },
+    {
+      "node_id": "S-SENS",
+      "description_text": "Sensors",
+      "location_text": "Busan, South Korea",
+      "latitude": 35.1796,
+      "longitude": 129.0756
+    },
+    {
+      "node_id": "S-PLASTIC",
+      "description_text": "Plastic Moulding",
+      "location_text": "Katowice, Poland",
+      "latitude": 50.2649,
+      "longitude": 19.0238
+    },
+    {
+      "node_id": "S-SEAL",
+      "description_text": "Rubber Products",
+      "location_text": "Brno, Czech Republic",
+      "latitude": 49.1951,
+      "longitude": 16.6068
+    },
+    {
+      "node_id": "S-FAST",
+      "description_text": "Fasteners",
+      "location_text": "Linz, Austria",
+      "latitude": 48.3069,
+      "longitude": 14.2858
+    },
+    {
+      "node_id": "S-PRINT",
+      "description_text": "Printing",
+      "location_text": "Ulm, Germany",
+      "latitude": 48.3984,
+      "longitude": 9.9916
+    },
+    {
+      "node_id": "C-ASSEMBLY",
+      "description_text": "Customer",
+      "location_text": "Munich, Germany",
+      "latitude": 48.1351,
+      "longitude": 11.582
+    },
+    {
+      "node_id": "C-SERVICE",
+      "description_text": "Customer",
+      "location_text": "Hamburg, Germany",
+      "latitude": 53.5511,
+      "longitude": 9.9937
+    }
+  ],
+  "network_nodes": [
+    {
+      "uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "depth": 0,
+      "name": "Stuttgart Control Systems GmbH",
+      "country": "Germany",
+      "industry": "Industrial Controls",
+      "website": "www.stuttgartcontrolsystemsgmbh.example",
+      "traded_as": "",
+      "number_of_employees": 4200,
+      "revenue": 1650000000,
+      "lat": 48.7758,
+      "long": 9.1829,
+      "is_seed": true
+    },
+    {
+      "uid": "fd074882-b55e-58b6-ad8a-3423310d5cd9",
+      "depth": 1,
+      "name": "Lumora Circuit Works",
+      "country": "Taiwan",
+      "industry": "Printed Circuit Boards",
+      "website": "www.lumoracircuitworks.example",
+      "traded_as": "",
+      "number_of_employees": 1800,
+      "revenue": 410000000,
+      "lat": 24.9936,
+      "long": 121.301,
+      "is_seed": false
+    },
+    {
+      "uid": "1f00b27e-8bd4-5b04-8b2e-302f1c7961ad",
+      "depth": 1,
+      "name": "Kestrel Microsystems",
+      "country": "Japan",
+      "industry": "Semiconductors",
+      "website": "www.kestrelmicrosystems.example",
+      "traded_as": "",
+      "number_of_employees": 2600,
+      "revenue": 1250000000,
+      "lat": 35.0116,
+      "long": 135.7681,
+      "is_seed": false
+    },
+    {
+      "uid": "d7426a6d-fbd4-5cd1-956d-e1e2e5b6f45f",
+      "depth": 1,
+      "name": "Orrin Semiconductor",
+      "country": "Malaysia",
+      "industry": "Semiconductors",
+      "website": "www.orrinsemiconductor.example",
+      "traded_as": "",
+      "number_of_employees": 1500,
+      "revenue": 640000000,
+      "lat": 5.4164,
+      "long": 100.3327,
+      "is_seed": false
+    },
+    {
+      "uid": "b2a14131-43a4-5051-b11f-682be83b75f3",
+      "depth": 1,
+      "name": "Vantor Passive Components",
+      "country": "China",
+      "industry": "Electronic Components",
+      "website": "www.vantorpassivecomponents.example",
+      "traded_as": "",
+      "number_of_employees": 3400,
+      "revenue": 520000000,
+      "lat": 31.299,
+      "long": 120.5853,
+      "is_seed": false
+    },
+    {
+      "uid": "7215b7af-9e17-5153-b7c8-07fc43003d7e",
+      "depth": 1,
+      "name": "Tessaro Connectors",
+      "country": "Mexico",
+      "industry": "Connectors",
+      "website": "www.tessaroconnectors.example",
+      "traded_as": "",
+      "number_of_employees": 1250,
+      "revenue": 230000000,
+      "lat": 20.6597,
+      "long": -103.3496,
+      "is_seed": false
+    },
+    {
+      "uid": "82308212-f124-5f1a-927a-e17cccce96b0",
+      "depth": 1,
+      "name": "Halong Cable Systems",
+      "country": "Vietnam",
+      "industry": "Wiring Harnesses",
+      "website": "www.halongcablesystems.example",
+      "traded_as": "",
+      "number_of_employees": 2900,
+      "revenue": 190000000,
+      "lat": 21.0278,
+      "long": 105.8342,
+      "is_seed": false
+    },
+    {
+      "uid": "e0899bc2-3726-5bb4-8cc3-244b7dc3c9f1",
+      "depth": 1,
+      "name": "Dorado Sensor Tech",
+      "country": "South Korea",
+      "industry": "Sensors",
+      "website": "www.doradosensortech.example",
+      "traded_as": "",
+      "number_of_employees": 900,
+      "revenue": 310000000,
+      "lat": 35.1796,
+      "long": 129.0756,
+      "is_seed": false
+    },
+    {
+      "uid": "a7fafd69-058f-51f6-b492-b8827fc1e480",
+      "depth": 1,
+      "name": "Brannock Polymers",
+      "country": "Poland",
+      "industry": "Plastic Moulding",
+      "website": "www.brannockpolymers.example",
+      "traded_as": "",
+      "number_of_employees": 1100,
+      "revenue": 170000000,
+      "lat": 50.2649,
+      "long": 19.0238,
+      "is_seed": false
+    },
+    {
+      "uid": "aaa2d8e4-5e65-5992-8727-e698dfb0a8aa",
+      "depth": 1,
+      "name": "Moravia Rubber Seals",
+      "country": "Czech Republic",
+      "industry": "Rubber Products",
+      "website": "www.moraviarubberseals.example",
+      "traded_as": "",
+      "number_of_employees": 640,
+      "revenue": 85000000,
+      "lat": 49.1951,
+      "long": 16.6068,
+      "is_seed": false
+    },
+    {
+      "uid": "89cc1a63-b49a-5c5a-8c86-063d79ff72cc",
+      "depth": 1,
+      "name": "Eisenau Fasteners",
+      "country": "Austria",
+      "industry": "Fasteners",
+      "website": "www.eisenaufasteners.example",
+      "traded_as": "",
+      "number_of_employees": 520,
+      "revenue": 98000000,
+      "lat": 48.3069,
+      "long": 14.2858,
+      "is_seed": false
+    },
+    {
+      "uid": "2152177e-c532-5028-affa-32b97f048988",
+      "depth": 1,
+      "name": "Neckar Label Print",
+      "country": "Germany",
+      "industry": "Printing",
+      "website": "www.neckarlabelprint.example",
+      "traded_as": "",
+      "number_of_employees": 210,
+      "revenue": 24000000,
+      "lat": 48.3984,
+      "long": 9.9916,
+      "is_seed": false
+    },
+    {
+      "uid": "2d2765c9-495e-519b-a354-c191cb346dfb",
+      "depth": 2,
+      "name": "Corvane Laminates",
+      "country": "Taiwan",
+      "industry": "Laminates",
+      "website": "www.corvanelaminates.example",
+      "traded_as": "",
+      "number_of_employees": 780,
+      "revenue": 140000000,
+      "lat": 24.8138,
+      "long": 120.9675,
+      "is_seed": false
+    },
+    {
+      "uid": "a2c42ff5-a04b-5d1a-b850-cbc2b8f3628d",
+      "depth": 2,
+      "name": "Sundra Chemicals",
+      "country": "Japan",
+      "industry": "Specialty Chemicals",
+      "website": "www.sundrachemicals.example",
+      "traded_as": "",
+      "number_of_employees": 5200,
+      "revenue": 2100000000,
+      "lat": 34.6937,
+      "long": 135.5023,
+      "is_seed": false
+    },
+    {
+      "uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+      "depth": 2,
+      "name": "Aurelia Wafer Foundry",
+      "country": "Taiwan",
+      "industry": "Semiconductor Foundry",
+      "website": "www.aureliawaferfoundry.example",
+      "traded_as": "",
+      "number_of_employees": 9800,
+      "revenue": 7400000000,
+      "lat": 24.7736,
+      "long": 121.01,
+      "is_seed": false
+    },
+    {
+      "uid": "71bf84c5-ba5b-5d5b-8480-f62c298b9c13",
+      "depth": 2,
+      "name": "Pinewood Chip Packaging",
+      "country": "Malaysia",
+      "industry": "Semiconductor Packaging",
+      "website": "www.pinewoodchippackaging.example",
+      "traded_as": "",
+      "number_of_employees": 1900,
+      "revenue": 380000000,
+      "lat": 5.3117,
+      "long": 100.4592,
+      "is_seed": false
+    },
+    {
+      "uid": "e9d76569-ef08-59c8-b97a-471c8b481da7",
+      "depth": 2,
+      "name": "Selangor Lead Frames",
+      "country": "Malaysia",
+      "industry": "Metal Stamping",
+      "website": "www.selangorleadframes.example",
+      "traded_as": "",
+      "number_of_employees": 1100,
+      "revenue": 120000000,
+      "lat": 3.139,
+      "long": 101.6869,
+      "is_seed": false
+    },
+    {
+      "uid": "c027b97a-d46e-5025-b138-6b2e267e32ba",
+      "depth": 2,
+      "name": "Ganzhou Ceramic Powders",
+      "country": "China",
+      "industry": "Advanced Ceramics",
+      "website": "www.ganzhouceramicpowders.example",
+      "traded_as": "",
+      "number_of_employees": 1400,
+      "revenue": 210000000,
+      "lat": 25.831,
+      "long": 114.9335,
+      "is_seed": false
+    },
+    {
+      "uid": "22abfafe-0052-592a-8580-0bfb5d97bbeb",
+      "depth": 2,
+      "name": "Zhuzhou Metal Foils",
+      "country": "China",
+      "industry": "Metal Foils",
+      "website": "www.zhuzhoumetalfoils.example",
+      "traded_as": "",
+      "number_of_employees": 950,
+      "revenue": 160000000,
+      "lat": 27.8274,
+      "long": 113.134,
+      "is_seed": false
+    },
+    {
+      "uid": "84f1194f-dd3d-5029-8400-54ddcd92e0d4",
+      "depth": 2,
+      "name": "Sonora Copper Strip",
+      "country": "Mexico",
+      "industry": "Copper Products",
+      "website": "www.sonoracopperstrip.example",
+      "traded_as": "",
+      "number_of_employees": 1600,
+      "revenue": 340000000,
+      "lat": 29.0729,
+      "long": -110.9559,
+      "is_seed": false
+    },
+    {
+      "uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+      "depth": 2,
+      "name": "Gulfline Resins",
+      "country": "United States",
+      "industry": "Plastic Resins",
+      "website": "www.gulflineresins.example",
+      "traded_as": "",
+      "number_of_employees": 6100,
+      "revenue": 3900000000,
+      "lat": 29.7604,
+      "long": -95.3698,
+      "is_seed": false
+    },
+    {
+      "uid": "fd368440-206a-5cb9-9a4e-82556ede96bb",
+      "depth": 2,
+      "name": "Dong Nai Copper Wire",
+      "country": "Vietnam",
+      "industry": "Wire and Cable",
+      "website": "www.dongnaicopperwire.example",
+      "traded_as": "",
+      "number_of_employees": 870,
+      "revenue": 145000000,
+      "lat": 10.9574,
+      "long": 106.8426,
+      "is_seed": false
+    },
+    {
+      "uid": "bacb3ef6-3b82-5fff-af85-d2eb830ca935",
+      "depth": 2,
+      "name": "Ulsan Glass Substrates",
+      "country": "South Korea",
+      "industry": "Glass Products",
+      "website": "www.ulsanglasssubstrates.example",
+      "traded_as": "",
+      "number_of_employees": 2100,
+      "revenue": 480000000,
+      "lat": 35.5384,
+      "long": 129.3114,
+      "is_seed": false
+    },
+    {
+      "uid": "71804407-58e0-5393-9ca0-36118e82926f",
+      "depth": 2,
+      "name": "Lodz Pigments",
+      "country": "Poland",
+      "industry": "Pigments",
+      "website": "www.lodzpigments.example",
+      "traded_as": "",
+      "number_of_employees": 310,
+      "revenue": 46000000,
+      "lat": 51.7592,
+      "long": 19.456,
+      "is_seed": false
+    },
+    {
+      "uid": "7d4eaf33-e84d-5423-a653-b8e1e4363658",
+      "depth": 2,
+      "name": "Songkhla Natural Rubber",
+      "country": "Thailand",
+      "industry": "Natural Rubber",
+      "website": "www.songkhlanaturalrubber.example",
+      "traded_as": "",
+      "number_of_employees": 740,
+      "revenue": 120000000,
+      "lat": 7.1756,
+      "long": 100.6144,
+      "is_seed": false
+    },
+    {
+      "uid": "7d62521f-5632-522c-a208-da0e8653cbb0",
+      "depth": 2,
+      "name": "Ostrava Elastomers",
+      "country": "Czech Republic",
+      "industry": "Synthetic Rubber",
+      "website": "www.ostravaelastomers.example",
+      "traded_as": "",
+      "number_of_employees": 520,
+      "revenue": 98000000,
+      "lat": 49.8209,
+      "long": 18.2625,
+      "is_seed": false
+    },
+    {
+      "uid": "b64e8b61-3a3e-50bb-a959-4fe585aeb1f0",
+      "depth": 2,
+      "name": "Donawitz Steel Wire",
+      "country": "Austria",
+      "industry": "Steel Wire",
+      "website": "www.donawitzsteelwire.example",
+      "traded_as": "",
+      "number_of_employees": 1250,
+      "revenue": 410000000,
+      "lat": 47.3807,
+      "long": 15.094,
+      "is_seed": false
+    },
+    {
+      "uid": "a5b0a0f1-fce1-5927-96b2-ff5e4c412461",
+      "depth": 2,
+      "name": "Schwarzwald Paper Mill",
+      "country": "Germany",
+      "industry": "Paper Products",
+      "website": "www.schwarzwaldpapermill.example",
+      "traded_as": "",
+      "number_of_employees": 430,
+      "revenue": 72000000,
+      "lat": 47.999,
+      "long": 7.8421,
+      "is_seed": false
+    },
+    {
+      "uid": "28d458ae-9b69-5705-b866-747676616431",
+      "depth": 2,
+      "name": "Rhein Ink Works",
+      "country": "Germany",
+      "industry": "Printing Inks",
+      "website": "www.rheininkworks.example",
+      "traded_as": "",
+      "number_of_employees": 190,
+      "revenue": 31000000,
+      "lat": 50.9375,
+      "long": 6.9603,
+      "is_seed": false
+    },
+    {
+      "uid": "f16f1688-71cd-5d74-bed9-ef984eb6a04e",
+      "depth": 3,
+      "name": "Nagano Silicon Boules",
+      "country": "Japan",
+      "industry": "Silicon Wafers",
+      "website": "www.naganosiliconboules.example",
+      "traded_as": "",
+      "number_of_employees": 2300,
+      "revenue": 950000000,
+      "lat": 36.6513,
+      "long": 138.181,
+      "is_seed": false
+    },
+    {
+      "uid": "cf5ad447-231e-59a4-84ea-914f1b75c80f",
+      "depth": 3,
+      "name": "Kanto Photoresist",
+      "country": "Japan",
+      "industry": "Photochemicals",
+      "website": "www.kantophotoresist.example",
+      "traded_as": "",
+      "number_of_employees": 410,
+      "revenue": 210000000,
+      "lat": 35.6762,
+      "long": 139.6503,
+      "is_seed": false
+    },
+    {
+      "uid": "28609737-f271-5733-81a1-2789cb143c7e",
+      "depth": 3,
+      "name": "Bayou Specialty Gases",
+      "country": "United States",
+      "industry": "Industrial Gases",
+      "website": "www.bayouspecialtygases.example",
+      "traded_as": "",
+      "number_of_employees": 1700,
+      "revenue": 880000000,
+      "lat": 29.7355,
+      "long": -94.9774,
+      "is_seed": false
+    },
+    {
+      "uid": "440f02b9-0d17-50a5-a061-9f0500208b3a",
+      "depth": 3,
+      "name": "Changzhou Glass Fibre",
+      "country": "China",
+      "industry": "Glass Fibre",
+      "website": "www.changzhouglassfibre.example",
+      "traded_as": "",
+      "number_of_employees": 2600,
+      "revenue": 540000000,
+      "lat": 31.8112,
+      "long": 119.974,
+      "is_seed": false
+    },
+    {
+      "uid": "66b06245-78c9-5184-ab52-ad3e01a1a819",
+      "depth": 3,
+      "name": "Taoyuan Copper Foil",
+      "country": "Taiwan",
+      "industry": "Copper Foil",
+      "website": "www.taoyuancopperfoil.example",
+      "traded_as": "",
+      "number_of_employees": 680,
+      "revenue": 260000000,
+      "lat": 24.9937,
+      "long": 121.3169,
+      "is_seed": false
+    },
+    {
+      "uid": "984fa2c0-d4fc-5f3e-930f-1cf217496409",
+      "depth": 3,
+      "name": "Baytown Olefins",
+      "country": "United States",
+      "industry": "Petrochemicals",
+      "website": "www.baytownolefins.example",
+      "traded_as": "",
+      "number_of_employees": 3800,
+      "revenue": 5200000000,
+      "lat": 29.7355,
+      "long": -94.9774,
+      "is_seed": false
+    },
+    {
+      "uid": "d8ba1cd8-1ddd-587d-a53e-1568e8bd4e8a",
+      "depth": 3,
+      "name": "Jubail Aromatics",
+      "country": "Saudi Arabia",
+      "industry": "Petrochemicals",
+      "website": "www.jubailaromatics.example",
+      "traded_as": "",
+      "number_of_employees": 2900,
+      "revenue": 3100000000,
+      "lat": 27.0046,
+      "long": 49.6225,
+      "is_seed": false
+    },
+    {
+      "uid": "579ca956-46ef-532b-a6b8-d3c6b7c69a14",
+      "depth": 3,
+      "name": "Calama Copper Cathode",
+      "country": "Chile",
+      "industry": "Copper Mining",
+      "website": "www.calamacoppercathode.example",
+      "traded_as": "",
+      "number_of_employees": 7400,
+      "revenue": 4800000000,
+      "lat": -22.4667,
+      "long": -68.9333,
+      "is_seed": false
+    },
+    {
+      "uid": "442a1de0-7328-5432-86cb-4e661ecea9a9",
+      "depth": 3,
+      "name": "Baotou Rare Earth Oxides",
+      "country": "China",
+      "industry": "Rare Earth Mining",
+      "website": "www.baotourareearthoxides.example",
+      "traded_as": "",
+      "number_of_employees": 3100,
+      "revenue": 690000000,
+      "lat": 40.6574,
+      "long": 109.8404,
+      "is_seed": false
+    },
+    {
+      "uid": "ae85c1a9-58ac-5169-8158-37463e8f0d9f",
+      "depth": 3,
+      "name": "Erzberg Iron Pellets",
+      "country": "Austria",
+      "industry": "Iron Ore",
+      "website": "www.erzbergironpellets.example",
+      "traded_as": "",
+      "number_of_employees": 560,
+      "revenue": 130000000,
+      "lat": 47.529,
+      "long": 14.883,
+      "is_seed": false
+    },
+    {
+      "uid": "b7ce81b0-b1e1-5a38-a516-d62bb78866b3",
+      "depth": 3,
+      "name": "Southern Plantation Coop",
+      "country": "Thailand",
+      "industry": "Rubber Plantations",
+      "website": "www.southernplantationcoop.example",
+      "traded_as": "",
+      "number_of_employees": 4100,
+      "revenue": 150000000,
+      "lat": 7.0086,
+      "long": 100.4747,
+      "is_seed": false
+    },
+    {
+      "uid": "e08d1d64-79cb-5791-8ec3-45296ff5b429",
+      "depth": 3,
+      "name": "Kymi Pulp",
+      "country": "Finland",
+      "industry": "Pulp",
+      "website": "www.kymipulp.example",
+      "traded_as": "",
+      "number_of_employees": 1200,
+      "revenue": 520000000,
+      "lat": 60.4664,
+      "long": 26.9458,
+      "is_seed": false
+    }
+  ],
+  "network_edges": [
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "fd074882-b55e-58b6-ad8a-3423310d5cd9",
+      "relation_type": "Supplier",
+      "relative_revenue": 155.8,
+      "relative_revenue_percentage": 38,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "1f00b27e-8bd4-5b04-8b2e-302f1c7961ad",
+      "relation_type": "Supplier",
+      "relative_revenue": 112.5,
+      "relative_revenue_percentage": 9,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "d7426a6d-fbd4-5cd1-956d-e1e2e5b6f45f",
+      "relation_type": "Supplier",
+      "relative_revenue": 134.4,
+      "relative_revenue_percentage": 21,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "b2a14131-43a4-5051-b11f-682be83b75f3",
+      "relation_type": "Supplier",
+      "relative_revenue": 31.2,
+      "relative_revenue_percentage": 6,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "7215b7af-9e17-5153-b7c8-07fc43003d7e",
+      "relation_type": "Supplier",
+      "relative_revenue": 41.4,
+      "relative_revenue_percentage": 18,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "82308212-f124-5f1a-927a-e17cccce96b0",
+      "relation_type": "Supplier",
+      "relative_revenue": 45.6,
+      "relative_revenue_percentage": 24,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "e0899bc2-3726-5bb4-8cc3-244b7dc3c9f1",
+      "relation_type": "Supplier",
+      "relative_revenue": 37.2,
+      "relative_revenue_percentage": 12,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "a7fafd69-058f-51f6-b492-b8827fc1e480",
+      "relation_type": "Supplier",
+      "relative_revenue": 37.4,
+      "relative_revenue_percentage": 22,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "aaa2d8e4-5e65-5992-8727-e698dfb0a8aa",
+      "relation_type": "Supplier",
+      "relative_revenue": 29.8,
+      "relative_revenue_percentage": 35,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "89cc1a63-b49a-5c5a-8c86-063d79ff72cc",
+      "relation_type": "Supplier",
+      "relative_revenue": 13.7,
+      "relative_revenue_percentage": 14,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+      "dst_uid": "2152177e-c532-5028-affa-32b97f048988",
+      "relation_type": "Supplier",
+      "relative_revenue": 14.4,
+      "relative_revenue_percentage": 60,
+      "depth": 1,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "fd074882-b55e-58b6-ad8a-3423310d5cd9",
+      "dst_uid": "2d2765c9-495e-519b-a354-c191cb346dfb",
+      "relation_type": "Supplier",
+      "relative_revenue": 42.0,
+      "relative_revenue_percentage": 30,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "fd074882-b55e-58b6-ad8a-3423310d5cd9",
+      "dst_uid": "a2c42ff5-a04b-5d1a-b850-cbc2b8f3628d",
+      "relation_type": "Supplier",
+      "relative_revenue": 84.0,
+      "relative_revenue_percentage": 4,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "1f00b27e-8bd4-5b04-8b2e-302f1c7961ad",
+      "dst_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+      "relation_type": "Supplier",
+      "relative_revenue": 1332.0,
+      "relative_revenue_percentage": 18,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "1f00b27e-8bd4-5b04-8b2e-302f1c7961ad",
+      "dst_uid": "71bf84c5-ba5b-5d5b-8480-f62c298b9c13",
+      "relation_type": "Supplier",
+      "relative_revenue": 45.6,
+      "relative_revenue_percentage": 12,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "d7426a6d-fbd4-5cd1-956d-e1e2e5b6f45f",
+      "dst_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+      "relation_type": "Supplier",
+      "relative_revenue": 1924.0,
+      "relative_revenue_percentage": 26,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "d7426a6d-fbd4-5cd1-956d-e1e2e5b6f45f",
+      "dst_uid": "e9d76569-ef08-59c8-b97a-471c8b481da7",
+      "relation_type": "Supplier",
+      "relative_revenue": 16.8,
+      "relative_revenue_percentage": 14,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "b2a14131-43a4-5051-b11f-682be83b75f3",
+      "dst_uid": "c027b97a-d46e-5025-b138-6b2e267e32ba",
+      "relation_type": "Supplier",
+      "relative_revenue": 46.2,
+      "relative_revenue_percentage": 22,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "b2a14131-43a4-5051-b11f-682be83b75f3",
+      "dst_uid": "22abfafe-0052-592a-8580-0bfb5d97bbeb",
+      "relation_type": "Supplier",
+      "relative_revenue": 30.4,
+      "relative_revenue_percentage": 19,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "7215b7af-9e17-5153-b7c8-07fc43003d7e",
+      "dst_uid": "84f1194f-dd3d-5029-8400-54ddcd92e0d4",
+      "relation_type": "Supplier",
+      "relative_revenue": 54.4,
+      "relative_revenue_percentage": 16,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "7215b7af-9e17-5153-b7c8-07fc43003d7e",
+      "dst_uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+      "relation_type": "Supplier",
+      "relative_revenue": 78.0,
+      "relative_revenue_percentage": 2,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "82308212-f124-5f1a-927a-e17cccce96b0",
+      "dst_uid": "fd368440-206a-5cb9-9a4e-82556ede96bb",
+      "relation_type": "Supplier",
+      "relative_revenue": 59.5,
+      "relative_revenue_percentage": 41,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "82308212-f124-5f1a-927a-e17cccce96b0",
+      "dst_uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+      "relation_type": "Supplier",
+      "relative_revenue": 78.0,
+      "relative_revenue_percentage": 2,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "e0899bc2-3726-5bb4-8cc3-244b7dc3c9f1",
+      "dst_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+      "relation_type": "Supplier",
+      "relative_revenue": 592.0,
+      "relative_revenue_percentage": 8,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "e0899bc2-3726-5bb4-8cc3-244b7dc3c9f1",
+      "dst_uid": "bacb3ef6-3b82-5fff-af85-d2eb830ca935",
+      "relation_type": "Supplier",
+      "relative_revenue": 52.8,
+      "relative_revenue_percentage": 11,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "a7fafd69-058f-51f6-b492-b8827fc1e480",
+      "dst_uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+      "relation_type": "Supplier",
+      "relative_revenue": 117.0,
+      "relative_revenue_percentage": 3,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "a7fafd69-058f-51f6-b492-b8827fc1e480",
+      "dst_uid": "71804407-58e0-5393-9ca0-36118e82926f",
+      "relation_type": "Supplier",
+      "relative_revenue": 11.5,
+      "relative_revenue_percentage": 25,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "aaa2d8e4-5e65-5992-8727-e698dfb0a8aa",
+      "dst_uid": "7d4eaf33-e84d-5423-a653-b8e1e4363658",
+      "relation_type": "Supplier",
+      "relative_revenue": 39.6,
+      "relative_revenue_percentage": 33,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "aaa2d8e4-5e65-5992-8727-e698dfb0a8aa",
+      "dst_uid": "7d62521f-5632-522c-a208-da0e8653cbb0",
+      "relation_type": "Supplier",
+      "relative_revenue": 27.4,
+      "relative_revenue_percentage": 28,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "89cc1a63-b49a-5c5a-8c86-063d79ff72cc",
+      "dst_uid": "b64e8b61-3a3e-50bb-a959-4fe585aeb1f0",
+      "relation_type": "Supplier",
+      "relative_revenue": 36.9,
+      "relative_revenue_percentage": 9,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "2152177e-c532-5028-affa-32b97f048988",
+      "dst_uid": "a5b0a0f1-fce1-5927-96b2-ff5e4c412461",
+      "relation_type": "Supplier",
+      "relative_revenue": 31.7,
+      "relative_revenue_percentage": 44,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "2152177e-c532-5028-affa-32b97f048988",
+      "dst_uid": "28d458ae-9b69-5705-b866-747676616431",
+      "relation_type": "Supplier",
+      "relative_revenue": 16.1,
+      "relative_revenue_percentage": 52,
+      "depth": 2,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+      "dst_uid": "f16f1688-71cd-5d74-bed9-ef984eb6a04e",
+      "relation_type": "Supplier",
+      "relative_revenue": 133.0,
+      "relative_revenue_percentage": 14,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+      "dst_uid": "cf5ad447-231e-59a4-84ea-914f1b75c80f",
+      "relation_type": "Supplier",
+      "relative_revenue": 65.1,
+      "relative_revenue_percentage": 31,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+      "dst_uid": "28609737-f271-5733-81a1-2789cb143c7e",
+      "relation_type": "Supplier",
+      "relative_revenue": 61.6,
+      "relative_revenue_percentage": 7,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "2d2765c9-495e-519b-a354-c191cb346dfb",
+      "dst_uid": "440f02b9-0d17-50a5-a061-9f0500208b3a",
+      "relation_type": "Supplier",
+      "relative_revenue": 64.8,
+      "relative_revenue_percentage": 12,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "2d2765c9-495e-519b-a354-c191cb346dfb",
+      "dst_uid": "66b06245-78c9-5184-ab52-ad3e01a1a819",
+      "relation_type": "Supplier",
+      "relative_revenue": 93.6,
+      "relative_revenue_percentage": 36,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+      "dst_uid": "984fa2c0-d4fc-5f3e-930f-1cf217496409",
+      "relation_type": "Supplier",
+      "relative_revenue": 416.0,
+      "relative_revenue_percentage": 8,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+      "dst_uid": "d8ba1cd8-1ddd-587d-a53e-1568e8bd4e8a",
+      "relation_type": "Supplier",
+      "relative_revenue": 186.0,
+      "relative_revenue_percentage": 6,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "84f1194f-dd3d-5029-8400-54ddcd92e0d4",
+      "dst_uid": "579ca956-46ef-532b-a6b8-d3c6b7c69a14",
+      "relation_type": "Supplier",
+      "relative_revenue": 144.0,
+      "relative_revenue_percentage": 3,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "fd368440-206a-5cb9-9a4e-82556ede96bb",
+      "dst_uid": "579ca956-46ef-532b-a6b8-d3c6b7c69a14",
+      "relation_type": "Supplier",
+      "relative_revenue": 96.0,
+      "relative_revenue_percentage": 2,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "c027b97a-d46e-5025-b138-6b2e267e32ba",
+      "dst_uid": "442a1de0-7328-5432-86cb-4e661ecea9a9",
+      "relation_type": "Supplier",
+      "relative_revenue": 186.3,
+      "relative_revenue_percentage": 27,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "b64e8b61-3a3e-50bb-a959-4fe585aeb1f0",
+      "dst_uid": "ae85c1a9-58ac-5169-8158-37463e8f0d9f",
+      "relation_type": "Supplier",
+      "relative_revenue": 58.5,
+      "relative_revenue_percentage": 45,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "7d4eaf33-e84d-5423-a653-b8e1e4363658",
+      "dst_uid": "b7ce81b0-b1e1-5a38-a516-d62bb78866b3",
+      "relation_type": "Supplier",
+      "relative_revenue": 87.0,
+      "relative_revenue_percentage": 58,
+      "depth": 3,
+      "direction": "suppliers"
+    },
+    {
+      "src_uid": "a5b0a0f1-fce1-5927-96b2-ff5e4c412461",
+      "dst_uid": "e08d1d64-79cb-5791-8ec3-45296ff5b429",
+      "relation_type": "Supplier",
+      "relative_revenue": 202.8,
+      "relative_revenue_percentage": 39,
+      "depth": 3,
+      "direction": "suppliers"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { mintAndVerifySession } from '@/lib/auth/sessionMint';
 import { roleChangeNotice, watchProfileFreshness } from '@/lib/auth/sessionRefresh';
 import { toast } from 'sonner';
+import { demoGuestUser, demoIdentity, endDemoSession, isDemoSession } from '@/lib/demo/demoSession';
 
 interface User {
   id: string;
@@ -88,6 +89,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   loading: boolean;
+  /** A demo session is on: `user` is the read-only demo account, not a person who signed in. */
+  demo: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -105,6 +108,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   });
   const [loading, setLoading] = useState(false);
+  // The demo session (src/lib/demo). A real sign-in always wins over it, and it is never
+  // written to `auth_user`: the account the pages see is derived here, per render.
+  const [demoActive, setDemoActive] = useState<boolean>(() => {
+    const on = isDemoSession();
+    console.log('[DEMO] demo session on load:', on);
+    return on;
+  });
+  const demoId = demoActive ? demoIdentity() : null;
+  const demoUser = demoId ? demoGuestUser(demoId) : null;
 
   const login = async (email: string, password: string) => {
     try {
@@ -190,6 +202,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(userObj);
       localStorage.setItem('auth_user', JSON.stringify(userObj));
       console.log('[AUTH] User stored in localStorage');
+      // Somebody real signed in: the demo session is over.
+      endDemoSession();
+      setDemoActive(false);
 
       // WP 7.1 stage 1b — ask for a real session BESIDE the one above, never instead of it.
       //
@@ -232,8 +247,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     console.log('[AUTH] Logging out user');
+    console.log('[DEMO] ending the demo session (if one is on)');
     setUser(null);
     localStorage.removeItem('auth_user');
+    // "Exit demo" is this same call: the session ends, and the route guard sends the
+    // visitor to /auth.
+    endDemoSession();
+    setDemoActive(false);
   };
 
   const refreshProfile = async () => {
@@ -297,7 +317,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user?.id]);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, refreshProfile, loading }}>
+    <AuthContext.Provider value={{ user: user ?? demoUser, login, logout, refreshProfile, loading, demo: !user && !!demoUser }}>
       {children}
     </AuthContext.Provider>
   );

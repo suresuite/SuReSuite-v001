@@ -1,0 +1,12 @@
+supplier_id,material_id,volume,time_unit,lead_time,lead_time_unit,unit_price
+S-PCB,M-PCB,130,week,5,week,6.5
+S-MCU,M-MCU,91,week,8,week,4.2
+S-MCU2,M-MCU,39,week,6,week,4.5
+S-PASSIVE,M-CAP,130,week,4,week,0.8
+S-CONN,M-CONNECTOR,260,week,3,week,0.55
+S-SENS,M-SENSOR,130,week,4,week,2.4
+S-HARNESS,M-HARNESS,130,week,4,week,3.1
+S-PLASTIC,M-SHELL,130,week,2,week,1.9
+S-SEAL,M-SEAL,130,week,2,week,0.35
+S-FAST,M-SCREW,780,week,1,week,0.04
+S-PRINT,M-LABEL,130,week,1,week,0.05

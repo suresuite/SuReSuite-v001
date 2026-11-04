@@ -1,0 +1,14 @@
+node_id,description_text,location_text,latitude,longitude
+S-PCB,Printed Circuit Boards,"Taoyuan, Taiwan",24.9936,121.301
+S-MCU,Semiconductors,"Kyoto, Japan",35.0116,135.7681
+S-MCU2,Semiconductors,"Penang, Malaysia",5.4164,100.3327
+S-PASSIVE,Electronic Components,"Suzhou, China",31.299,120.5853
+S-CONN,Connectors,"Guadalajara, Mexico",20.6597,-103.3496
+S-HARNESS,Wiring Harnesses,"Hanoi, Vietnam",21.0278,105.8342
+S-SENS,Sensors,"Busan, South Korea",35.1796,129.0756
+S-PLASTIC,Plastic Moulding,"Katowice, Poland",50.2649,19.0238
+S-SEAL,Rubber Products,"Brno, Czech Republic",49.1951,16.6068
+S-FAST,Fasteners,"Linz, Austria",48.3069,14.2858
+S-PRINT,Printing,"Ulm, Germany",48.3984,9.9916
+C-ASSEMBLY,Customer,"Munich, Germany",48.1351,11.582
+C-SERVICE,Customer,"Hamburg, Germany",53.5511,9.9937
