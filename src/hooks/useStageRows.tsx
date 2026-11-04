@@ -84,10 +84,15 @@ export function useStageRows({ projectId, plantName, stage }: Args) {
     (async () => {
       const sb = supabase as any;
       try {
-        // 1) Canonical edge list from the RPC.
-        // The three stage hooks ask this at once with the same arguments: one request.
-        // A reload() (tick > 0) follows a write, so it reads afresh.
-        const { data: scd, error: scdErr } = await shareRead(
+        // START EVERY READ THIS STAGE WILL NEED NOW, AWAIT EACH WHERE IT IS USED.
+        // These were awaited one after another (edges, lanes, then the stage's own
+        // extra read), so the grid waited for the SUM of their round trips. None
+        // depends on another's answer, and each stage below ALWAYS makes its own
+        // extra read, so starting it early changes when it begins, not whether.
+        const fresh = tick > 0; // a reload() follows a write, so it reads afresh
+        // The three stage hooks ask for the edge list at once with the same
+        // arguments: one request.
+        const scdP = shareRead(
           `scd|${projectId}|${user.id}|${String(user.email).toLowerCase()}`,
           async () =>
             await sb.rpc("get_supply_chain_data", {
@@ -96,8 +101,23 @@ export function useStageRows({ projectId, plantName, stage }: Args) {
               p_user_id: user.id,
               p_user_email: user.email,
             }),
-          tick > 0,
+          fresh,
         );
+        const lanesP = fetchProjectLanes(projectId, user, { fresh });
+        // Supplier stage: the materials master (ids only), listed for materials no
+        // lane or BOM row names. Same direct read the Item Master editor uses.
+        const masterP =
+          stage === "supplier"
+            ? (async () =>
+                await sb.from("materials").select("material_id").eq("project_id", projectId).limit(50_000))()
+            : null;
+        // Customer stage: each row's uploaded forecast series.
+        const forecastsP = stage === "customer" ? fetchProjectForecasts(projectId, user) : null;
+        // A read nobody awaits (we threw earlier) must not surface as unhandled.
+        for (const side of [lanesP, masterP, forecastsP]) side?.catch(() => undefined);
+
+        // 1) Canonical edge list from the RPC.
+        const { data: scd, error: scdErr } = await scdP;
         if (scdErr) {
           // Name the read: the catch renders this, and "failed" without a
           // source is not a diagnosis anyone can act on (§4 D178).
@@ -112,7 +132,7 @@ export function useStageRows({ projectId, plantName, stage }: Args) {
         // 2) Enrichment rows via the SECURITY DEFINER RPC (the app's custom
         //    auth makes direct .from() reads on the lane tables return empty
         //    under RLS — see src/lib/policies/projectLanes.ts).
-        const lanes = await fetchProjectLanes(projectId, user, { fresh: tick > 0 });
+        const lanes = await lanesP;
         if (!cancelled) setTruncated(lanes.truncated);
         const inbound = lanes.inbound;
         const outbound = lanes.outbound;
@@ -551,11 +571,7 @@ export function useStageRows({ projectId, plantName, stage }: Args) {
           try {
             // Same direct read the Item Master editor uses (its RLS admits it;
             // the lane tables' does not — see projectLanes.ts).
-            const { data: masterRows, error: masterErr } = await sb
-              .from("materials")
-              .select("material_id")
-              .eq("project_id", projectId)
-              .limit(50_000);
+            const { data: masterRows, error: masterErr } = await masterP!;
             if (masterErr) throw masterErr;
             for (const m of (masterRows ?? []) as Record<string, unknown>[]) {
               const mat = String(m.material_id ?? "").trim();
@@ -710,7 +726,7 @@ export function useStageRows({ projectId, plantName, stage }: Args) {
           // PLAN.md §24 WP 14.2 — each row's uploaded forecast series, shown
           // read-only with its source; the series itself is uploaded in Project
           // manager (the `demand_forecasts` dataset).
-          const fq = await fetchProjectForecasts(projectId, user);
+          const fq = await forecastsP!;
           if (fq.error) console.warn("[useStageRows] demand forecast read failed", fq.error);
           const bucketsByRow = new Map<string, ForecastBucket[]>();
           for (const f of fq.rows as unknown as ForecastBucket[]) {

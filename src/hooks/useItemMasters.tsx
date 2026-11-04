@@ -5,6 +5,7 @@ import { useProjectRights } from "@/hooks/useProjectRights";
 import { ProjectRightRefused } from "@/lib/auth/projectRights";
 import { toast } from "sonner";
 import { fetchProjectForecasts, fetchProjectLanes } from "@/lib/policies/projectLanes";
+import { shareRead } from "@/lib/sharedRead";
 import type { ForecastBucket } from "@/lib/policies/customerRows";
 import {
   demandWeightedSellPrice,
@@ -183,23 +184,28 @@ export function useItemMasters(projectId: string | null | undefined): UseItemMas
   // than join a request that started before it.
   const loadLogistics = useCallback(async (fresh = false) => {
     if (!projectId) return;
-    const lanes = await fetchProjectLanes(projectId, user, { fresh });
+    // The lanes, the forecast series and the customers master do not depend on one
+    // another, so they are read together (they were three round trips in a row).
+    const [lanes, fq, cq] = await Promise.all([
+      fetchProjectLanes(projectId, user, { fresh }),
+      fetchProjectForecasts(projectId, user),
+      // WP 14.3 — the customers master (anon-readable, `customers_anon_read`).
+      shareRead(`im|customers|${projectId}`, async () =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any)
+          .from("customers")
+          .select("customer_id,segment,priority_weight,sla_fill_floor_pct")
+          .eq("project_id", projectId), fresh),
+    ]);
     setInboundArcs(lanes.inbound);
     setOutboundArcs(lanes.outbound);
     // WP 14.2 — a failed read is logged and leaves the series empty; the
     // Customer row then shows no forecast, which the Data map reports as a
     // failed read rather than as "none uploaded" (useDataMap).
-    const fq = await fetchProjectForecasts(projectId, user);
     if (fq.error) console.warn("[useItemMasters] demand forecast read failed", fq.error);
     setForecasts(fq.rows as unknown as ForecastBucket[]);
-    // WP 14.3 — the customers master (anon-readable, `customers_anon_read`).
-    // A failed read is logged; the Customer row's priority and target then
+    // A failed customers read is logged; the Customer row's priority and target then
     // show their declared defaults, the same answer the Data map reports.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cq = await (supabase as any)
-      .from("customers")
-      .select("customer_id,segment,priority_weight,sla_fill_floor_pct")
-      .eq("project_id", projectId);
     if (cq.error) console.warn("[useItemMasters] customers read failed", cq.error);
     setCustomerRows((cq.data ?? []) as Record<string, unknown>[]);
     // BOTH BOM shapes pass through raw — the shared grader normalizes
@@ -213,15 +219,17 @@ export function useItemMasters(projectId: string | null | undefined): UseItemMas
   }, [projectId, user]);
 
   const loadTable = useCallback(
-    async (table: ItemMasterTable) => {
+    // `fresh`: after a save or a realtime change, read again; at mount, join the read
+    // another instance of this hook (this page mounts several) already started.
+    async (table: ItemMasterTable, fresh = false) => {
       if (!projectId) return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sb = supabase as any;
-      const { data, error: err } = await sb
-        .from(table)
-        .select("*")
-        .eq("project_id", projectId)
-        .order(ID_COLUMN[table]);
+      const { data, error: err } = await shareRead(
+        `im|${table}|${projectId}`,
+        async () => await sb.from(table).select("*").eq("project_id", projectId).order(ID_COLUMN[table]),
+        fresh,
+      );
       if (err) {
         console.error(`load ${table} failed`, err);
         setError(err.message ?? `Failed to load ${table}`);
@@ -234,7 +242,7 @@ export function useItemMasters(projectId: string | null | undefined): UseItemMas
     [projectId],
   );
 
-  const reload = useCallback(async () => {
+  const load = useCallback(async (fresh: boolean) => {
     if (!projectId) return;
     setLoading(true);
     setError(null);
@@ -243,25 +251,34 @@ export function useItemMasters(projectId: string | null | undefined): UseItemMas
     // Materialize master rows for every id in the logistics/BOM tables so
     // there is always a row to edit (ON CONFLICT DO NOTHING — user-entered
     // economics survive re-uploads).
-    const { error: ensureErr } = await sb.rpc("ensure_item_masters", {
-      p_project_id: projectId,
-      // D71 · the actor, so the rows this materializes carry one. DEFAULT NULL
-      // on the RPC, so omitting it is exactly the old behaviour.
-      _actor_user_id: user?.id ?? null,
-    });
+    const { error: ensureErr } = await shareRead(
+      `im|ensure|${projectId}|${user?.id ?? ""}`,
+      async () =>
+        await sb.rpc("ensure_item_masters", {
+          p_project_id: projectId,
+          // D71 · the actor, so the rows this materializes carry one. DEFAULT NULL
+          // on the RPC, so omitting it is exactly the old behaviour.
+          _actor_user_id: user?.id ?? null,
+        }),
+      fresh,
+    );
     if (ensureErr) console.error("ensure_item_masters failed", ensureErr);
     await Promise.all([
-      loadTable("materials"),
-      loadTable("products"),
-      loadTable("suppliers"),
-      loadLogistics(),
+      loadTable("materials", fresh),
+      loadTable("products", fresh),
+      loadTable("suppliers", fresh),
+      loadLogistics(fresh),
     ]);
     setLoading(false);
   }, [projectId, loadTable, loadLogistics, user?.id]);
 
+  // The public reload is always a fresh read (callers use it after a change); only the
+  // mount-time load joins reads another instance of this hook has in flight.
+  const reload = useCallback(() => load(true), [load]);
+
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    void load(false);
+  }, [load]);
 
   // Realtime: item masters are in the supabase_realtime publication; reload
   // the affected table on any change (rows are few, merging isn't worth it).
@@ -272,7 +289,7 @@ export function useItemMasters(projectId: string | null | undefined): UseItemMas
       channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table, filter: `project_id=eq.${projectId}` },
-        () => void loadTable(table),
+        () => void loadTable(table, true),
       );
     });
     // Logistics re-uploads change the derived (fallback) economics too.
@@ -311,7 +328,7 @@ export function useItemMasters(projectId: string | null | undefined): UseItemMas
           throw new Error(err.message ?? `Failed to save ${table}`);
         }
       }
-      await loadTable(table);
+      await loadTable(table, true);
     },
     [projectId, loadTable, user?.id, canEditInputs, inputEditRefusal],
   );
