@@ -175,13 +175,17 @@ def disruption_rule() -> dict[str, Any]:
         "start_week_min": pm.EVENT_START_WEEK_MIN,
         "duration_weeks_min": pm.EVENT_DURATION_WEEKS_MIN,
         "duration_weeks_max": pm.EVENT_DURATION_WEEKS_MAX,
-        # A supplier id of the project, or the plant (`plant`, `plant:<x>`, `node:plant`).
-        "supported_target_kinds": ["supplier", "plant"],
+        # A supplier id of the project, the plant (`plant`, `plant:<x>`, `node:plant`),
+        # or a supplied material (`material:<id>`, since 0.9.0).
+        "supported_target_kinds": ["supplier", "plant", pm.MATERIAL_EVENT_KIND],
         "unsupported_target_kinds": list(pm.UNSUPPORTED_EVENT_KINDS),
         # magnitude_pct < 100 is a capacity cut BY that share; 100 is a full outage.
         # A partial cut on a supplier with no finite capacity becomes a full outage.
         "full_outage_pct": 100,
         "partial_cut_needs_finite_supplier_capacity": True,
+        # A material event stops every supply link of that material; a magnitude
+        # below 100 on it runs as that full outage (the cut is per supplier).
+        "material_cut_runs_as_outage": True,
     }
 
 

@@ -161,3 +161,56 @@ def test_material_events_do_not_mark_a_supplier_disrupted():
     assert links.tolist() == [bool(cm.model.link_mat[k] == cm.model.mat_index["m1"])
                               for k in range(cm.model.n_links)]
     assert np.count_nonzero(links) == 1
+
+
+# ── PLAN.md §29 WP 19.1 — the platform's schedule reaches a material ─────────────
+# `project_map._map_events` turns a scenario's `material:<id>` into the event above.
+
+from scsim.io.project_map import _map_events  # noqa: E402
+
+
+def _entry(target, *, start_day=140, duration_days=28, magnitude_pct=100):
+    return {"target": target, "target_type": "node", "start_day": start_day,
+            "duration_days": duration_days, "magnitude_pct": magnitude_pct}
+
+
+def test_the_mapper_turns_a_material_target_into_a_material_event():
+    w: list = []
+    ev = _map_events([_entry("material:M1")], {"S1"}, {"S1": None}, w, mat_ids={"M1", "M2"})
+    assert len(ev) == 1 and not w
+    assert ev[0].target_type == TargetType.NODE_MATERIAL and ev[0].target_id == "M1"
+    assert (ev[0].start, ev[0].duration) == (20, 4)
+    assert ev[0].effect_type == EffectType.LEAD_TIME_EXTENSION
+
+
+def test_a_partial_cut_on_a_material_runs_as_an_outage_and_says_so():
+    w: list = []
+    ev = _map_events([_entry("material:M1", magnitude_pct=50)], {"S1"}, {"S1": 100.0}, w, mat_ids={"M1"})
+    assert len(ev) == 1 and ev[0].effect_type == EffectType.LEAD_TIME_EXTENSION
+    assert any("full outage of its supply" in x.reason for x in w)
+
+
+def test_an_unknown_or_unsupplied_material_is_skipped_with_its_reason():
+    w: list = []
+    assert _map_events([_entry("material:NOPE")], {"S1"}, {}, w, mat_ids={"M1"}) == []
+    assert any("no supplied material named 'NOPE'" in x.reason for x in w)
+
+
+def test_the_material_kind_is_no_longer_named_unsupported():
+    from scsim.io import project_map as pm
+    from scsim.io.registry_export import disruption_rule
+    assert "material" not in pm.UNSUPPORTED_EVENT_KINDS
+    rule = disruption_rule()
+    assert "material" in rule["supported_target_kinds"] and rule["material_cut_runs_as_outage"] is True
+
+
+def test_a_mapped_material_outage_stops_that_material_only_end_to_end():
+    """Through the mapper's event: M1 stops for its weeks, M2 (same supplier) keeps arriving."""
+    net = two_chain_network()
+    m1, m2 = net.materials[0].id, net.materials[1].id
+    w: list = []
+    events = _map_events([_entry(f"material:{m1}", start_day=140, duration_days=98)],
+                         {s.id for s in net.suppliers}, {}, w,
+                         mat_ids={l.material_id for l in net.supplier_links})
+    assert not w
+    assert lost(run_scenario(scenario(net, events=events))) > lost(run_scenario(scenario(net)))

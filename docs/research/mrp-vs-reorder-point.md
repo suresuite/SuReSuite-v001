@@ -2,7 +2,7 @@
 
 # MRP versus reorder point — the Phase 14 validation study
 
-**Status:** GENERATED · engine 0.8.3 · PLAN.md §24 WP 14.6 · blueprint G20.
+**Status:** GENERATED · engine 0.9.0 · PLAN.md §24 WP 14.6 · blueprint G20.
 
 What planning materials from the plan (MRP: BOM × planned production over the lead time, net of stock and the pipeline) changes against planning them from consumption (min-max reorder point). Every cell is a mean over CRN-paired replications with a 95 % confidence half-width; the paired lines compare the SAME replications, so the demand and the disruption are identical across the two policies.
 

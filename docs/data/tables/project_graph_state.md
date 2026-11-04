@@ -246,6 +246,6 @@ When the row last changed for any reason.
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `0cb3952fcb41`, engine `0.9.0`,
 sidecar `supabase/contract/project_graph_state.contract.yaml`, table created by `20261001000007_graph_levels_compute_once.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

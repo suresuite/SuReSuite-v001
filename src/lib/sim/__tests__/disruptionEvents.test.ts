@@ -25,7 +25,8 @@ describe("one disruption-event model (WP 9.4 slice 6 · §4 D226)", () => {
   it("reads the mapper's exported rule", () => {
     const d = (registry as unknown as { disruption: typeof DISRUPTION_RULE }).disruption;
     expect(DISRUPTION_RULE).toEqual(d);
-    expect(DISRUPTION_RULE.supported_target_kinds).toEqual(["supplier", "plant"]);
+    // Engine 0.9.0 (PLAN.md §29 WP 19.1): a supplied material is a target too.
+    expect(DISRUPTION_RULE.supported_target_kinds).toEqual(["supplier", "plant", "material"]);
   });
 
   it("agrees with the derived stress-preset classification on every event", () => {

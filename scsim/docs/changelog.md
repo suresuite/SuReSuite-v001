@@ -4,6 +4,19 @@
 
 Every engine version, what it changed, and whether results stay comparable across it. Authored once in `scsim/CHANGELOG.yaml` and gated in CI (PLAN.md §25, gate `engine-ledger`). *Comparable* answers the user's question; *Tier* is the engineering classification (Part IX §9.5) — a patch can still change results for some projects.
 
+## 0.9.0 · 2026-11-04 · Tier 2
+
+**Changed for some projects.** Results change only for a scenario whose disruption schedule names a supplied material (`material:<id>`), which used to run undisrupted; every other scenario runs exactly as before (no frozen reference run has a material event).
+
+A scenario can now disrupt a material, not only a supplier or the plant. A material outage stops every supply of that one material for its weeks, while the suppliers that ship it keep shipping their other materials. Before this version such an event was skipped with a warning and the run went ahead undisrupted. A material is disrupted as a full outage only: a smaller percentage on a material runs as the full outage and the run's notes say so, because the engine cuts capacity per supplier, not per material.
+
+*Technical.* `project_map._map_events` takes `mat_ids` (the materials with a supply link, from the call site) and maps `material:<id>` to `DisruptionEvent(target_type=NODE_MATERIAL)` with the same start/duration rounding and clamps as a supplier event; magnitude < 100 earns a `magnitude` warning and still maps as `lead_time_extension`; an unknown or unsupplied material is skipped with its own `target` warning. `material` leaves `UNSUPPORTED_EVENT_KINDS`. `registry_export.disruption_rule()` exports `supported_target_kinds` with `material` and `material_cut_runs_as_outage: true`. The engine-side event (WP 17.1) is unchanged.
+
+- commit: not yet recorded
+- KPIs `fill_rate`, `lost_sales_value`, `lost_inbound_units`, `max_backlog`, `ttr_weeks`, `tts_weeks`, `service_loss_area`, `cost_of_resilience`
+- frozen reference runs moved: none
+- refs D311, D112, WP 19.1
+
 ## 0.8.3 · 2026-10-27 · Tier 2
 
 **Changed for some projects.** Results change only for a scenario that ticks Safety stock and sets a buffer window; every other scenario runs exactly as before (every frozen reference run kept its digest).
