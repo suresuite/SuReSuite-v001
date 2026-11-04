@@ -39,6 +39,11 @@ export function useScenarioRuns(projectId: string | null | undefined) {
       return;
     }
     void refresh();
+    // A running run writes its replication counter on every replication, and each
+    // write arrives here. Only a run that is (or was) "done" can change this hook's
+    // answer, so queued/running/cancelled/failed updates are ignored, and the rest
+    // are coalesced — the same 400 ms window useSimulationRun uses.
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const ch = sb
       .channel(`project_runs:${projectId}`)
       .on(
@@ -49,10 +54,18 @@ export function useScenarioRuns(projectId: string | null | undefined) {
           table: "simulation_runs",
           filter: `project_id=eq.${projectId}`,
         },
-        () => void refresh(),
+        (payload: { eventType?: string; new?: { status?: string } }) => {
+          // DELETE carries no new row: refetch. INSERT/UPDATE: only when it is "done".
+          if (payload.eventType !== "DELETE" && payload.new?.status !== "done") return;
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(() => void refresh(), 400);
+        },
       )
       .subscribe();
-    return () => sb.removeChannel(ch);
+    return () => {
+      if (timer) clearTimeout(timer);
+      sb.removeChannel(ch);
+    };
   }, [projectId, refresh]);
 
   return { runsByScenario, loading, refresh };

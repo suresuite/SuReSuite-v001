@@ -5,6 +5,7 @@
 // "Members & access" lists who is on the project and what each may do (D215).
 // Model column shows a mono BOM/data chip pair; status is an outlined chip; row
 // actions live in a menu.
+import { invalidateProjectsCache } from '@/lib/projects/projectsCache';
 import { projectWindow } from '@/lib/sim/projectWindow';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,6 +64,8 @@ export default function AdminProjects({ isCollapsed, setIsCollapsed }: Props) {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+  // Admin edits (rename, copy, transfer, delete) change what list_projects returns.
+  useEffect(() => () => invalidateProjectsCache(), []);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();

@@ -1,4 +1,5 @@
 // @ts-nocheck — schema mismatch: this file targets a supply-chain schema not yet migrated into this project. Remove once tables/RPCs are created.
+import { listProjectsCached, invalidateProjectsCache } from '@/lib/projects/projectsCache';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -214,13 +215,9 @@ const DataManager = ({ isCollapsed, setIsCollapsed }: DataManagerProps) => {
     if (!user?.id) return;
 
     try {
-      const { data, error } = await supabase.rpc('list_projects', {
-        p_user_id: user.id,
-        p_user_email: user.email
-      });
-
-      if (error) throw error;
-      setProjects(data || []);
+      // This page changes projects, so it always reads fresh and, on leaving,
+      // drops the shared copy for the pages that read it from memory.
+      setProjects(await listProjectsCached(user, { force: true }));
     } catch (error) {
       console.error('Error loading projects:', error);
       toast.error(`Error loading projects: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -232,6 +229,8 @@ const DataManager = ({ isCollapsed, setIsCollapsed }: DataManagerProps) => {
       loadProjects();
     }
   }, [user?.id]);
+
+  useEffect(() => () => invalidateProjectsCache(), []);
 
   // Check data completion for all projects when they load
   useEffect(() => {

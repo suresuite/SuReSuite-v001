@@ -2,7 +2,7 @@
 // Used by /network/product-level and /policies so the project picker is
 // consistent across pages.
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { listProjectsCached } from "@/lib/projects/projectsCache";
 import { useAuth } from "@/hooks/useAuth";
 
 export interface ProjectSummary {
@@ -21,12 +21,7 @@ export function useProjects() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await (supabase as any).rpc("list_projects", {
-        p_user_id: user.id,
-        p_user_email: user.email,
-      });
-      if (error) throw error;
-      setProjects((data as ProjectSummary[]) || []);
+      setProjects((await listProjectsCached(user)) as ProjectSummary[]);
     } catch (e) {
       console.error("[useProjects] failed", e);
     } finally {

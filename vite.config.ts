@@ -16,7 +16,7 @@ function buildSha(): string {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(() => ({
+export default defineConfig(({ mode }) => ({
   define: {
     __BUILD_SHA__: JSON.stringify(buildSha()),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString().slice(0, 16).replace("T", " ")),
@@ -31,6 +31,12 @@ export default defineConfig(() => ({
     port: 8080,
   },
   plugins: [react()],
+  // Production builds drop console.log/debug calls (134 in src/, 54 in the map
+  // components, some inside per-node loops). warn and error are kept: those are
+  // diagnostics a user can send us. `vite dev` is untouched.
+  esbuild: {
+    pure: mode === "production" ? ["console.log", "console.debug"] : [],
+  },
   build: {
     // scripts/audit-bundle-size.mjs reads this to walk the real import graph,
     // so it can tell "a lazy chunk got bigger" (fine) from "a lazy chunk became

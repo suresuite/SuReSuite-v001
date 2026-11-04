@@ -1,4 +1,5 @@
 // @ts-nocheck — schema mismatch: this file targets a supply-chain schema not yet migrated into this project. Remove once tables/RPCs are created.
+import { listProjectsCached } from '@/lib/projects/projectsCache';
 import { Suspense, useEffect, useState, useMemo, useRef } from 'react';
 import { lazyChunk } from '@/lib/lazyChunk';
 import { Node, Edge } from '@xyflow/react';
@@ -272,13 +273,7 @@ export default function FirmLevelNetwork({ isCollapsed, setIsCollapsed }: FirmLe
     if (!user) return;
     
     try {
-      const { data, error } = await supabase.rpc('list_projects', {
-        p_user_id: user.id,
-        p_user_email: user.email
-      });
-      
-      if (error) throw error;
-      setProjects(data || []);
+      setProjects(await listProjectsCached(user));
     } catch (e) {
       console.error('Failed to fetch projects:', e);
       toast.error('Failed to load projects');

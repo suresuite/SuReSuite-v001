@@ -34,6 +34,7 @@
  * comes from the props and hooks below, so the two platforms share one data
  * flow and one message stream.
  */
+import { listProjectsCached } from "@/lib/projects/projectsCache";
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageLayout } from "@/components/shared/PageLayout";
@@ -184,12 +185,7 @@ const ProjectIntelligence: React.FC<ProjectIntelligenceProps> = ({ isCollapsed, 
     if (!user) return;
     (async () => {
       try {
-        const { data, error } = await db.rpc("list_projects", {
-          p_user_id: user.id,
-          p_user_email: user.email,
-        });
-        if (error) throw error;
-        setProjects((data as ProjectRow[]) ?? []);
+        setProjects((await listProjectsCached(user)) as ProjectRow[]);
       } catch (e) {
         console.error(e);
         toast.error("Failed to load projects");
