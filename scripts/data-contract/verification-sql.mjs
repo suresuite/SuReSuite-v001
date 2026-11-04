@@ -5372,6 +5372,13 @@ async function phase18RunCalendar() {
       where run_spec is not null and (run_spec ? 'calendar_start' or (run_spec -> 'scenario') ? 'calendar_start')`,
     "the calendar reached the RunKey spec, so identical simulations would get new keys");
 
+  // WP 18.4 — after `20261101000002`, no project may still carry the day-early window.
+  await gate("(7) a project still carrying the day-early window (31 Dec → 30 Dec)",
+    `select count(*)::int as n from public.projects
+      where extract(month from simulation_start) = 12 and extract(day from simulation_start) = 31
+        and simulation_end = (simulation_start + 1) + interval '1 year' - interval '2 days'`,
+    "the date correction missed a project, or a new one was saved with the old bug");
+
   report("(5) per project: the window and its runs",
     await tryQ(`
       select p.name, p.simulation_start, p.simulation_end,
