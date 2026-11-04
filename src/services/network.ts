@@ -1,4 +1,5 @@
 // @ts-nocheck — schema mismatch: this file targets a supply-chain schema not yet migrated into this project. Remove once tables/RPCs are created.
+import { readAllPages } from '@/lib/pagedRead';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface MultiTierNetworkData {
@@ -30,41 +31,22 @@ export async function fetchMultiTierNetworkData(
 ): Promise<MultiTierNetworkData[]> {
   console.log('🔐 Fetching multi-tier network data via RPC for project:', projectId);
   
-  let allData: MultiTierNetworkData[] = [];
-  let offset = 0;
-  const pageSize = 1000; // Fetch in chunks of 1000
-  let hasMore = true;
-
-  while (hasMore) {
-    console.log(`📄 Fetching page at offset ${offset}...`);
-    
-    const { data, error } = await supabase.rpc('get_supply_chain_data_multi_tier', {
-      p_project_id: projectId,
-      p_user_id: userId,
-      p_user_email: userEmail,
-      p_limit: pageSize,
-      p_offset: offset
-    });
-
-    if (error) {
-      console.error('❌ RPC call failed:', error);
-      throw new Error(`Failed to fetch multi-tier network data: ${error.message}`);
-    }
-
-    if (!data || data.length === 0) {
-      hasMore = false;
-      break;
-    }
-
-    allData = allData.concat(data);
-    console.log(`📊 Fetched ${data.length} records (total so far: ${allData.length})`);
-    
-    // If we got less than pageSize records, we've reached the end
-    if (data.length < pageSize) {
-      hasMore = false;
-    } else {
-      offset += pageSize;
-    }
+  // Pages are read several at a time (`pagedRead.ts`). No page ceiling: this read has
+  // never had one, and a silent cut here would draw a partial network.
+  const { rows: allData, error } = await readAllPages<MultiTierNetworkData>(
+    async (offset, limit) =>
+      await supabase.rpc('get_supply_chain_data_multi_tier', {
+        p_project_id: projectId,
+        p_user_id: userId,
+        p_user_email: userEmail,
+        p_limit: limit,
+        p_offset: offset,
+      }),
+    { maxPages: Number.POSITIVE_INFINITY },
+  );
+  if (error) {
+    console.error('❌ RPC call failed:', error);
+    throw new Error(`Failed to fetch multi-tier network data: ${(error as { message?: string }).message ?? String(error)}`);
   }
 
   console.log(`✅ Successfully fetched ALL ${allData.length} multi-tier network records`);

@@ -8,6 +8,11 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
+// renderToStaticMarkup cannot wait for a lazy chunk, so the real chart component stands
+// in for its lazy wrapper (lazyCharts.tsx only defers it; props and output are the same).
+vi.mock("@/components/sim/lazyCharts", async () => ({
+  ItemCharts: (await import("@/components/sim/inventory/ItemCharts")).ItemCharts,
+}));
 
 import RUN from "@/lib/sim/__tests__/fixtures/inventoryInspectionRun.json";
 import { InventoryExplorerView, type InventoryExplorerViewProps } from "../ItemSeriesExplorer";

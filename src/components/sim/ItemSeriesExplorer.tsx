@@ -19,7 +19,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectRights } from "@/hooks/useProjectRights";
 import type { SimulationRun } from "@/hooks/useSimulationRun";
-import { downloadWorkbook } from "@/lib/policies/excel";
 import { fetchProjectLanes } from "@/lib/policies/projectLanes";
 import { assembleRunRecord, RUN_SCENARIO_COLUMNS, type RunScenarioRow } from "@/lib/trust/assembleRunRecord";
 import {
@@ -31,8 +30,8 @@ import {
   type ItemKind,
   type ItemSeriesRow,
 } from "@/lib/sim/inventoryExplorer";
-import { buildInventoryWorkbook, inventoryFileName } from "@/lib/sim/inventoryWorkbook";
-import { ItemCharts } from "@/components/sim/inventory/ItemCharts";
+import { inventoryFileName } from "@/lib/sim/inventoryFileName";
+import { ItemCharts } from "@/components/sim/lazyCharts";
 import { MaterialTable, ProductTable } from "@/components/sim/inventory/InventoryTable";
 
 const SERIES_LABEL: Record<string, string> = {
@@ -230,6 +229,11 @@ export function ItemSeriesExplorer({ runId, warmupWeeks = null, projectName, emp
       } else {
         recordAbsentBecause = "The run row could not be read.";
       }
+      // The workbook library loads on the first export click.
+      const [{ buildInventoryWorkbook }, { downloadWorkbook }] = await Promise.all([
+        import("@/lib/sim/inventoryWorkbook"),
+        import("@/lib/policies/excel"),
+      ]);
       const wb = buildInventoryWorkbook({
         record,
         recordAbsentBecause,

@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import type { StageKey } from "@/lib/policies/stages";
 import { ratePerDay } from "@/lib/policies/effectiveEconomics";
 import { fetchProjectForecasts, fetchProjectLanes } from "@/lib/policies/projectLanes";
+import { shareRead } from "@/lib/sharedRead";
+import { readAllPages } from "@/lib/pagedRead";
 import { forecastSummary, type ForecastBucket } from "@/lib/policies/customerRows";
 import { engineSupplierLinks } from "../../supabase/functions/_shared/grading";
 
@@ -83,12 +85,19 @@ export function useStageRows({ projectId, plantName, stage }: Args) {
       const sb = supabase as any;
       try {
         // 1) Canonical edge list from the RPC.
-        const { data: scd, error: scdErr } = await sb.rpc("get_supply_chain_data", {
-          p_project_id: projectId,
-          p_plant_name: null,
-          p_user_id: user.id,
-          p_user_email: user.email,
-        });
+        // The three stage hooks ask this at once with the same arguments: one request.
+        // A reload() (tick > 0) follows a write, so it reads afresh.
+        const { data: scd, error: scdErr } = await shareRead(
+          `scd|${projectId}|${user.id}|${String(user.email).toLowerCase()}`,
+          async () =>
+            await sb.rpc("get_supply_chain_data", {
+              p_project_id: projectId,
+              p_plant_name: null,
+              p_user_id: user.id,
+              p_user_email: user.email,
+            }),
+          tick > 0,
+        );
         if (scdErr) {
           // Name the read: the catch renders this, and "failed" without a
           // source is not a diagnosis anyone can act on (§4 D178).
@@ -103,7 +112,7 @@ export function useStageRows({ projectId, plantName, stage }: Args) {
         // 2) Enrichment rows via the SECURITY DEFINER RPC (the app's custom
         //    auth makes direct .from() reads on the lane tables return empty
         //    under RLS — see src/lib/policies/projectLanes.ts).
-        const lanes = await fetchProjectLanes(projectId, user);
+        const lanes = await fetchProjectLanes(projectId, user, { fresh: tick > 0 });
         if (!cancelled) setTruncated(lanes.truncated);
         const inbound = lanes.inbound;
         const outbound = lanes.outbound;
@@ -134,34 +143,29 @@ export function useStageRows({ projectId, plantName, stage }: Args) {
         // on multi-level projects. Same RPC and paging the network pages use;
         // the numbers on the tree are THESE rows, never a client-side walk.
         if (stage === "supplier" && hasMultiShape) {
-          const pageSize = 1000;
-          let all: Record<string, unknown>[] = [];
-          let offset = 0;
-          for (let page = 0; page < 50; page++) {
-            const { data: mt, error: mtErr } = await sb.rpc("get_supply_chain_data_multi_tier", {
-              p_project_id: projectId,
-              p_user_id: user.id,
-              p_user_email: user.email,
-              p_limit: pageSize,
-              p_offset: offset,
-            });
-            if (mtErr) {
-              // The tree degrades in the grid; the flat rows above are
-              // unaffected. Never fail the stage over this read — but the
-              // degradation names itself: `deepError` reaches the toolbar
-              // (§4 D178), a console line is not a display (§5.3 T2).
-              console.warn("[useStageRows] deep-lane read failed — tree numbers unavailable", mtErr);
-              if (!cancelled)
-                setDeepError(
-                  `get_supply_chain_data_multi_tier: ${String((mtErr as { message?: string })?.message ?? JSON.stringify(mtErr))}`,
-                );
-              all = [];
-              break;
-            }
-            if (!mt || mt.length === 0) break;
-            all = all.concat(mt as Record<string, unknown>[]);
-            if (mt.length < pageSize) break;
-            offset += pageSize;
+          // Pages are read several at a time (`pagedRead.ts`); the first error ends the
+          // read with no rows, as the sequential loop did.
+          const { rows: all, error: mtErr } = await readAllPages<Record<string, unknown>>(
+            async (offset, limit) =>
+              await sb.rpc("get_supply_chain_data_multi_tier", {
+                p_project_id: projectId,
+                p_user_id: user.id,
+                p_user_email: user.email,
+                p_limit: limit,
+                p_offset: offset,
+              }),
+            { maxPages: 50 },
+          );
+          if (mtErr) {
+            // The tree degrades in the grid; the flat rows above are
+            // unaffected. Never fail the stage over this read — but the
+            // degradation names itself: `deepError` reaches the toolbar
+            // (§4 D178), a console line is not a display (§5.3 T2).
+            console.warn("[useStageRows] deep-lane read failed — tree numbers unavailable", mtErr);
+            if (!cancelled)
+              setDeepError(
+                `get_supply_chain_data_multi_tier: ${String((mtErr as { message?: string })?.message ?? JSON.stringify(mtErr))}`,
+              );
           }
           if (!cancelled) setDeepRows(all);
         }

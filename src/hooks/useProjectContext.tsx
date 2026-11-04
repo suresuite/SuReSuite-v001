@@ -1,4 +1,5 @@
 // @ts-nocheck — RPC return shape not in generated types.
+import { readAllPages } from "@/lib/pagedRead";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,30 +36,25 @@ export function useProjectContext({ projectId, fulfillmentStrategy }: Args) {
       try {
         // page through the RPC (same one InteractiveNetworkSpace uses)
         const sb = supabase as any;
-        let all: Array<{
+        // hard cap so a huge project doesn't lock the UI; pages are read several at a time
+        const { rows: all, error } = await readAllPages<{
           from_location: string;
           to_location: string;
           data_source: string;
           level: number;
           plant_name: string;
-        }> = [];
-        let offset = 0;
-        const pageSize = 1000;
-        // hard cap so a huge project doesn't lock the UI
-        for (let i = 0; i < 20; i++) {
-          const { data, error } = await sb.rpc("get_supply_chain_data_multi_tier", {
-            p_project_id: projectId,
-            p_user_id: user.id,
-            p_user_email: user.email,
-            p_limit: pageSize,
-            p_offset: offset,
-          });
-          if (error) throw error;
-          if (!data || data.length === 0) break;
-          all = all.concat(data);
-          if (data.length < pageSize) break;
-          offset += pageSize;
-        }
+        }>(
+          async (offset, limit) =>
+            await sb.rpc("get_supply_chain_data_multi_tier", {
+              p_project_id: projectId,
+              p_user_id: user.id,
+              p_user_email: user.email,
+              p_limit: limit,
+              p_offset: offset,
+            }),
+          { maxPages: 20 },
+        );
+        if (error) throw error;
 
         if (cancelled) return;
 

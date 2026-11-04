@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 // Supabase browser client, which needs a DOM. Re-exported so callers still have
 // one import for the lane read and the limit it was read under.
 import { LANE_ROW_CEILING, laneTruncationNotice } from "@/lib/policies/laneTruncation";
+import { shareRead } from "@/lib/sharedRead";
 
 export { LANE_ROW_CEILING, laneTruncationNotice };
 
@@ -71,11 +72,36 @@ async function fetchDirect(projectId: string): Promise<ProjectLanes> {
   };
 }
 
+/**
+ * The project's lanes. Callers that ask while another call for the same project and
+ * user is still running share its request (`sharedRead.ts`) — /policies asks from
+ * six hooks at once. Pass `fresh` right after a write so the read starts afterwards.
+ * Each caller gets its own arrays; the row objects are shared and read-only.
+ */
 export async function fetchProjectLanes(
   projectId: string | null | undefined,
   user: { id: string; email: string } | null | undefined,
+  opts: { fresh?: boolean } = {},
 ): Promise<ProjectLanes> {
   if (!projectId) return EMPTY;
+  const lanes = await shareRead(
+    `lanes|${projectId}|${user?.id ?? ""}|${(user?.email ?? "").toLowerCase()}`,
+    () => readProjectLanes(projectId, user),
+    opts.fresh,
+  );
+  return {
+    ...lanes,
+    inbound: [...lanes.inbound],
+    outbound: [...lanes.outbound],
+    bom: [...lanes.bom],
+    truncated: [...lanes.truncated],
+  };
+}
+
+async function readProjectLanes(
+  projectId: string,
+  user: { id: string; email: string } | null | undefined,
+): Promise<ProjectLanes> {
   if (user?.id && user?.email) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

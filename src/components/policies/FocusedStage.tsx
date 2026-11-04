@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { LAYER, tint } from "@/components/intelligence/piUi";
-import * as XLSX from "xlsx";
 import { StagePolicyTable } from "./StagePolicyTable";
 import { MobileStagePolicyList } from "./MobileStagePolicyList";
 import { MobileGroup, MobileNote, MobilePanel, MobileRow } from "@/components/mobile";
@@ -32,11 +31,8 @@ import {
 } from "@/lib/policies/projectRules";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useProjectRights } from "@/hooks/useProjectRights";
-import {
-  downloadWorkbook,
-  exportStageWorkbook,
-  importStageWorkbook,
-} from "@/lib/policies/excel";
+// `excel.ts` and `xlsx` load on the first export/import (see handleExport).
+const loadExcel = () => import("@/lib/policies/excel");
 
 /** A project rule's fields as read-only phone rows. */
 function ruleRows(fields: RuleField[], value: Record<string, unknown>) {
@@ -118,11 +114,12 @@ export function FocusedStage({
     !bannerDismissed &&
     activePreset.startsWith(`${stageKey}:`);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!canExport) {
       toast.error(rights.refusal("export") ?? "Export isn't enabled for you on this project.");
       return;
     }
+    const { exportStageWorkbook, downloadWorkbook } = await loadExcel();
     const wb = exportStageWorkbook(stage.title, stage.families, defaults, stageOverrides);
     const ts = new Date().toISOString().slice(0, 10);
     downloadWorkbook(wb, `policies-${stage.key}-${ts}.xlsx`);
@@ -132,6 +129,7 @@ export function FocusedStage({
   const handleImportFile = async (file: File) => {
     try {
       const buf = await file.arrayBuffer();
+      const [XLSX, { importStageWorkbook }] = await Promise.all([import("xlsx"), loadExcel()]);
       const wb = XLSX.read(buf, { type: "array" });
       const result = importStageWorkbook(wb, stage.families, defaults);
       if (result.errors.length) {

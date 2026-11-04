@@ -77,6 +77,32 @@ export interface SimulationRun {
   calendar_start_source?: "dispatch" | "backfill" | null;
 }
 
+/**
+ * A run row WITHOUT its four heavy JSON columns. The Run queue lists up to 20 runs and
+ * re-reads them on every change while a run streams, and `run_spec` (the whole run
+ * identity), `disruption_schedule`, `mapping_warnings` and `protocol_overrides` are
+ * the bulk of each row. The queue shows none of them; whoever inspects ONE run reads
+ * the full row (`loadRun`). The type omits them so a caller cannot read a field the
+ * row does not carry.
+ */
+export type RunSummary = Omit<
+  SimulationRun,
+  "run_spec" | "disruption_schedule" | "mapping_warnings" | "protocol_overrides"
+>;
+
+// Every `simulation_runs` column the SimulationRun type names, minus the four above.
+// An explicit list because PostgREST cannot say "all but"; `runSummaryColumns.test.ts`
+// holds it equal to the type, so a column added to one cannot be forgotten in the other.
+export const RUN_SUMMARY_COLUMNS = [
+  "id", "scenario_id", "project_id", "status", "started_at", "ended_at",
+  "aggregate_kpis", "ci_half_widths", "warmup_detected_at", "rep_count_target",
+  "rep_count_done", "error_message", "code_version", "policy_version_id", "policy_hash",
+  "dataset_version_id", "created_at", "updated_at", "scenario_hash", "seed",
+  "model_validation_id", "gate_skipped", "series_object", "series_bytes", "retention",
+  "series_expires_at", "series_expired_at", "hash_simulation", "simulation_version_id",
+  "engine_id", "run_key", "exploratory", "calendar_start", "calendar_start_source",
+].join(",");
+
 // The dispatch types and client live in lib/sim/dispatch.ts (WP 9.4 slice 8),
 // shared with Run & Validate; re-exported here for existing importers.
 export type { GateResponseFinding, ReuseCandidate, RunDispatchResult } from "@/lib/sim/dispatch";
@@ -100,33 +126,38 @@ const sb = supabase as any;
 export function useSimulationRun(scenarioId: string | null | undefined) {
   const [latestRun, setLatestRun] = useState<SimulationRun | null>(null);
   const [reps, setReps] = useState<Replication[]>([]);
-  const [history, setHistory] = useState<SimulationRun[]>([]);
+  const [history, setHistory] = useState<RunSummary[]>([]);
   // WP 10.6 — where the latest run's weekly series are: in its rows, in its
   // Parquet object (hydrated into the rows), or expired (said, with the RunKey).
   const [seriesState, setSeriesState] = useState<RunSeriesState>({ state: "inline" });
 
   const loadLatest = useCallback(async () => {
     if (!scenarioId) return;
-    const { data: runs } = await sb
-      .from("simulation_runs")
-      .select("*")
-      .eq("scenario_id", scenarioId)
-      .order("created_at", { ascending: false })
-      .limit(20);
-    const list = (runs ?? []) as SimulationRun[];
+    // Two reads at once: the newest run in full (the page shows it), and the last 20
+    // without their heavy JSON (the queue lists them). The newest appears in both;
+    // the full row stands for it in the list so the two never disagree.
+    const [{ data: newest }, { data: runs }] = await Promise.all([
+      sb.from("simulation_runs").select("*").eq("scenario_id", scenarioId)
+        .order("created_at", { ascending: false }).limit(1),
+      sb.from("simulation_runs").select(RUN_SUMMARY_COLUMNS).eq("scenario_id", scenarioId)
+        .order("created_at", { ascending: false }).limit(20),
+    ]);
+    const full = ((newest ?? [])[0] ?? null) as SimulationRun | null;
+    const list = ((runs ?? []) as RunSummary[]).map((r) => (full && r.id === full.id ? full : r));
+    if (full && !list.some((r) => r.id === full.id)) list.unshift(full); // a run created between the two reads
     setHistory(list);
-    setLatestRun(list[0] ?? null);
-    if (list[0]) {
+    setLatestRun(full);
+    if (full) {
       const { data: rs } = await sb
         .from("run_replications")
         .select("*")
-        .eq("run_id", list[0].id)
+        .eq("run_id", full.id)
         .order("rep_index", { ascending: true });
       const rows = (rs ?? []) as Replication[];
       // A running run has no object yet (its rows stream KPIs only); the object
       // is read once the run is done, and cached for the page's life.
-      if (list[0].status === "done") {
-        const { reps: hydrated, series } = await withRunSeries(list[0], rows);
+      if (full.status === "done") {
+        const { reps: hydrated, series } = await withRunSeries(full, rows);
         setReps(hydrated);
         setSeriesState(series);
       } else {
@@ -241,6 +272,12 @@ export function useSimulationRun(scenarioId: string | null | undefined) {
     return run && run.status === "done" ? (await withRunSeries(run, rows)).reps : rows;
   }, []);
 
+  /** One run in full — the row the queue's "View" inspects. Null if it is gone. */
+  const loadRun = useCallback(async (runId: string): Promise<SimulationRun | null> => {
+    const { data } = await sb.from("simulation_runs").select("*").eq("id", runId).maybeSingle();
+    return (data ?? null) as SimulationRun | null;
+  }, []);
+
   const addReps = useCallback(async (projectId: string, runId: string, n: number) => {
     const { error } = await supabase.functions.invoke("sim-command", {
       body: {
@@ -253,5 +290,5 @@ export function useSimulationRun(scenarioId: string | null | undefined) {
     if (error) throw error;
   }, []);
 
-  return { latestRun, reps, history, seriesState, runExperiment, cancelRun, addReps, loadReps, refresh: loadLatest };
+  return { latestRun, reps, history, seriesState, runExperiment, cancelRun, addReps, loadReps, loadRun, refresh: loadLatest };
 }

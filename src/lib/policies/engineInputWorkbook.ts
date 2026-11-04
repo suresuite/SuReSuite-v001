@@ -34,7 +34,7 @@
 import * as XLSX from "xlsx";
 import type { EngineInput } from "@/lib/sim/pyodideEngine";
 import { FIELD_LABELS } from "./schemas";
-import { sheetName } from "./excel";
+import { sheetName } from "./excelNames";
 
 type Cell = string | number | boolean | null;
 

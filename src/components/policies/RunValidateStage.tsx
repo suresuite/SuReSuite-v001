@@ -18,16 +18,6 @@
 // (run_replications / simulation_runs) — synthetic or illustrative data is
 // banned here, even labeled. Pre-run states are empty states.
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip as RTooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -107,13 +97,11 @@ import {
   type AdoptionDecision,
 } from "@/lib/sim/validatedModel";
 import { ValidatedModelSummary } from "@/components/sim/ValidatedModelSummary";
-import { ConvergencePlot } from "@/components/sim/ConvergencePlot";
-import { InventoryOverTime } from "@/components/sim/InventoryOverTime";
-import { CapacityOverTime, type CapacityBinding } from "@/components/sim/CapacityOverTime";
+import { ConvergencePlot, InventoryOverTime, CapacityOverTime, ReplicationSeedExplorer, WeeklyTraceLines } from "@/components/sim/lazyCharts";
+import type { CapacityBinding } from "@/components/sim/CapacityOverTime";
 import { CapacityReadinessPanel } from "@/components/sim/CapacityReadiness";
 import { ItemSeriesExplorer } from "@/components/sim/ItemSeriesExplorer";
-import { ReplicationSeedExplorer } from "@/components/sim/ReplicationSeedExplorer";
-import type { Replication, SimulationRun } from "@/hooks/useSimulationRun";
+import type { Replication, RunSummary, SimulationRun } from "@/hooks/useSimulationRun";
 import type { PolicyBundle, FulfillmentStrategy } from "@/lib/policies/schemas";
 import type { OverrideRow } from "@/lib/policies/resolve";
 import { MappingWarningsCard } from "@/components/sim/RunProgressPanel";
@@ -337,6 +325,7 @@ export function RunValidateStage({
     cancelRun,
     addReps,
     loadReps,
+    loadRun,
     refresh: refreshRuns,
   } = useSimulationRun(validationScenarioId);
 
@@ -383,7 +372,7 @@ export function RunValidateStage({
   // All jobs, newest-first: the persisted history plus, when a browser run
   // hasn't been persisted, the in-memory localRun (so an offline run still
   // shows as its own job row). cancelRun already cancels any run by id.
-  const jobs = useMemo<SimulationRun[]>(() => {
+  const jobs = useMemo<RunSummary[]>(() => {
     const list = [...history];
     if (localRun && !list.some((r) => r.id === localRun.id)) list.unshift(localRun);
     return list;
@@ -396,30 +385,50 @@ export function RunValidateStage({
   // loaded on demand (the realtime path only keeps the latest run's reps hot).
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [selectedReps, setSelectedReps] = useState<Replication[]>([]);
+  // The queue rows carry no heavy JSON (RunSummary), so "View" reads the chosen run in
+  // full, together with its replications; until both arrive nothing is inspected.
+  const [selectedFull, setSelectedFull] = useState<SimulationRun | null>(null);
   const inspectedRun = useMemo(
-    () => (selectedRunId ? jobs.find((r) => r.id === selectedRunId) ?? latestRun : latestRun),
-    [selectedRunId, jobs, latestRun],
+    () => (selectedRunId ? (selectedFull?.id === selectedRunId ? selectedFull : null) : latestRun),
+    [selectedRunId, selectedFull, latestRun],
   );
   // Reps for the inspected run: reuse the hot latest-run reps when it IS the
   // latest, else the on-demand-loaded set.
   const inspectedReps =
     inspectedRun && inspectedRun.id === latestRun?.id ? reps : selectedReps;
 
-  const onViewRun = (job: SimulationRun) => {
+  const viewSeq = useRef(0); // the last "View" wins if two reads overlap
+  const onViewRun = (job: RunSummary) => {
+    const seq = ++viewSeq.current;
     if (job.id === latestRun?.id) {
       setSelectedRunId(null);
       setSelectedReps([]);
+      setSelectedFull(null);
       return;
     }
     setSelectedRunId(job.id);
     setSelectedReps([]);
-    void loadReps(job.id).then(setSelectedReps);
+    setSelectedFull(null);
+    // A browser run exists only in memory: it is already whole.
+    const inMemory = localRun && localRun.id === job.id ? localRun : null;
+    void Promise.all([inMemory ? Promise.resolve(inMemory) : loadRun(job.id), loadReps(job.id)]).then(
+      ([run, repRows]) => {
+        if (seq !== viewSeq.current) return;
+        if (!run) {
+          // Gone since the list was read: fall back to the latest run, as before.
+          setSelectedRunId((cur) => (cur === job.id ? null : cur));
+          return;
+        }
+        setSelectedFull(run);
+        setSelectedReps(repRows);
+      },
+    );
   };
 
   // Cancel one job — the semantics already supported by the stack: a browser
   // run terminates the Pyodide worker; a server run is cancelled by id via
   // experiment.cancel (works for ANY queued/running run, not just the latest).
-  const cancelJob = (job: SimulationRun) => {
+  const cancelJob = (job: RunSummary) => {
     const isBrowserInFlight =
       job.id === localRun?.id || (activeRunPath === "browser" && job.id === latestRun?.id);
     if (isBrowserInFlight) cancelBrowserRun();
@@ -431,7 +440,7 @@ export function RunValidateStage({
       void cancelRun(projectId, job.id);
     }
   };
-  const cancelAllActive = (active: SimulationRun[]) => active.forEach(cancelJob);
+  const cancelAllActive = (active: RunSummary[]) => active.forEach(cancelJob);
 
   // Re-attach to the auto-managed validation scenario on mount, so engine
   // output persisted by earlier sessions renders immediately — previously the
@@ -1810,7 +1819,7 @@ export function RunValidateStage({
                   jobs={jobs}
                   activeReps={reps}
                   activeRepsRunId={latestRun?.id ?? null}
-                  selectedRunId={inspectedRun?.id ?? null}
+                  selectedRunId={selectedRunId ?? inspectedRun?.id ?? null}
                   credibility={runCredibility}
                   policyLabels={policyLabels}
                   onCancel={cancelJob}
@@ -2562,28 +2571,12 @@ function WeeklySeriesChart({
           932px Pro Max. `md:` keeps the caller's pixel height. */}
       <div className="aspect-[4/3] w-full max-h-[42dvh] md:aspect-auto md:max-h-none md:h-[var(--chart-h)]"
            style={{ ['--chart-h' as string]: `${height}px` }}>
-        <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid strokeOpacity={0.15} />
-          <XAxis dataKey="week" tick={{ fontSize: 9 }} />
-          <YAxis tick={{ fontSize: 9 }} width={36} domain={["auto", "auto"]} />
-          <RTooltip contentStyle={{ fontSize: 10 }} />
-          {warmupWeeks != null && warmupWeeks > 0 && (
-            <ReferenceLine x={warmupWeeks} stroke={LAYER.brand} strokeDasharray="4 3" label={{ value: "warm-up", fontSize: 9, fill: LAYER.brand }} />
-          )}
-          {traces.map((_, i) => (
-            <Line
-              key={i}
-              type="monotone"
-              dataKey={`r${i}`}
-              stroke={`hsl(${(i * 47) % 360} 70% 50%)`}
-              strokeWidth={1.2}
-              dot={false}
-              isAnimationActive={false}
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
+        <WeeklyTraceLines
+          data={data}
+          traceCount={traces.length}
+          warmupWeeks={warmupWeeks}
+          warmupColor={LAYER.brand}
+        />
       </div>
     </div>
   );

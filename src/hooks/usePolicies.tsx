@@ -14,8 +14,6 @@ import {
   type PolicyFamily,
 } from "@/lib/policies/schemas";
 import type { OverrideRow } from "@/lib/policies/resolve";
-import { downloadWorkbook } from "@/lib/policies/excel";
-import { buildPolicyVersionEngineInput } from "@/lib/policies/engineInputExport";
 import { currentPolicyVersion } from "@/lib/policies/currentPolicyVersion";
 
 export interface PolicyVersion {
@@ -718,6 +716,12 @@ export function usePolicies(projectId: string | null | undefined): UsePoliciesRe
     const name = version.label || `version-${version.id.slice(0, 8)}`;
     const toastId = toast.loading("Preparing the simulation input — reading the two frozen versions…");
     try {
+      // Loaded on demand: the workbook library and the browser engine's mapping are
+      // large and only an export click needs them.
+      const [{ buildPolicyVersionEngineInput }, { downloadWorkbook }] = await Promise.all([
+        import("@/lib/policies/engineInputExport"),
+        import("@/lib/policies/excel"),
+      ]);
       const wb = await buildPolicyVersionEngineInput(projectId, version, (p) => {
         toast.loading(
           p === "reading"

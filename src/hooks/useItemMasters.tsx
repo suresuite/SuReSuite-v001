@@ -179,9 +179,11 @@ export function useItemMasters(projectId: string | null | undefined): UseItemMas
   // the SECURITY DEFINER RPC (direct .from() reads are RLS-blocked under the
   // app's custom auth — see src/lib/policies/projectLanes.ts). Rows are kept
   // RAW: the shared grader must see exactly what the edge gate reads.
-  const loadLogistics = useCallback(async () => {
+  // `fresh`: a realtime change means a write just happened, so read again rather
+  // than join a request that started before it.
+  const loadLogistics = useCallback(async (fresh = false) => {
     if (!projectId) return;
-    const lanes = await fetchProjectLanes(projectId, user);
+    const lanes = await fetchProjectLanes(projectId, user, { fresh });
     setInboundArcs(lanes.inbound);
     setOutboundArcs(lanes.outbound);
     // WP 14.2 — a failed read is logged and leaves the series empty; the
@@ -278,7 +280,7 @@ export function useItemMasters(projectId: string | null | undefined): UseItemMas
       channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table, filter: `project_id=eq.${projectId}` },
-        () => void loadLogistics(),
+        () => void loadLogistics(true),
       );
     });
     channel.subscribe();

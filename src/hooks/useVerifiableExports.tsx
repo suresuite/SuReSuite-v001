@@ -9,14 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectRights } from "@/hooks/useProjectRights";
 import { fetchProjectLanes, laneTruncationNotice } from "@/lib/policies/projectLanes";
-import { downloadWorkbook, safeName } from "@/lib/policies/excel";
-import {
-  buildDatasetWorkbook,
-  type RowProvenance,
-  buildRunResultsWorkbook,
-  type DatasetVersionRow,
-  type RunScenarioMeta,
+import { safeName } from "@/lib/policies/excelNames";
+import type {
+  RowProvenance,
+  DatasetVersionRow,
+  RunScenarioMeta,
 } from "@/lib/policies/verifiableExports";
+
+// The workbook builders (and the `xlsx` library under them) load on the first export.
+const loadWorkbookTools = () =>
+  Promise.all([import("@/lib/policies/verifiableExports"), import("@/lib/policies/excel")]);
 import type { Replication, SimulationRun } from "@/hooks/useSimulationRun";
 import { assembleRunRecord, RUN_SCENARIO_COLUMNS, type RunScenarioRow } from "@/lib/trust/assembleRunRecord";
 import { seriesNotice, withRunSeries } from "@/lib/sim/runSeries";
@@ -145,7 +147,7 @@ export function useVerifiableExports(
       let bomMulti: Record<string, unknown>[] | undefined;
       if (snapshotVersion < 2) {
         try {
-          const lanes = await fetchProjectLanes(projectId, user);
+          const lanes = await fetchProjectLanes(projectId, user, { fresh: true }); // an export reads what is stored now
           if (lanes.bomLevel === "multi") bomMulti = lanes.bom;
           // D20 / §5 T3 — an export states the limits of its own computation.
           // The rows still go into the workbook (dropping them silently would be
@@ -187,6 +189,7 @@ export function useVerifiableExports(
         if (anyRead) provenance = gathered;
       }
 
+      const [{ buildDatasetWorkbook }, { downloadWorkbook }] = await loadWorkbookTools();
       const wb = buildDatasetWorkbook(
         version as DatasetVersionRow,
         projectName ?? null,
@@ -260,6 +263,7 @@ export function useVerifiableExports(
         const notice = seriesNotice(series);
         if (notice) record.limits = [...record.limits, { ref: "T3", limit: notice, consequence:
           "The workbook carries the run's KPIs and aggregates; its weekly series sheets are absent." }];
+        const [{ buildRunResultsWorkbook }, { downloadWorkbook }] = await loadWorkbookTools();
         const wb = buildRunResultsWorkbook(
           run as SimulationRun,
           (scenario ?? null) as RunScenarioMeta | null,

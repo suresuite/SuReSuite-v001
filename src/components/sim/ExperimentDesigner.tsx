@@ -26,7 +26,7 @@ import {
   materializeDesignRow,
   scenarioNameForRow,
 } from "@/lib/sim/playbookFactor";
-import { ExperimentResultsPanel } from "./ExperimentResultsPanel";
+import { ExperimentResultsPanel } from "./lazyCharts";
 
 type DesignType = "factorial" | "lhs";
 type NumericFactorKey = "replications" | "horizon_days" | "warmup_days";

@@ -36,7 +36,7 @@ import {
   Square,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { SimulationRun, Replication } from "@/hooks/useSimulationRun";
+import type { RunSummary as SimulationRun, Replication } from "@/hooks/useSimulationRun";
 import { CredibilityBadge } from "@/components/sim/CredibilityBadge";
 import { engineLabel } from "@/components/sim/RunProgressPanel";
 import type { Credibility } from "@/hooks/useModelValidation";

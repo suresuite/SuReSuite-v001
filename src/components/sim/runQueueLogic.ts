@@ -2,7 +2,7 @@
 // module (no JSX) so the queue logic — tally, filter, active-job selection,
 // queue position, segment cells — is unit-testable in isolation and doesn't
 // trip react-refresh's "only export components" rule.
-import type { SimulationRun, Replication } from "@/hooks/useSimulationRun";
+import type { RunSummary as SimulationRun, Replication } from "@/hooks/useSimulationRun";
 import { formatMoney } from '@/lib/sim/money';
 
 export type JobStatus = SimulationRun["status"]; // queued | running | done | cancelled | failed

@@ -13,7 +13,7 @@
 // selected ones (a sheet per item of a 500-item run is a file nobody opens).
 
 import * as XLSX from "xlsx";
-import { safeName, sheetName } from "@/lib/policies/excel";
+import { sheetName } from "@/lib/policies/excelNames";
 import { recordRows, type ReproducibilityRecord } from "@/lib/trust/reproducibilityRecord";
 import {
   EXPLORER_LIMITS,
@@ -172,9 +172,5 @@ export function buildInventoryWorkbook(input: InventoryWorkbookInput): XLSX.Work
   return wb;
 }
 
-/** `inventory-<project>-run-<id8>-<YYYY-MM-DD>.xlsx`. */
-export function inventoryFileName(projectName: string, runId: string, date: Date = new Date()): string {
-  const day = date.toISOString().slice(0, 10);
-  return `inventory-${safeName(projectName)}-run-${runId.slice(0, 8)}-${day}.xlsx`;
-}
+export { inventoryFileName } from "./inventoryFileName";
 
