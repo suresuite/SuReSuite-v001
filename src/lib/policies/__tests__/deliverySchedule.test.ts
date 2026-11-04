@@ -6,6 +6,7 @@
  * schedule reads, the pre-run gate refuses an empty one, and the editor's
  * arithmetic.
  */
+import { formatRunWeekRange } from "@/lib/sim/calendarWeeks";
 import { describe, expect, it } from "vitest";
 import { STAGE_TABLE_SPEC, rowDemandMode, type ColSpecCtx } from "../columnSpecs";
 import { rowGateCtx, type DerivedMaps, type MasterRowMaps } from "../resolveEffective";
@@ -14,6 +15,7 @@ import {
   MAX_SCHEDULE_WEEKS,
   asSchedule,
   horizonWeeksOf,
+  scheduleCellLabel,
   parseSchedulePaste,
   resizeSchedule,
   scheduleSummary,
@@ -162,3 +164,14 @@ describe("the editor's arithmetic", () => {
     expect(scheduleSummary(null)).toBe("not entered");
   });
 });
+
+describe("§4 D319 — a schedule cell is numbered as the engine runs it", () => {
+  it("cell i is run week i, dated from the project start", () => {
+    expect(scheduleCellLabel("2026-01-01", 0)).toEqual({ short: "W0", title: expect.stringMatching(/^Run week 0 · /) });
+    const l = scheduleCellLabel("2026-01-01", 25);
+    expect(l.short).toBe("W25");
+    expect(l.title).toContain(formatRunWeekRange("2026-01-01", 25));
+    expect(scheduleCellLabel(null, 3)).toEqual({ short: "W3", title: "Run week 3" });
+  });
+});
+

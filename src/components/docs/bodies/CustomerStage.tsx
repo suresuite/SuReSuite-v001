@@ -67,7 +67,7 @@ export default function CustomerStage() {
             ),
             row_demand_schedule: (
               <>
-                Units per week, from week 1 of the run. Open the cell to type each week, paste a column
+                Units per week, from run week 0 — the project start, numbered as the Lab and the results number weeks. Each cell shows its dates. Open the cell to type each week, paste a column
                 from a spreadsheet, or fill every week with one value. A week past the schedule's end has
                 no demand, and the pre-run check warns when the schedule is shorter than the run. The
                 schedule is saved as an override on the row; the upload is never changed.

@@ -509,7 +509,7 @@ export const COLUMN_CHECK: Record<string, ColumnCheck> = {
     verdict: "works",
   },
   "customer:row_demand_schedule": {
-    shows: "the row's requested delivery schedule — units per week from week 1, typed here",
+    shows: "the row's requested delivery schedule — units per week from run week 0 (the project start), typed here",
     savedTo: "override demand.row_demand_schedule (Customer row, an array)",
     engine: "CustomerLink.forecast with a deterministic draw and mean 0: the row's demand is exactly the schedule, and nothing past its end; its distribution and any uploaded forecast are set aside",
     verdict: "works",

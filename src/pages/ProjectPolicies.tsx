@@ -83,10 +83,10 @@ function highlightMatch(text: string, query: string) {
   );
 }
 
-/** Horizon + "Week 1 = …" calendar mapping, from the project's sim window —
+/** Horizon + "Run week 0 = …" calendar mapping, from the project's sim window —
  *  the one run length (`projectWindow`) and the one week↔date rule
- *  (`calendarWeeks`), PLAN.md §4 D318. Week 1 here is the delivery schedule's
- *  first cell, which feeds the engine's first tick (run week 0). */
+ *  (`calendarWeeks`), PLAN.md §4 D318. Weeks are numbered as the engine and the
+ *  Lab number them: run week 0 is the project start (§4 D319). */
 function useHorizon(
   startDate: string | null | undefined,
   endDate: string | null | undefined,
@@ -108,7 +108,7 @@ function useHorizon(
       const label = unit === "day" ? "Day" : unit === "week" ? "Week" : "Month";
       unitMap =
         unit === "week"
-          ? `${label} 1 = ${formatRunWeekRange(startDate, 0)} (${span} days each)`
+          ? `Run week 0 = ${formatRunWeekRange(startDate, 0)} (${span} days each)`
           : unit === "day"
             ? `${label} 1 = ${formatCalendarDate(startDate)}`
             : `${label} 1 = ${formatCalendarDate(startDate)} → ${formatCalendarDate(toCalendarDate(parseCalendarDate(startDate) + (span - 1) * 86_400_000))} (${span} days each)`;
