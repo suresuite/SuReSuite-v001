@@ -11,6 +11,7 @@
 
 /** The schedule's length cap — the agent surface refuses longer (`policyFields.ts`). */
 import { projectWindow } from "@/lib/sim/projectWindow";
+import { formatRunWeekRange, isCalendarDate } from "@/lib/sim/calendarWeeks";
 
 export const MAX_SCHEDULE_WEEKS = 520;
 
@@ -81,4 +82,17 @@ export function scheduleSummary(values: readonly number[] | null, horizonWeeks?:
   const firstWeeks = values.filter((_, i) => i < 3).map(fmt).join(", ");
   const of = horizonWeeks !== undefined && values.length !== horizonWeeks ? ` of ${horizonWeeks}` : "";
   return `${values.length}${of} wk · Σ ${fmt(total)} · ${firstWeeks}${values.length > 3 ? " …" : ""}`;
+}
+
+/**
+ * A schedule cell's label (§4 D319): cell i feeds engine tick i, so it is RUN
+ * WEEK i — numbered as the engine, the Lab and the results number weeks — with
+ * its seven days when the project states a start.
+ */
+export function scheduleCellLabel(weekOneStart: string | null | undefined, i: number): {
+  short: string;
+  title: string;
+} {
+  const days = isCalendarDate(weekOneStart) ? formatRunWeekRange(weekOneStart, i) : null;
+  return { short: `W${i}`, title: days ? `Run week ${i} · ${days}` : `Run week ${i}` };
 }

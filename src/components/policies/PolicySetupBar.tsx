@@ -151,7 +151,7 @@ export function PolicySetupBar({
   onUnitChange: (u: PlanningUnit) => void;
   /** e.g. "365 days · 52.1 weeks" */
   horizon: string;
-  /** e.g. "Week 1 = Jan 6, 2025 → Jan 12, 2025 (7 days each)" */
+  /** e.g. "Run week 0 = 6 Jan – 12 Jan 2025 (7 days each)" */
   unitMap: string;
   stages: StageGuard[];
   activeStage: StageId;

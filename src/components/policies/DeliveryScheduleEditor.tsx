@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { formatCalendarDate, isCalendarDate, runWeekStart } from "@/lib/sim/calendarWeeks";
 import { cn } from "@/lib/utils";
 import { DIALOG_AS_SHEET } from "@/components/shared";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,13 +10,15 @@ import {
   asSchedule,
   parseSchedulePaste,
   resizeSchedule,
+  scheduleCellLabel,
   scheduleSummary,
 } from "@/lib/policies/deliverySchedule";
 
 /**
  * The Customer row's REQUESTED DELIVERY SCHEDULE cell (P-C.4): a summary that
  * opens an editor with one input per week of the run. What is saved is the
- * array the engine runs exactly — units per week from week 1.
+ * array the engine runs exactly — units per week from run week 0 (the project
+ * start). Weeks are numbered as the engine and the Lab number them (§4 D319).
  */
 export function DeliveryScheduleCell({
   value,
@@ -29,7 +30,7 @@ export function DeliveryScheduleCell({
 }: {
   value: unknown;
   horizonWeeks: number;
-  /** ISO date of week 1's first day, when the project states its window. */
+  /** ISO date of run week 0's first day (the project start), when the project states its window. */
   weekOneStart?: string | null;
   rowLabel: string;
   disabled?: boolean;
@@ -109,10 +110,6 @@ function DeliveryScheduleDialog({
   const anyInvalid = invalid.some(Boolean);
   const total = anyInvalid ? null : values.reduce((a, b) => a + b, 0);
 
-  // Cell i feeds engine tick i (the schedule is the row's forecast series), so
-  // its first day is the project start + 7i — one rule, `calendarWeeks` (§4 D318).
-  const weekDate = (i: number) =>
-    isCalendarDate(weekOneStart) ? formatCalendarDate(runWeekStart(weekOneStart, i), false) : null;
 
   const applyPaste = () => {
     const r = parseSchedulePaste(paste);
@@ -142,7 +139,7 @@ function DeliveryScheduleDialog({
         <DialogHeader>
           <DialogTitle>Requested delivery schedule · {rowLabel}</DialogTitle>
           <DialogDescription>
-            The quantity this customer asks to receive each week, from week 1 of the run. The run uses it
+            The quantity this customer asks to receive each week, from run week 0 (the project start). The run uses it
             exactly — no spread around it — and a week past the last one has no demand. A blank week is 0.
           </DialogDescription>
         </DialogHeader>
@@ -186,13 +183,13 @@ function DeliveryScheduleDialog({
 
         <div className="grid max-h-[45svh] grid-cols-4 gap-1.5 overflow-auto py-1 md:grid-cols-[repeat(13,minmax(0,1fr))]">
           {cells.map((t, i) => (
-            <label key={i} className="flex min-w-0 flex-col" title={weekDate(i) ? `Week ${i + 1} · from ${weekDate(i)}` : `Week ${i + 1}`}>
-              <span className="font-mono text-[9.5px] text-muted-foreground">W{i + 1}</span>
+            <label key={i} className="flex min-w-0 flex-col" title={scheduleCellLabel(weekOneStart, i).title}>
+              <span className="font-mono text-[9.5px] text-muted-foreground">{scheduleCellLabel(weekOneStart, i).short}</span>
               <input
                 inputMode="decimal"
                 value={t}
                 placeholder="0"
-                aria-label={`Week ${i + 1} quantity`}
+                aria-label={`Run week ${i} quantity`}
                 onChange={(e) => {
                   const v = e.target.value;
                   setCells((c) => c.map((x, j) => (j === i ? v : x)));
@@ -208,7 +205,7 @@ function DeliveryScheduleDialog({
 
         <div className="flex flex-col gap-1 text-xs">
           <span className="text-muted-foreground">
-            Paste from a spreadsheet — one value per week, as a column or a row (fills from week 1)
+            Paste from a spreadsheet — one value per week, as a column or a row (fills from run week 0)
           </span>
           <div className="flex items-start gap-2">
             <Textarea
