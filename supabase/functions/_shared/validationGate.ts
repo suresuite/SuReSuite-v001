@@ -205,6 +205,7 @@ export function runValidationGate(args: {
       dataset.suppliers,
       disruptionSchedule ?? [],
       (registry as unknown as { disruption: DisruptionRule }).disruption,
+      dataset.inbound,
     ).map(
       ({ severity, field, policy, rows, message }) =>
         ({ severity, field, policy, rows, message }),

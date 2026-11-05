@@ -28,6 +28,10 @@ import {
   effectMeaning,
   isLeadTimeDelay,
   judgeTarget,
+  isMaterialTarget,
+  materialTarget,
+  MATERIAL_EVENT_NOTE,
+  suppliedMaterialIds,
   newEvent,
   supplierTarget,
   targetChoices,
@@ -103,7 +107,7 @@ function Body({
   const navigate = useNavigate();
   const { scenarios, create, update } = useScenarios(projectId);
   const { currentHash: policyHash } = usePolicies(projectId);
-  const { suppliers } = useItemMasters(projectId);
+  const { suppliers, lanes } = useItemMasters(projectId);
   const cred = useModelValidation(projectId);
   const calendarRow = useProjectCalendar(projectId);
   const projWindow = projectWindow(calendarRow.projectStart, calendarRow.projectEnd);
@@ -113,6 +117,8 @@ function Body({
   });
 
   const supplierIds = useMemo(() => suppliers.map((s) => s.supplier_id).filter(Boolean), [suppliers]);
+  // Engine 0.9.0 (PLAN.md §29 WP 19.2): a supplied material is a target too.
+  const materialIds = useMemo(() => suppliedMaterialIds(lanes.inbound), [lanes.inbound]);
 
   // The selected node, as the engine would name it.
   const nodeTarget = useMemo(() => {
@@ -120,9 +126,10 @@ function Body({
     if (!id) return "";
     if (plantName && id.trim().toLowerCase() === plantName.trim().toLowerCase()) return PLANT_TARGET;
     if (supplierIds.includes(id)) return supplierTarget(id);
+    if (materialIds.includes(id)) return materialTarget(id);
     return id;
-  }, [nodeId, plantName, supplierIds]);
-  const nodeJudged = judgeTarget(nodeTarget, supplierIds);
+  }, [nodeId, plantName, supplierIds, materialIds]);
+  const nodeJudged = judgeTarget(nodeTarget, supplierIds, materialIds);
   const neighbours = useMemo(() => {
     const ids = new Set<string>();
     for (const e of connectedEdges) for (const n of [e.source, e.target]) if (supplierIds.includes(n)) ids.add(n);
@@ -159,12 +166,13 @@ function Body({
         suppliers as unknown as Record<string, unknown>[],
         schedule as unknown as Record<string, unknown>[],
         DISRUPTION_RULE,
+        lanes.inbound as unknown as Record<string, unknown>[],
       )
     : [];
   const capReason = dest === "existing" && existing ? addBlockedReason(existing.disruption_schedule ?? []) : null;
   const blocker = !target
-    ? "Choose the node to disrupt: the plant or one of this project's suppliers."
-    : judgeTarget(target, supplierIds).reason ??
+    ? "Choose the node to disrupt: the plant, one of this project's suppliers or a material they supply."
+    : judgeTarget(target, supplierIds, materialIds).reason ??
       capReason ??
       (dest === "existing" && !existing ? "Choose the scenario that receives this event." : null) ??
       (dest === "new" && !name.trim() ? "Name the new scenario." : null);
@@ -213,7 +221,8 @@ function Body({
     }
   };
 
-  const choices = targetChoices(supplierIds);
+  const choices = targetChoices(supplierIds, materialIds);
+  const targetIsMaterial = isMaterialTarget(target) && judgeTarget(target, supplierIds, materialIds).reason === null;
   const selectedKind = nodeJudged.reason ? "Cannot be disrupted" : nodeTarget === PLANT_TARGET ? "Plant" : nodeTarget ? "Supplier" : null;
   const destName = dest === "new" ? name.trim() : existing?.name;
   const horizonWeeks = validated.world.horizon_days ? engineWeeks(validated.world.horizon_days) : undefined;
@@ -281,17 +290,25 @@ function Body({
             id="disruption-node"
             value={target}
             choices={choices}
-            onChange={setTarget}
-            placeholder="Choose the plant or a supplier"
+            onChange={(v) => {
+              setTarget(v);
+              // A material event is the full outage of its supply (the engine's rule).
+              if (isMaterialTarget(v)) setEvent((e) => ({ ...e, magnitude_pct: DISRUPTION_RULE.full_outage_pct }));
+            }}
+            placeholder="Choose the plant, a supplier or a material"
           />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_168px]">
           <Field
             label={DISRUPTION_TERMS.effect}
-            hint={isLeadTimeDelay(ev.magnitude_pct) ? effectMeaning(ev.magnitude_pct) : undefined}
+            hint={targetIsMaterial ? MATERIAL_EVENT_NOTE : isLeadTimeDelay(ev.magnitude_pct) ? effectMeaning(ev.magnitude_pct) : undefined}
           >
-            <EffectControl value={ev.magnitude_pct} onChange={(v) => setEvent((e) => ({ ...e, magnitude_pct: v }))} />
+            <EffectControl
+              value={ev.magnitude_pct}
+              outageOnly={targetIsMaterial}
+              onChange={(v) => setEvent((e) => ({ ...e, magnitude_pct: v }))}
+            />
           </Field>
           {!isLeadTimeDelay(ev.magnitude_pct) ? (
             <Field label="Capacity lost" htmlFor="disruption-share" hint={effectMeaning(ev.magnitude_pct)}>

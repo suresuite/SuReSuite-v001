@@ -197,6 +197,7 @@ export function compileGateFindings(
       dataset.suppliers,
       disruptionSchedule,
       (registry as unknown as { disruption: DisruptionRule }).disruption,
+      dataset.inbound,
     ),
   ];
 }

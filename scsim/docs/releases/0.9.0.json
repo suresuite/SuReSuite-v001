@@ -1,0 +1,355 @@
+{
+ "version": "0.9.0",
+ "current_build": "scsim-0.9.0+abb3ca5b9a84",
+ "previous_version": "0.8.3",
+ "previous_commit": "849b79137ff6f7f950151300e0a8ebf7966eb5ed",
+ "previous_build": "scsim-0.8.3+3a5c01d64236",
+ "replications": 20,
+ "kpis_compared": [
+  "fill_rate",
+  "lost_sales_value",
+  "cost_of_resilience",
+  "max_backlog",
+  "lost_inbound_units",
+  "ttr_weeks",
+  "tts_weeks",
+  "revenue",
+  "avg_on_hand_value",
+  "avg_fg_value"
+ ],
+ "cases": {
+  "example_backorder": {
+   "previous_build": "scsim-0.8.3+3a5c01d64236",
+   "kpis": {
+    "fill_rate": {
+     "n": 20,
+     "previous": 0.885734,
+     "current": 0.885734,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "lost_sales_value": {
+     "n": 20,
+     "previous": 7057.98,
+     "current": 7057.98,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "cost_of_resilience": {
+     "n": 20,
+     "previous": 7320.48,
+     "current": 7320.48,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "max_backlog": {
+     "n": 20,
+     "previous": 152.417,
+     "current": 152.417,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "lost_inbound_units": {
+     "n": 20,
+     "previous": 0.0,
+     "current": 0.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "ttr_weeks": {
+     "n": 20,
+     "previous": 8.4,
+     "current": 8.4,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "tts_weeks": {
+     "n": 20,
+     "previous": 3.05,
+     "current": 3.05,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "revenue": {
+     "n": 20,
+     "previous": 188587.0,
+     "current": 188587.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "avg_on_hand_value": {
+     "n": 20,
+     "previous": 10824.5,
+     "current": 10824.5,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "avg_fg_value": {
+     "n": 20,
+     "previous": 0.0,
+     "current": 0.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    }
+   }
+  },
+  "example_outage": {
+   "previous_build": "scsim-0.8.3+3a5c01d64236",
+   "kpis": {
+    "fill_rate": {
+     "n": 20,
+     "previous": 0.966068,
+     "current": 0.966068,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "lost_sales_value": {
+     "n": 20,
+     "previous": 6571.53,
+     "current": 6571.53,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "cost_of_resilience": {
+     "n": 20,
+     "previous": 7096.53,
+     "current": 7096.53,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "max_backlog": {
+     "n": 20,
+     "previous": 0.0,
+     "current": 0.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "lost_inbound_units": {
+     "n": 20,
+     "previous": 0.0,
+     "current": 0.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "ttr_weeks": {
+     "n": 20,
+     "previous": 3.3,
+     "current": 3.3,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "tts_weeks": {
+     "n": 11,
+     "previous": 3.36364,
+     "current": 3.36364,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "revenue": {
+     "n": 20,
+     "previous": 188676.0,
+     "current": 188676.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "avg_on_hand_value": {
+     "n": 20,
+     "previous": 12538.4,
+     "current": 12538.4,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "avg_fg_value": {
+     "n": 20,
+     "previous": 0.0,
+     "current": 0.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    }
+   }
+  },
+  "tron_supplier_965": {
+   "previous_build": "scsim-0.8.3+3a5c01d64236",
+   "kpis": {
+    "fill_rate": {
+     "n": 20,
+     "previous": 0.961482,
+     "current": 0.961482,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "lost_sales_value": {
+     "n": 20,
+     "previous": 210438.0,
+     "current": 210438.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "cost_of_resilience": {
+     "n": 20,
+     "previous": 210438.0,
+     "current": 210438.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "max_backlog": {
+     "n": 20,
+     "previous": 0.0,
+     "current": 0.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "lost_inbound_units": {
+     "n": 20,
+     "previous": 0.0,
+     "current": 0.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "ttr_weeks": {
+     "n": 0,
+     "verdict": "not measured"
+    },
+    "tts_weeks": {
+     "n": 0,
+     "verdict": "not measured"
+    },
+    "revenue": {
+     "n": 20,
+     "previous": 5245550.0,
+     "current": 5245550.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "avg_on_hand_value": {
+     "n": 20,
+     "previous": 3762000.0,
+     "current": 3762000.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    },
+    "avg_fg_value": {
+     "n": 20,
+     "previous": 0.0,
+     "current": 0.0,
+     "delta": 0.0,
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "verdict": "identical"
+    }
+   }
+  }
+ },
+ "moved": [],
+ "changed": []
+}

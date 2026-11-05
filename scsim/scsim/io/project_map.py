@@ -2971,7 +2971,8 @@ def from_project_data(data: ProjectData) -> MappingResult:
     )
 
     settings = _build_settings(sc, w)
-    events = _map_events(sc.disruption_schedule, sup_ids, cap_by_sup, w)
+    events = _map_events(sc.disruption_schedule, sup_ids, cap_by_sup, w,
+                         mat_ids={l.material_id for l in links})
     # The engine extends replications under a sequential-CI rule only when the
     # scenario HAS events (`run_scenario` gates on `scenario.events`). A baseline
     # scenario with that rule ran its fixed count and said nothing (audit F-32).
@@ -3123,8 +3124,11 @@ EVENT_START_WEEK_MIN = 1         # an event starts no earlier than the first wee
 EVENT_DURATION_WEEKS_MIN = 1
 EVENT_DURATION_WEEKS_MAX = 52
 # Target kinds the mapper names as "cannot be disrupted yet"; anything that is not
-# a supplier id of the project or the plant is skipped too, with its own warning.
-UNSUPPORTED_EVENT_KINDS = ("material", "edge", "customer", "lane")
+# a supplier id of the project, a supplied material (`material:<id>`, since 0.9.0 —
+# PLAN.md §29 WP 19.1, §4 D311's platform half) or the plant is skipped too, with
+# its own warning.
+UNSUPPORTED_EVENT_KINDS = ("edge", "customer", "lane")
+MATERIAL_EVENT_KIND = "material"
 
 
 def _is_plant_target(raw: str, stripped: str) -> bool:
@@ -3134,19 +3138,47 @@ def _is_plant_target(raw: str, stripped: str) -> bool:
 
 def _map_events(
     schedule: list[dict], sup_ids: set[str], cap_by_sup: dict[str, Optional[float]],
-    w: list[MappingWarning],
+    w: list[MappingWarning], mat_ids: Optional[set[str]] = None,
 ) -> list[DisruptionEvent]:
+    """`mat_ids` are the materials with at least one supply link — the ones a
+    `node:material` event can stop (the injector refuses any other)."""
     events: list[DisruptionEvent] = []
+    mat_ids = mat_ids or set()
     for entry in schedule[:EVENT_CAP]:
         raw = str(entry.get("target", entry.get("target_id", "")))
         target = raw.rsplit(":", 1)[1] if ":" in raw else raw
+        kind = raw.split(":", 1)[0].lower() if ":" in raw else ""
+        if kind == MATERIAL_EVENT_KIND:
+            # A full outage of every supply link of ONE material (WP 17.1): the
+            # engine models lead-time extension only for a material, so a partial
+            # cut runs as an outage and says so.
+            if target not in mat_ids:
+                w.append(MappingWarning("warn", f"event:{raw}", "target",
+                                        f"no supplied material named {target!r} in this project's data — event skipped"))
+                continue
+            start_days = float(entry.get("start_day", entry.get("start_week", 0)) or 0)
+            start_week = round(start_days) if "start_week" in entry else round(start_days / 7.0)
+            dur_days = float(entry.get("duration_days", entry.get("duration_weeks", 6)) or 6)
+            dur_weeks = round(dur_days) if "duration_weeks" in entry else round(dur_days / 7.0)
+            magnitude = float(entry.get("magnitude_pct", entry.get("magnitude", 100.0)) or 100.0)
+            if magnitude < 100.0:
+                w.append(MappingWarning("warn", f"event:{raw}", "magnitude",
+                                        f"{magnitude:.0f}% cut on a material runs as a full outage of its "
+                                        f"supply — the engine cuts capacity per supplier, not per material"))
+            events.append(DisruptionEvent(
+                target_type=TargetType.NODE_MATERIAL, target_id=target,
+                start=int(_clamp(int(start_week), EVENT_START_WEEK_MIN, float("inf"), w=w,
+                                 entity=f"event:{raw}", field="start", unit=" wk")),
+                duration=int(_clamp(dur_weeks, EVENT_DURATION_WEEKS_MIN, EVENT_DURATION_WEEKS_MAX,
+                                    w=w, entity=f"event:{raw}", field="duration", unit=" wk")),
+            ))
+            continue
         is_plant = target not in sup_ids and _is_plant_target(raw, target)
         if target not in sup_ids and not is_plant:
             # Two different failures, said apart (acceptance audit 2026-09-23):
             # a target KIND the mapper cannot disrupt yet, versus a supplier id
             # this project simply does not have. The old single message blamed
             # "material/edge" even when the target was `supplier:primary`.
-            kind = raw.split(":", 1)[0].lower() if ":" in raw else ""
             if kind in UNSUPPORTED_EVENT_KINDS:
                 w.append(MappingWarning("warn", f"event:{raw}", "target",
                                         f"{kind} targets cannot be disrupted yet (land later in M7) — event skipped"))

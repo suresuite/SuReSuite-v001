@@ -1723,7 +1723,7 @@ export const DOCS_INDEX: Record<string, DocsIndexEntry> = {
     ]
   },
   "engine-versions": {
-    "minutes": 23,
+    "minutes": 24,
     "sections": [
       {
         "id": "how-to-read",

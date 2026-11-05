@@ -15,6 +15,9 @@ import {
   newEvent,
   supplierTarget,
   targetChoices,
+  isMaterialTarget,
+  materialTarget,
+  suppliedMaterialIds,
   targetLabel,
 } from "../disruptionEvents";
 import { disruptionWeeks } from "../runWindow";
@@ -25,7 +28,8 @@ describe("one disruption-event model (WP 9.4 slice 6 · §4 D226)", () => {
   it("reads the mapper's exported rule", () => {
     const d = (registry as unknown as { disruption: typeof DISRUPTION_RULE }).disruption;
     expect(DISRUPTION_RULE).toEqual(d);
-    expect(DISRUPTION_RULE.supported_target_kinds).toEqual(["supplier", "plant"]);
+    // Engine 0.9.0 (PLAN.md §29 WP 19.1): a supplied material is a target too.
+    expect(DISRUPTION_RULE.supported_target_kinds).toEqual(["supplier", "plant", "material"]);
   });
 
   it("agrees with the derived stress-preset classification on every event", () => {
@@ -79,5 +83,18 @@ describe("one disruption-event model (WP 9.4 slice 6 · §4 D226)", () => {
     expect(disruptionWeeks(0, 400 * 7).durationWeeks).toBe(DISRUPTION_RULE.duration_weeks_max);
     const src = readFileSync(join(ROOT, "src/lib/sim/runWindow.ts"), "utf8");
     expect(src).not.toMatch(/clamp\([^)]*,\s*1,\s*52\)/);
+  });
+
+  it("a supplied material is a target, offered and judged as the engine maps it (§29 WP 19.2)", () => {
+    const inbound = [{ supplier_id: "S1", material_id: "M2" }, { supplier_id: "S2", material_id: "M1" }, { material_id: "M1" }];
+    const mats = suppliedMaterialIds(inbound);
+    expect(mats).toEqual(["M1", "M2"]);
+    const choices = targetChoices(["S1"], mats);
+    expect(choices.filter((c) => c.group === "Materials").map((c) => c.value)).toEqual(["material:M1", "material:M2"]);
+    expect(judgeTarget(materialTarget("M1"), ["S1"], mats)).toEqual({ target: { kind: "material", id: "M1" }, reason: null });
+    expect(judgeTarget(materialTarget("M9"), ["S1"], mats).reason).toMatch(/No supplied material named "M9"/);
+    expect(targetLabel(materialTarget("M1"))).toBe("Material M1");
+    expect(isMaterialTarget("material:M1")).toBe(true);
+    expect(isMaterialTarget("supplier:S1")).toBe(false);
   });
 });

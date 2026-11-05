@@ -8,6 +8,10 @@ Initial source: `7698ac2d541242de35383d488cfa3cc1ab5a31c2`. Refreshed through `2
 
 Seven evidence hashes had gone stale as main advanced past the reviewed commit (Phase 14–16 work, the notebook key check and two policy-grid fixes). Each file's change since the version its hash was recorded against was read against the manual page it backs. Four manual claims were corrected: who can create an API key and the button's name (`getting-an-api-key`), the engine-difference rule of the comparison screen (`experiments-and-comparison`), the bounded lead-time exception to "an override wins" (`how-policies-work`), and the optional lane-shape and production lead-time columns (`uploading-data`). `engineInputExport.ts` changed only in how the Export reads the project's MTS/MTO default; no claim depended on it. Not refreshed: the other twelve hashes, which still match. Not reviewed here: `plant-stage` and `customer-stage` against the production lead-time and requested-delivery-schedule fields, which are outside this evidence map.
 
+## Refresh 2026-11-04 (PLAN.md §29 WP 19.1)
+
+One evidence hash moved: `scsim/scsim/io/project_map.py`, whose `_map_events` now maps a `material:<id>` target (engine 0.9.0). Read against `how-policies-work`, the page it backs: that page makes no claim about which targets a disruption may name, so no text changed there. The disruption pages (`disruptions`, `stress-tests`) are updated with the library in WP 19.3–19.5.
+
 ## Refresh 2026-10-31 (PLAN.md §4 D318)
 
 Two evidence hashes moved: `comparability.ts` (`runVersions` gains the run's recorded calendar; `canonicalSchedule` ignores `start_anchor`) and `CompareScenariosPanel.tsx` (a Calendar column in "What each run used"). Both were read against `experiments-and-comparison`, whose description of that table was corrected to name the calendar and to say that neither the calendar nor how a start was entered makes a column not like-for-like. `disruptions` gained the three ways to enter a start and how runs are dated. Not refreshed: every other hash, which still matches.

@@ -48,6 +48,7 @@
  * objective · disruption schedule · recovery playbook · findings · mapping
  * report.
  */
+import { suppliedMaterialIds } from "@/lib/sim/disruptionEvents";
 import { replicationLabel } from "@/lib/sim/replicationLabel";
 import type { RunGateState } from "@/lib/sim/runGate";
 import React, { useMemo, useState } from "react";
@@ -1049,6 +1050,7 @@ export function MobileSimulationLab(props: MobileSimulationLabProps) {
                   projectId={projectId}
                   warmup={{ days: selected.warmup_days, mode: selected.warmup_mode, horizonDays: selected.horizon_days }}
                   supplierIds={supplierIds}
+                  materialIds={suppliedMaterialIds(inboundLanes)}
                 />
               </ReadOnlyFrame>
             </div>

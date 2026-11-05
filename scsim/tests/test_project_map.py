@@ -359,14 +359,31 @@ def test_plant_event_runs_end_to_end():
     assert out.aggregates["lost_sales_value"]["mean"] > 0.0
 
 
-def test_material_target_still_skipped_with_warning():
+def test_material_target_maps_to_a_material_outage():
+    """Engine 0.9.0 (PLAN.md §29 WP 19.1): a supplied material is a target. Before
+    0.9.0 this schedule was skipped with a warning; it now stops m1's supply, and a
+    partial cut says it runs as the full outage."""
+    from scsim.entities.enums import EffectType, TargetType
     d = _base()
     d.scenario.disruption_schedule = [
         {"target": "material:m1", "magnitude_pct": 50, "start_week": 90, "duration_weeks": 6},
     ]
     res = from_project_data(d)
+    (ev,) = res.scenario.events
+    assert (ev.target_type, ev.target_id, ev.start, ev.duration) == (TargetType.NODE_MATERIAL, "m1", 90, 6)
+    assert ev.effect_type == EffectType.LEAD_TIME_EXTENSION
+    assert any(w.field == "magnitude" and "full outage of its supply" in w.reason for w in res.warnings)
+    assert not any(w.field == "target" and "skipped" in w.reason for w in res.warnings)
+
+
+def test_a_material_with_no_supply_link_is_still_skipped():
+    d = _base()
+    d.scenario.disruption_schedule = [
+        {"target": "material:not-supplied", "magnitude_pct": 100, "start_week": 90, "duration_weeks": 6},
+    ]
+    res = from_project_data(d)
     assert res.scenario.events == []
-    assert any(w.field == "target" and "skipped" in w.reason for w in res.warnings)
+    assert any(w.field == "target" and "no supplied material" in w.reason for w in res.warnings)
 
 
 def test_supplier_literally_named_plant_stays_a_supplier():

@@ -17,7 +17,9 @@
 //
 // `engineTargetOf` mirrors the mapper's rule for ONE target. It is not a node-type
 // classifier (oneClassifier.test.ts): it answers only "will the engine keep this
-// event", by the engine's own test — a supplier id in the project, or the plant.
+// event", by the engine's own test — a supplier id in the project, the plant, or
+// (engine 0.9.0, PLAN.md §29 WP 19.1) `material:<id>` for a material with a supply
+// link, which the engine runs as the full outage of that material's supply.
 
 import { num, type GradedFinding, type Row } from "./grading.ts";
 
@@ -31,28 +33,40 @@ export interface DisruptionRule {
   unsupported_target_kinds: string[];
   full_outage_pct: number;
   partial_cut_needs_finite_supplier_capacity: boolean;
+  /** Engine 0.9.0: a magnitude below 100 on a material runs as its full outage. */
+  material_cut_runs_as_outage?: boolean;
 }
 
 export type EngineTarget =
   | { kind: "supplier"; id: string }
   | { kind: "plant"; id: "plant" }
+  | { kind: "material"; id: string }
   | { kind: "unsupported"; id: string; targetKind: string }
-  | { kind: "unknown"; id: string };
+  | { kind: "unknown"; id: string; material?: true };
 
 /** `_is_plant_target`: `plant:X`, `node:plant`, or bare `plant`. */
 function isPlantTarget(raw: string, stripped: string): boolean {
   return raw.toLowerCase().startsWith("plant:") || stripped.toLowerCase() === "plant";
 }
 
-/** What `_map_events` does with one target, by the engine's own test. */
+const asSet = (v: ReadonlySet<string> | readonly string[] | undefined): ReadonlySet<string> =>
+  v instanceof Set ? v : new Set((v ?? []) as readonly string[]);
+
+/** What `_map_events` does with one target, by the engine's own test. `materialIds`
+ *  are the materials with a supply link (the mapper's `mat_ids`). */
 export function engineTargetOf(
   rawTarget: string,
   supplierIds: ReadonlySet<string> | readonly string[],
   rule: Pick<DisruptionRule, "unsupported_target_kinds">,
+  materialIds?: ReadonlySet<string> | readonly string[],
 ): EngineTarget {
-  const ids = supplierIds instanceof Set ? supplierIds : new Set(supplierIds as readonly string[]);
+  const ids = asSet(supplierIds);
   const raw = String(rawTarget ?? "");
   const id = raw.includes(":") ? raw.slice(raw.lastIndexOf(":") + 1) : raw;
+  // The mapper reads the `material:` prefix before anything else.
+  if (raw.includes(":") && raw.split(":", 1)[0].toLowerCase() === "material") {
+    return asSet(materialIds).has(id) ? { kind: "material", id } : { kind: "unknown", id, material: true };
+  }
   if (ids.has(id)) return { kind: "supplier", id };
   if (isPlantTarget(raw, id)) return { kind: "plant", id: "plant" };
   const prefix = raw.includes(":") ? raw.split(":", 1)[0].toLowerCase() : "";
@@ -64,6 +78,11 @@ export function engineTargetOf(
 export function engineTargetReason(t: EngineTarget): string | null {
   if (t.kind === "unsupported") return `The engine cannot disrupt ${t.targetKind} targets yet — this event is skipped.`;
   if (t.kind === "unknown") {
+    if (t.material) {
+      return t.id
+        ? `No supplied material named "${t.id}" in this project's data — this event is skipped.`
+        : "No material — this event is skipped.";
+    }
     return t.id
       ? `No supplier or plant named "${t.id}" in this project's data — this event is skipped.`
       : "No target — this event is skipped.";
@@ -81,6 +100,8 @@ export function scheduleFindings(
   suppliers: Row[],
   schedule: Row[],
   rule: DisruptionRule,
+  /** inbound lanes — their `material_id`s are the materials an event can stop */
+  inbound: Row[] = [],
 ): GradedFinding[] {
   const events = schedule ?? [];
   const out: GradedFinding[] = [];
@@ -88,6 +109,7 @@ export function scheduleFindings(
     (suppliers ?? []).map((s) => [String(s.supplier_id ?? ""), num(s.capacity_per_week)]),
   );
   const ids = new Set([...capBySupplier.keys()].filter(Boolean));
+  const materialIds = new Set((inbound ?? []).map((r) => String(r.material_id ?? "")).filter(Boolean));
 
   if (events.length > rule.event_cap) {
     out.push({
@@ -104,7 +126,7 @@ export function scheduleFindings(
 
   events.slice(0, rule.event_cap).forEach((ev) => {
     const raw = String(ev.target ?? ev.target_id ?? "");
-    const t = engineTargetOf(raw, ids, rule);
+    const t = engineTargetOf(raw, ids, rule, materialIds);
     const why = engineTargetReason(t);
     if (why) {
       out.push({
@@ -113,11 +135,26 @@ export function scheduleFindings(
         policy: "engine",
         rows: [raw],
         message: `Disruption on "${raw || "(no target)"}": ${why}`,
-        reason: "The engine disrupts a supplier of this project or the plant; every other target is skipped with a mapping warning.",
+        reason:
+          "The engine disrupts a supplier of this project, a material it is supplied with, or the plant; " +
+          "every other target is skipped with a mapping warning.",
       });
       return;
     }
     const magnitude = num(ev.magnitude_pct ?? ev.magnitude ?? rule.full_outage_pct);
+    if (t.kind === "material" && magnitude < rule.full_outage_pct && rule.material_cut_runs_as_outage) {
+      out.push({
+        severity: "warn",
+        field: "scenarios.disruption_schedule",
+        policy: "engine",
+        rows: [raw],
+        message:
+          `Capacity reduction by ${magnitude}% on material "${t.id}": the engine runs a material ` +
+          `event as the full outage of its supply.`,
+        reason: "The engine cuts capacity per supplier, not per material; a material event stops every supply of it.",
+      });
+      return;
+    }
     if (
       t.kind === "supplier" &&
       rule.partial_cut_needs_finite_supplier_capacity &&

@@ -342,7 +342,7 @@ Deno.test("a lane with no volume carries no weight rather than an epsilon one", 
 });
 
 // ── WP 9.4 slice 6 · the disruption rule, graded from the engine's export ─────
-import { engineTargetOf, scheduleFindings, type DisruptionRule } from "./disruptionRules.ts";
+import { engineTargetOf, engineTargetReason, scheduleFindings, type DisruptionRule } from "./disruptionRules.ts";
 
 const RULE = (registry as unknown as { disruption: DisruptionRule }).disruption;
 const SUPPLIERS: Row[] = [
@@ -356,16 +356,23 @@ const ev = (target: string, magnitude_pct = 100): Row => ({
 Deno.test("the rule is the engine's export, not a restatement", () => {
   assertEquals(RULE.event_cap, 5, "project_map.EVENT_CAP");
   assertEquals(RULE.duration_weeks_max, 52, "project_map.EVENT_DURATION_WEEKS_MAX");
-  assertEquals(RULE.supported_target_kinds, ["supplier", "plant"], "RULE.supported_target_kinds");
+  assertEquals(RULE.supported_target_kinds, ["supplier", "plant", "material"], "RULE.supported_target_kinds");
+  assertEquals(RULE.material_cut_runs_as_outage, true, "registry_export material_cut_runs_as_outage");
 });
 
-Deno.test("engineTargetOf follows _map_events: a supplier id, the plant, or skipped", () => {
+Deno.test("engineTargetOf follows _map_events: a supplier id, the plant, a supplied material, or skipped", () => {
   const ids = new Set(["S_CAP"]);
+  const mats = new Set(["M1"]);
   assertEquals(engineTargetOf("supplier:S_CAP", ids, RULE).kind, "supplier", "engineTargetOf(\"supplier:S_CAP\"");
   assertEquals(engineTargetOf("S_CAP", ids, RULE).kind, "supplier", "engineTargetOf(\"S_CAP\"");
   assertEquals(engineTargetOf("node:plant", ids, RULE).kind, "plant", "engineTargetOf(\"node:plant\"");
   assertEquals(engineTargetOf("plant:P1", ids, RULE).kind, "plant", "engineTargetOf(\"plant:P1\"");
-  assertEquals(engineTargetOf("material:M1", ids, RULE).kind, "unsupported", "engineTargetOf(\"material:M1\"");
+  // Engine 0.9.0 (PLAN.md §29 WP 19.1): a material with a supply link is a target;
+  // one with none is skipped, and says it is a material that is missing.
+  assertEquals(engineTargetOf("material:M1", ids, RULE, mats).kind, "material", "engineTargetOf(\"material:M1\", mats");
+  const missing = engineTargetOf("material:M1", ids, RULE);
+  assertEquals(missing.kind, "unknown", "engineTargetOf(\"material:M1\") with no supplied materials");
+  assertEquals(engineTargetReason(missing)?.includes("No supplied material named"), true, "the material reason");
   assertEquals(engineTargetOf("customer:all", ids, RULE).kind, "unsupported", "engineTargetOf(\"customer:all\"");
   assertEquals(engineTargetOf("supplier:NOPE", ids, RULE).kind, "unknown", "engineTargetOf(\"supplier:NOPE\"");
 });
@@ -383,6 +390,14 @@ Deno.test("events past the cap, skipped targets and uncapacitated cuts are each 
   assertEquals(f[1].field, "suppliers.capacity_per_week", "f[1].field");
   // §4 D223: the engine cuts BY the share — a 30% cut is not "to 30%".
   assertEquals(f[1].message.includes("by 30%"), true, f[1].message);
+});
+
+Deno.test("a supplied material is graded as the engine maps it (engine 0.9.0)", () => {
+  const inbound = [{ supplier_id: "S_CAP", material_id: "M1" }];
+  assertEquals(scheduleFindings(SUPPLIERS, [ev("material:M1")], RULE, inbound), [], "a material outage is clean");
+  const cut = scheduleFindings(SUPPLIERS, [ev("material:M1", 40)], RULE, inbound);
+  assertEquals(cut.length, 1, "a partial cut on a material is said once");
+  assertEquals(cut[0].message.includes("full outage of its supply"), true, cut[0].message);
 });
 
 // ── §23 WP 13.1 — a /policies override of an item master is SET ─────────────
