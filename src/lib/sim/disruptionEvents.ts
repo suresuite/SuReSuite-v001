@@ -31,6 +31,8 @@ export const DISRUPTION_RULE = (registry as unknown as { disruption: DisruptionR
 /** How a target is written: the plant, or `supplier:<id>`. */
 export const PLANT_TARGET = "node:plant";
 export const supplierTarget = (id: string) => `supplier:${id}`;
+/** A material, as the mapper reads it (engine 0.9.0, PLAN.md §29 WP 19.1). */
+export const materialTarget = (id: string) => `material:${id}`;
 
 /** A new event: a lead-time delay at `target`, four weeks long, starting four
  *  measured weeks after the warm-up (audit F-03's default). */
@@ -45,11 +47,16 @@ export function newEvent(target = "", warmupDays?: number): ScheduleEvent {
 }
 
 /** What the engine will do with this target. */
-export function judgeTarget(target: string, supplierIds: readonly string[]): {
+export function judgeTarget(
+  target: string,
+  supplierIds: readonly string[],
+  /** materials with a supply link — the ones a material event can stop */
+  materialIds: readonly string[] = [],
+): {
   target: EngineTarget;
   reason: string | null;
 } {
-  const t = engineTargetOf(target, supplierIds, DISRUPTION_RULE);
+  const t = engineTargetOf(target, supplierIds, DISRUPTION_RULE, materialIds);
   return { target: t, reason: engineTargetReason(t) };
 }
 
@@ -106,6 +113,7 @@ export function targetLabel(target: string): string {
   if (!target) return "No node";
   if (target === PLANT_TARGET) return "Plant";
   if (target.startsWith("supplier:")) return `Supplier ${target.slice("supplier:".length)}`;
+  if (target.startsWith("material:")) return `Material ${target.slice("material:".length)}`;
   return target;
 }
 
@@ -122,10 +130,30 @@ export function describeEvent(e: Pick<ScheduleEvent, "target" | "start_day" | "d
   return `${effectLabel(e.magnitude_pct)} · ${targetLabel(e.target)} · ${eventWindow(e.start_day, e.duration_days)}`;
 }
 
-/** Target choices the engine can disrupt, grouped: the plant, then the project's suppliers. */
-export function targetChoices(supplierIds: readonly string[]): { value: string; label: string; group: "Plant" | "Suppliers" }[] {
+/** Target choices the engine can disrupt, grouped: the plant, the project's
+ *  suppliers, then the materials they supply. */
+export function targetChoices(
+  supplierIds: readonly string[],
+  materialIds: readonly string[] = [],
+): { value: string; label: string; group: "Plant" | "Suppliers" | "Materials" }[] {
   return [
     { value: PLANT_TARGET, label: "Plant", group: "Plant" },
     ...[...supplierIds].sort().map((id) => ({ value: supplierTarget(id), label: id, group: "Suppliers" as const })),
+    ...[...new Set(materialIds)].sort().map((id) => ({ value: materialTarget(id), label: id, group: "Materials" as const })),
   ];
+}
+
+/** The materials an event can stop: those with a supply link, i.e. named on an
+ *  inbound lane (the mapper's `mat_ids`). */
+export function suppliedMaterialIds(inbound: readonly { material_id?: unknown }[] | null | undefined): string[] {
+  return [...new Set((inbound ?? []).map((r) => String(r.material_id ?? "").trim()).filter(Boolean))].sort();
+}
+
+/** What a material event does, in one sentence (engine 0.9.0). */
+export const MATERIAL_EVENT_NOTE =
+  "Every supply of this material stops for the event's weeks; its suppliers keep shipping their other materials.";
+
+/** A material event is always the full outage of its supply (the engine's rule). */
+export function isMaterialTarget(target: string): boolean {
+  return target.toLowerCase().startsWith("material:");
 }

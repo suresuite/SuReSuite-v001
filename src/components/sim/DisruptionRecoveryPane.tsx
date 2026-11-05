@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { suppliedMaterialIds } from "@/lib/sim/disruptionEvents";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -340,6 +341,7 @@ export function DisruptionRecoveryPane({
             warmup={{ days: scenario.warmup_days, mode: scenario.warmup_mode, horizonDays: scenario.horizon_days }}
             supplierIds={supplierIds}
             uncapacitated={uncapacitated}
+            materialIds={suppliedMaterialIds(inboundLanes)}
           />
         </CardContent>
       </Card>

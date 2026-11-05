@@ -159,8 +159,9 @@ export function Segmented<T extends string>({
   );
 }
 
-/** The nodes the engine can disrupt, grouped plant first, then suppliers. A
- *  stored target outside that list is kept visible rather than silently swapped. */
+/** The nodes the engine can disrupt, grouped plant first, then suppliers, then
+ *  supplied materials (engine 0.9.0). A stored target outside that list is kept
+ *  visible rather than silently swapped. */
 export function TargetSelect({
   id,
   value,
@@ -177,6 +178,7 @@ export function TargetSelect({
 }) {
   const known = !value || choices.some((c) => c.value === value);
   const suppliers = choices.filter((c) => c.group === "Suppliers");
+  const materials = choices.filter((c) => c.group === "Materials");
   return (
     <select
       id={id}
@@ -198,6 +200,15 @@ export function TargetSelect({
       {suppliers.length > 0 ? (
         <optgroup label={`Suppliers (${suppliers.length})`}>
           {suppliers.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </optgroup>
+      ) : null}
+      {materials.length > 0 ? (
+        <optgroup label={`Materials (${materials.length})`}>
+          {materials.map((c) => (
             <option key={c.value} value={c.value}>
               {c.label}
             </option>
@@ -527,7 +538,16 @@ export function AnchorDriftNote({
 
 /** Lead-time delay, or a capacity reduction BY a share — the engine's reading of
  *  `magnitude_pct`. The share keeps its last value when the user switches back. */
-export function EffectControl({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+export function EffectControl({
+  value,
+  onChange,
+  outageOnly = false,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  /** a material target: the engine runs only the full outage of its supply */
+  outageOnly?: boolean;
+}) {
   const full = DISRUPTION_RULE.full_outage_pct;
   const partial = !isLeadTimeDelay(value);
   const [lastShare, setLastShare] = useState(partial ? value : 50);
@@ -541,7 +561,7 @@ export function EffectControl({ value, onChange }: { value: number; onChange: (v
       value={partial ? "partial" : "delay"}
       options={[
         { value: "delay", label: DISRUPTION_TERMS.leadTimeDelay },
-        { value: "partial", label: DISRUPTION_TERMS.capacityReduction },
+        { value: "partial", label: DISRUPTION_TERMS.capacityReduction, disabled: outageOnly },
       ]}
       onChange={(v) => onChange(v === "delay" ? full : lastShare)}
     />

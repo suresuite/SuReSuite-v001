@@ -12,7 +12,9 @@ import {
   describeEvent,
   effectMeaning,
   isLeadTimeDelay,
+  isMaterialTarget,
   judgeTarget,
+  MATERIAL_EVENT_NOTE,
   newEvent,
   targetChoices,
   type ScheduleEvent,
@@ -46,6 +48,8 @@ interface Props {
   supplierIds?: string[];
   /** Suppliers with no finite weekly capacity: a partial cut on one runs as an outage. */
   uncapacitated?: string[];
+  /** Materials with a supply link — targets since engine 0.9.0 (PLAN.md §29 WP 19.2). */
+  materialIds?: string[];
   /** Overrides `projects.simulation_start` — run week 0, the anchor for a start
    *  entered as an ISO week or a date (PLAN.md §4 D318). Read from the project
    *  calendar when omitted. */
@@ -69,6 +73,7 @@ export function DisruptionScheduleEditor({
   warmup,
   supplierIds = [],
   uncapacitated = [],
+  materialIds = [],
   projectStart: projectStartProp,
 }: Props) {
   const calendar = useProjectCalendar(projectId);
@@ -95,7 +100,7 @@ export function DisruptionScheduleEditor({
 
   const horizonWeeks = warmup?.horizonDays ? engineWeeks(warmup.horizonDays) : undefined;
   const blocked = addBlockedReason(local);
-  const choices = targetChoices(supplierIds);
+  const choices = targetChoices(supplierIds, materialIds);
   const add = () => {
     if (blocked) return;
     commit([...local, newEvent(choices[0]?.value ?? "", warmup?.days)]);
@@ -115,7 +120,8 @@ export function DisruptionScheduleEditor({
         <p className="text-[10px] text-muted-foreground">{AUTO_WARMUP_RULE}</p>
       )}
       {local.map((d, i) => {
-        const { target, reason } = judgeTarget(d.target, supplierIds);
+        const { target, reason } = judgeTarget(d.target, supplierIds, materialIds);
+        const isMaterial = target.kind === "material";
         const outageOnly =
           !isLeadTimeDelay(d.magnitude_pct) && target.kind === "supplier" && uncapacitated.includes(target.id);
         return (
@@ -141,13 +147,24 @@ export function DisruptionScheduleEditor({
             <div className="flex flex-col gap-3 p-3">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <Field label={DISRUPTION_TERMS.target}>
-                  <TargetSelect value={d.target} choices={choices} onChange={(v) => patchNow(i, { target: v })} />
+                  <TargetSelect
+                    value={d.target}
+                    choices={choices}
+                    onChange={(v) =>
+                      // A material event is the full outage of its supply (the engine's rule).
+                      patchNow(i, isMaterialTarget(v) ? { target: v, magnitude_pct: DISRUPTION_RULE.full_outage_pct } : { target: v })
+                    }
+                  />
                 </Field>
                 <Field
                   label={DISRUPTION_TERMS.effect}
                   hint={isLeadTimeDelay(d.magnitude_pct) ? effectMeaning(d.magnitude_pct) : undefined}
                 >
-                  <EffectControl value={d.magnitude_pct} onChange={(v) => patchNow(i, { magnitude_pct: v })} />
+                  <EffectControl
+                    value={d.magnitude_pct}
+                    outageOnly={isMaterial}
+                    onChange={(v) => patchNow(i, { magnitude_pct: v })}
+                  />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -188,6 +205,11 @@ export function DisruptionScheduleEditor({
               />
               {reason ? (
                 <p className="text-[11.5px] text-[#b3261e]">{reason}</p>
+              ) : isMaterial ? (
+                <p className="text-[11.5px] text-muted-foreground">
+                  {MATERIAL_EVENT_NOTE}
+                  {!isLeadTimeDelay(d.magnitude_pct) ? " A capacity reduction on a material runs as this outage." : ""}
+                </p>
               ) : outageOnly ? (
                 <p className="text-[11.5px] text-[--warn-ink,#92400e]">
                   This supplier has no weekly capacity, so the engine runs a capacity reduction as a lead-time delay.
