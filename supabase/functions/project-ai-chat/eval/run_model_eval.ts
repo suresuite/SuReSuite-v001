@@ -303,6 +303,12 @@ interface RouteMiss {
   kinds: string[];
   expected: { route: string; agent_id: string | null; intent: string | null; needs_run: boolean; cache_checkable: boolean };
   got: { route: string; agent_id: string | null; intent: string | null; needs_run: boolean; cache_checkable: boolean; confidence: number };
+  /** Why the deterministic wrapper demoted the classifier's answer to
+   * advisory (`low_confidence`, `agent_not_enabled`, `parse_failure`, …) —
+   * null when the classifier itself chose this route. A fallback zeroes
+   * `got.confidence`, so without this a demotion and a genuine advisory call
+   * are indistinguishable. */
+  fallback: string | null;
 }
 
 async function evalRouting(
@@ -434,6 +440,7 @@ async function evalRouting(
             cache_checkable: decision.cache_checkable === true,
             confidence: decision.confidence,
           },
+          fallback: rawDecision.short_circuit ?? null,
         });
       }
     }
@@ -1707,7 +1714,7 @@ export async function runModelEval(opts: {
       console.log(`  routing misses (${routing.misses.length}/${routing.n}) — full records in the report's routing[].misses:`);
       for (const m of routing.misses) {
         console.log(`    · ${m.id} [${m.kinds.join(",")}] expected ${m.expected.route}/${m.expected.agent_id ?? "-"} ` +
-          `got ${m.got.route}/${m.got.agent_id ?? "-"} (conf ${m.got.confidence.toFixed(2)}) — ${JSON.stringify(m.utterance)}`);
+          `got ${m.got.route}/${m.got.agent_id ?? "-"} (conf ${m.got.confidence.toFixed(2)}${m.fallback ? `, fallback ${m.fallback}` : ""}) — ${JSON.stringify(m.utterance)}`);
       }
     }
 
