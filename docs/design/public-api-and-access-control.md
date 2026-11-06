@@ -437,6 +437,8 @@ Sequenced so the **security foundation ships before any write capability**, and 
 - OAuth2 client-credentials short-lived tokens (§5.5); experiment endpoints (§9.1) and, as they land, surrogate/criticality endpoints (§11 of blueprint); finer-grained per-endpoint quotas.
 - **Exit:** the API tracks the experimentation and AI layers as they productize — same gateway, new scopes.
 
+**Agent interoperability (G22).** `docs/design/agent-interop-plan.md` adds an MCP route to this gateway (`/v1/mcp`). It goes through the same pipeline with personal keys only, and its webhooks and OAuth packages (AG.7, AG.8) are this plan's Phase 3 push half and Phase 4 tokens, made concrete for agent hosts. It adds no endpoint that bypasses §4.
+
 ---
 
 ## 15. How this rides the existing roadmap
