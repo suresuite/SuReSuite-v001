@@ -42,6 +42,20 @@ export function resolveModel(id: string | undefined | null): ModelSpec {
   return MODEL_REGISTRY[DEFAULT_MODEL_ID];
 }
 
+/** Registry models this deployment does NOT serve to users (ai-agents.md §25
+ * Q0, §10 entry 38(f)): run 42291434086 got 429 "exceeded your current
+ * quota" from Gemini and 402 "Insufficient Balance" from DeepSeek on every
+ * call, so a user who picked either failed on every turn. They stay in
+ * MODEL_REGISTRY — past turns, the §7.4 eval and the §23 matrix still name
+ * them — but the chat refuses them by name instead of failing upstream or
+ * swapping silently (§23.4). The client picker hides the same two
+ * (src/components/chat/ModelPicker.tsx CHAT_MODELS); restore both together. */
+export const HIDDEN_MODEL_IDS: ReadonlySet<string> = new Set(["gemini-2.5-flash", "deepseek-chat"]);
+
+export function isHiddenModelId(id: string | undefined | null): boolean {
+  return !!id && HIDDEN_MODEL_IDS.has(id);
+}
+
 /** Whether a caller-supplied model id is one this deployment can actually run.
  *
  * resolveModel() silently falls back to DEFAULT_MODEL_ID for anything it does
