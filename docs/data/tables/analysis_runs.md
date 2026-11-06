@@ -62,9 +62,9 @@ Read follows project reachability (`has_project_access`), uuid-only since WP 3.0
 
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
-| `FirmLevelNetwork.tsx` | rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5) | `src/components/MLPrediction.tsx:77` | yes |
-| `ProcessLevelNetwork.tsx` | rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5) | `src/components/MLPrediction.tsx:77` | yes |
-| `ProductLevelNetwork.tsx` | rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5) | `src/components/MLPrediction.tsx:77` | yes |
+| `FirmLevelNetwork.tsx` | rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5) | `src/components/MLPrediction.tsx:84` | yes |
+| `ProcessLevelNetwork.tsx` | rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5) | `src/components/MLPrediction.tsx:84` | yes |
+| `ProductLevelNetwork.tsx` | rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5) | `src/components/MLPrediction.tsx:84` | yes |
 | `ProductLevelNetwork.tsx` | rpc project_freshness (GraphVersionChip → FreshnessBadge, WP 10.1) | `src/components/trust/useProjectFreshness.ts:28` | yes |
 | `SimulationLab.tsx` | rpc project_freshness | `src/components/trust/useProjectFreshness.ts:28` | yes |
 
@@ -383,6 +383,6 @@ The VERSION of the level the run keyed on ("Firm graph v5") — the `graph_level
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `b7b5c922471e`, engine `0.8.3`,
 sidecar `supabase/contract/analysis_runs.contract.yaml`, table created by `20260917000006_analysis_store.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

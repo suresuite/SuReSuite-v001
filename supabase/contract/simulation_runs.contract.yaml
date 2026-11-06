@@ -44,12 +44,12 @@ surfaces:
   - page: "SimulationLab.tsx"
     via: "hook useSimulationRun → select * from simulation_runs"
     grain: table
-    evidence: "src/hooks/useSimulationRun.tsx:109"
+    evidence: "src/hooks/useSimulationRun.tsx:140"
     confirmed: true
   - page: "ProjectPolicies.tsx"
     via: "useVerifiableExports → select * from simulation_runs"
     grain: table
-    evidence: "src/hooks/useVerifiableExports.tsx:216"
+    evidence: "src/hooks/useVerifiableExports.tsx:220"
     confirmed: true
     note: >-
       The run-results workbook, whose reproducibility sheet binds the run from

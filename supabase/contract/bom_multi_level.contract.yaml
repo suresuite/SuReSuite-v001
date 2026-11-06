@@ -45,12 +45,12 @@ surfaces:
   - page: "InteractiveNetworkSpace.tsx"
     via: "table read"
     grain: table
-    evidence: "src/pages/InteractiveNetworkSpace.tsx:478"
+    evidence: "src/pages/InteractiveNetworkSpace.tsx:473"
     confirmed: true
   - page: "ProcessLevelNetwork.tsx"
     via: "table read"
     grain: table
-    evidence: "src/pages/ProcessLevelNetwork.tsx:385"
+    evidence: "src/pages/ProcessLevelNetwork.tsx:381"
     confirmed: true
   - page: "ProjectPolicies.tsx"
     via: "table read"
@@ -181,12 +181,12 @@ fields:
       - page: "InteractiveNetworkSpace.tsx"
         via: "table read"
         grain: column
-        evidence: "src/pages/InteractiveNetworkSpace.tsx:478"
+        evidence: "src/pages/InteractiveNetworkSpace.tsx:473"
         confirmed: true
       - page: "ProcessLevelNetwork.tsx"
         via: "table read"
         grain: column
-        evidence: "src/pages/ProcessLevelNetwork.tsx:385"
+        evidence: "src/pages/ProcessLevelNetwork.tsx:381"
         confirmed: true
     resolution:
       default_mode: asserted

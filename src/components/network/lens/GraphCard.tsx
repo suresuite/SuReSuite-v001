@@ -21,6 +21,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -44,6 +45,10 @@ import { Maximize, Minus, Plus, RotateCcw } from 'lucide-react';
 import { GRAPH_INK } from '@/lib/graph';
 import { cn } from '@/lib/utils';
 import { LENS } from './tokens';
+
+import { isLargeGraph, buildOverviewNodes } from '@/lib/network/scale';
+import { LargeNetworkOverview } from './LargeNetworkOverview';
+import { LargeGraphCanvas, type LargeGraphCanvasHandle, type LargeLayout } from './LargeGraphCanvas';
 
 export interface LegendItem {
   key: string;
@@ -84,6 +89,42 @@ interface GraphCardProps {
   replaceCanvas?: ReactNode;
   /** Drawn over the canvas: a loading or empty state. */
   overlay?: ReactNode;
+  /**
+   * Opts the lens into the LARGE-NETWORK behaviour (`lib/network/scale.ts`): above the size
+   * where one element per node is too many, the whole network is drawn on a canvas
+   * (`LargeGraphCanvas`) with the page's own layout and colours, and a Summary tab lists the
+   * same network as counts and a ranking. Focusing a node hands back React Flow at the size it
+   * can be read at, with a way back. `nodes` / `edges` here are the FULL graph, not the
+   * focus-filtered one React Flow draws.
+   */
+  largeView?: LargeViewConfig;
+}
+
+export interface LargeViewConfig {
+  /** A new key (the project) forgets which view the person last chose. */
+  projectKey: string;
+  nodes: Node[];
+  edges: Edge[];
+  /** The node's class, matching a legend key. */
+  groupOf: (n: Node) => string | undefined | null;
+  /** The lens's own figure for a node (flow, revenue); omit when it has none. */
+  weight?: { label: string; of: (n: Node) => number | null | undefined; format?: (v: number) => string };
+  /** A second grouping to break the network down by (country, tier). */
+  secondary?: { title: string; of: (n: Node) => string | null | undefined };
+  focusedId: string | null;
+  /**
+   * How the whole network is placed when it is drawn big: `page` keeps the lens's own layout; `columns`
+   * and `rings` (`lib/network/largeLayout.ts`) re-place it for lenses whose own is unreadable at this size.
+   * `layerOf` is the index of the node's class/tier in flow order (the legend's), `tieKey` an optional
+   * string that orders the first ring.
+   */
+  layout: LargeLayout;
+  /** The page's selected node, drawn ringed with its edges highlighted. */
+  selectedId: string | null;
+  /** A click on a node (or on empty canvas, null): the page's own selection and details panel. */
+  onSelect: (id: string | null) => void;
+  /** Focus a node, which narrows the graph to its supply path; null leaves the focus. */
+  onFocus: (id: string | null) => void;
 }
 
 const HEIGHT = { min: 360, max: 1200, initial: 640 } as const;
@@ -130,6 +171,7 @@ const GraphCardInner = forwardRef<GraphCardHandle, GraphCardProps>(function Grap
     minimapNodeColor = defaultMinimapColor,
     replaceCanvas,
     overlay,
+    largeView,
   },
   ref,
 ) {
@@ -138,6 +180,42 @@ const GraphCardInner = forwardRef<GraphCardHandle, GraphCardProps>(function Grap
   const [height, setHeight] = useState(() => readHeight(storageKey));
   const [fitZoom, setFitZoom] = useState(1);
   const zoom = useStore((s) => s.transform[2]);
+
+  // ── Large-network behaviour ────────────────────────────────────────────────
+  // The view is DERIVED during render, never set in an effect: an effect would let the first
+  // commit of a big graph mount React Flow with every node before flipping to the overview,
+  // which is the cost this exists to avoid. A person's choice is remembered per project.
+  const large = !!largeView && isLargeGraph(largeView.nodes.length, largeView.edges.length);
+  const projectKey = largeView?.projectKey;
+  const nodeCount = largeView?.nodes.length ?? 0;
+  const focusedId = largeView?.focusedId ?? null;
+  const [choice, setChoice] = useState<{ key: string | undefined; mode: 'network' | 'summary' } | null>(null);
+  const chosen = choice && choice.key === projectKey ? choice.mode : null;
+  const mode: 'network' | 'summary' = chosen ?? 'network';
+  const choose = (m: 'network' | 'summary') => setChoice({ key: projectKey, mode: m });
+  // A big graph is the canvas; a focus on it is small again and goes back to React Flow.
+  const showCanvasGraph = large && !focusedId && mode === 'network' && !replaceCanvas;
+  const showOverview = large && !focusedId && mode === 'summary' && !replaceCanvas;
+  const focusedLarge = large && !!focusedId && !replaceCanvas;
+  const gcRef = useRef<LargeGraphCanvasHandle>(null);
+  const [canvasZoom, setCanvasZoom] = useState(1);
+  const legendKeys = useMemo(() => legend.map((l) => l.key), [legend]);
+  const palette = useMemo(() => [...legend.map((l) => l.color), '#9a9a9a'], [legend]);
+  const overviewNodes = useMemo(
+    () =>
+      showOverview && largeView
+        ? buildOverviewNodes(largeView.nodes, largeView.edges, {
+            id: (n) => n.id,
+            label: (n) => String((n.data as { label?: unknown })?.label ?? n.id),
+            group: largeView.groupOf,
+            weight: largeView.weight?.of,
+            secondary: largeView.secondary?.of,
+          })
+        : [],
+    // The node and edge SETS decide; their identity changes on every drag.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showOverview, projectKey, nodeCount, largeView?.edges.length],
+  );
 
   const fit = useCallback(() => {
     // Two frames: the first lets React Flow mount the new node set, the second lets
@@ -178,13 +256,22 @@ const GraphCardInner = forwardRef<GraphCardHandle, GraphCardProps>(function Grap
     [flow, fitZoom],
   );
 
-  useImperativeHandle(ref, () => ({ fit, centerOn, canvasSize }), [fit, centerOn, canvasSize]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      fit: showCanvasGraph ? () => gcRef.current?.fit() : fit,
+      centerOn: showCanvasGraph ? (id: string) => gcRef.current?.centerOn(id) : centerOn,
+      canvasSize,
+    }),
+    [showCanvasGraph, fit, centerOn, canvasSize],
+  );
 
+  const canvasReplaced = !!replaceCanvas || showOverview || showCanvasGraph;
   useEffect(() => {
-    if (!replaceCanvas) fit();
+    if (!canvasReplaced) fit();
     // `fit` is stable per flow instance; the key is what decides.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fitKey, !!replaceCanvas]);
+  }, [fitKey, canvasReplaced]);
 
   useEffect(() => {
     try {
@@ -212,7 +299,11 @@ const GraphCardInner = forwardRef<GraphCardHandle, GraphCardProps>(function Grap
     window.addEventListener('pointerup', up);
   };
 
-  const zoomPct = fitZoom > 0 ? Math.round((zoom / fitZoom) * 100) : 100;
+  const zoomPct = showCanvasGraph
+    ? Math.round(canvasZoom * 100)
+    : fitZoom > 0 ? Math.round((zoom / fitZoom) * 100) : 100;
+  const zoomStep = (factor: number) => (showCanvasGraph ? gcRef.current?.zoomBy(factor) : zoomBy(factor));
+  const fitView = () => (showCanvasGraph ? gcRef.current?.fit() : fit());
 
   const stackButton =
     'grid h-7 w-7 place-items-center bg-white text-[var(--brand-ink)] ' + LENS.hoverControl;
@@ -245,50 +336,112 @@ const GraphCardInner = forwardRef<GraphCardHandle, GraphCardProps>(function Grap
               </span>
             </span>
           ))}
+          {large && !replaceCanvas && !focusedId && (
+            <div role="group" aria-label="Network view" className={cn('ml-auto flex overflow-hidden rounded-[4px] border', LENS.border)}>
+              {(['network', 'summary'] as const).map((m, i) => (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={mode === m}
+                  onClick={() => choose(m)}
+                  className={cn(
+                    'px-2.5 py-1 text-[12px]',
+                    i > 0 && 'border-l',
+                    LENS.border,
+                    mode === m ? 'bg-[var(--brand-ink)] text-white' : cn('bg-white', LENS.ink, LENS.hoverControl),
+                  )}
+                >
+                  {m === 'network' ? 'Network' : 'Summary'}
+                </button>
+              ))}
+            </div>
+          )}
+          {focusedLarge && largeView && (
+            <button
+              type="button"
+              onClick={() => largeView.onFocus(null)}
+              className={cn('ml-auto rounded-[4px] border bg-white px-2.5 py-1 text-[12px]', LENS.border, LENS.ink, LENS.hoverControl)}
+            >
+              ← Full network ({largeView.nodes.length.toLocaleString('en-US')})
+            </button>
+          )}
         </div>
       </div>
 
       {/* §2.2 canvas */}
       <div ref={canvasRef} className="relative min-h-0 flex-1">
-        {replaceCanvas ?? (
+        {replaceCanvas ?? (showOverview && largeView ? (
+          <LargeNetworkOverview
+            legend={legend}
+            nodes={overviewNodes}
+            edgeCount={largeView.edges.length}
+            weightLabel={largeView.weight?.label}
+            weightFormat={largeView.weight?.format}
+            secondaryTitle={largeView.secondary?.title}
+            focusedId={largeView.focusedId}
+            onFocus={(id) => largeView.onFocus(id)}
+            onShowGraph={() => choose('network')}
+          />
+        ) : (
           <>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onNodeClick={onNodeClick}
-              onNodeDoubleClick={onNodeDoubleClick}
-              onNodeDragStart={onNodeDragStart}
-              onPaneClick={onPaneClick}
-              nodesDraggable
-              nodesConnectable={false}
-              edgesFocusable={false}
-              panOnDrag
-              zoomOnDoubleClick={false}
-              minZoom={0.3 * fitZoom}
-              maxZoom={4 * fitZoom}
-              attributionPosition="top-right"
-              // The selected ring (§3): React Flow's own is 0.5px and reads as nothing
-              // against a 1px outline. Nodes are never dimmed; the ring is the cue.
-              className="[&_.react-flow__node.selected]:shadow-[0_0_0_1.5px_var(--brand-ink)]"
-            >
-              <Background variant={BackgroundVariant.Dots} gap={20} size={1} color={GRAPH_INK.dotGrid} />
-              <MiniMap
-                pannable
-                nodeColor={minimapNodeColor}
-                nodeStrokeWidth={0}
-                maskColor="rgba(255,255,255,0.55)"
-                maskStrokeColor="var(--brand-ink)"
-                maskStrokeWidth={1}
-                position="bottom-right"
-                className={cn(
-                  '!m-0 !bottom-[18px] !right-3 overflow-hidden rounded-[4px] border !bg-[rgba(255,255,255,.95)]',
-                  LENS.border,
-                  '[&_.react-flow__minimap-node]:opacity-80',
-                )}
-                style={{ width: 160, height: 96 }}
+            {showCanvasGraph && largeView ? (
+              <LargeGraphCanvas
+                ref={gcRef}
+                nodes={largeView.nodes}
+                edges={largeView.edges}
+                colorOf={(n) => {
+                  const i = legendKeys.indexOf(String(largeView.groupOf(n) ?? ''));
+                  return i >= 0 ? i : legendKeys.length;
+                }}
+                palette={palette}
+                shape={legendShape === 'round' ? 'circle' : 'rect'}
+                layout={largeView.layout}
+                selectedId={largeView.selectedId}
+                onSelect={largeView.onSelect}
+                onFocus={largeView.onFocus}
+                onZoom={setCanvasZoom}
               />
-            </ReactFlow>
+            ) : (
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onNodeClick={onNodeClick}
+                onNodeDoubleClick={onNodeDoubleClick}
+                onNodeDragStart={onNodeDragStart}
+                onPaneClick={onPaneClick}
+                // A focus on a big graph is small; the rest of React Flow's work is the same.
+                onlyRenderVisibleElements={large}
+                nodesDraggable
+                nodesConnectable={false}
+                edgesFocusable={false}
+                panOnDrag
+                zoomOnDoubleClick={false}
+                minZoom={0.3 * fitZoom}
+                maxZoom={4 * fitZoom}
+                attributionPosition="top-right"
+                // The selected ring (§3): React Flow's own is 0.5px and reads as nothing
+                // against a 1px outline. Nodes are never dimmed; the ring is the cue.
+                className="[&_.react-flow__node.selected]:shadow-[0_0_0_1.5px_var(--brand-ink)]"
+              >
+                <Background variant={BackgroundVariant.Dots} gap={20} size={1} color={GRAPH_INK.dotGrid} />
+                <MiniMap
+                  pannable
+                  nodeColor={minimapNodeColor}
+                  nodeStrokeWidth={0}
+                  maskColor="rgba(255,255,255,0.55)"
+                  maskStrokeColor="var(--brand-ink)"
+                  maskStrokeWidth={1}
+                  position="bottom-right"
+                  className={cn(
+                    '!m-0 !bottom-[18px] !right-3 overflow-hidden rounded-[4px] border !bg-[rgba(255,255,255,.95)]',
+                    LENS.border,
+                    '[&_.react-flow__minimap-node]:opacity-80',
+                  )}
+                  style={{ width: 160, height: 96 }}
+                />
+              </ReactFlow>
+            )}
 
             {/* §2.3 zoom stack */}
             <div
@@ -298,15 +451,15 @@ const GraphCardInner = forwardRef<GraphCardHandle, GraphCardProps>(function Grap
               )}
             >
               {[
-                { label: 'Zoom in', Icon: Plus, run: () => zoomBy(1.25) },
-                { label: 'Zoom out', Icon: Minus, run: () => zoomBy(0.8) },
-                { label: 'Fit view', Icon: Maximize, run: fit },
+                { label: 'Zoom in', Icon: Plus, run: () => zoomStep(1.25) },
+                { label: 'Zoom out', Icon: Minus, run: () => zoomStep(0.8) },
+                { label: 'Fit view', Icon: Maximize, run: fitView },
                 {
                   label: 'Reset layout',
                   Icon: RotateCcw,
                   run: () => {
                     onResetLayout();
-                    fit();
+                    fitView();
                   },
                 },
               ].map(({ label, Icon, run }, i) => (
@@ -332,14 +485,17 @@ const GraphCardInner = forwardRef<GraphCardHandle, GraphCardProps>(function Grap
 
             <p
               className={cn(
-                'pointer-events-none absolute bottom-5 left-24 right-[184px] z-10 truncate text-center text-[10px]',
+                'pointer-events-none absolute bottom-5 left-24 z-10 truncate text-center text-[10px]',
+                showCanvasGraph ? 'right-3' : 'right-[184px]',
                 LENS.muted,
               )}
             >
-              {hint}
+              {showCanvasGraph
+                ? 'Click a node to select it · double-click to focus its supply path · drag to pan · scroll to zoom'
+                : hint}
             </p>
           </>
-        )}
+        ))}
         {overlay}
       </div>
 

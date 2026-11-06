@@ -211,6 +211,6 @@ When it was last changed. Server-stamped by the `update_*_updated_at` trigger.
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `b7b5c922471e`, engine `0.8.3`,
 sidecar `supabase/contract/disruption_scenario_targets.contract.yaml`, table created by `20250827171106_00d577a4-5496-4e8d-8775-bbe357746c20.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

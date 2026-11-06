@@ -51,8 +51,8 @@ Two policies through the project's organization, the same pair `tier2_suppliers`
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
 | `DataManager.tsx` | rpc delete_project_dataset | `src/pages/DataManager.tsx:737` | yes |
-| `ProjectPolicies.tsx` | rpc get_project_datasets | `src/lib/policies/projectLanes.ts:82` | yes |
-| `SimulationLab.tsx` | rpc get_project_datasets | `src/lib/policies/projectLanes.ts:82` | yes |
+| `ProjectPolicies.tsx` | rpc get_project_datasets | `src/lib/policies/projectLanes.ts:108` | yes |
+| `SimulationLab.tsx` | rpc get_project_datasets | `src/lib/policies/projectLanes.ts:108` | yes |
 
 Each row says the page READS the table by that path, at that line. It does
 not say every column below is displayed there — a column carries its own
@@ -218,6 +218,6 @@ When the row was last written. Server-stamped by trigger.
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `b7b5c922471e`, engine `0.8.3`,
 sidecar `supabase/contract/multi_tier_supply_chain.contract.yaml`, table created by `20250820145837_5a2d95f1-7a5f-4bbb-8ac8-995d53011bce.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

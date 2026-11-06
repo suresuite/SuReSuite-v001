@@ -74,7 +74,7 @@ partially or get corrected — the write fails.
 
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
-| `FirmLevelNetwork.tsx` | table read | `src/pages/FirmLevelNetwork.tsx:330` | yes |
+| `FirmLevelNetwork.tsx` | table read | `src/pages/FirmLevelNetwork.tsx:349` | yes |
 | `ProductLevelNetwork.tsx` | table read | `src/pages/ProductLevelNetwork.tsx:385` | yes |
 
 Each row says the page READS the table by that path, at that line. It does
@@ -130,7 +130,7 @@ The country the risk class applies to, spelled as the network pages spell it —
 | Validated at ingest | must equal upper(btrim(country)) — CHECK risk_data_country_normalized |
 | Rendered at | `[object Object]`, `[object Object]` |
 
-**Rendered on** `FirmLevelNetwork.tsx` (`src/pages/FirmLevelNetwork.tsx:330`), `ProductLevelNetwork.tsx` (`src/pages/ProductLevelNetwork.tsx:385`) —
+**Rendered on** `FirmLevelNetwork.tsx` (`src/pages/FirmLevelNetwork.tsx:349`), `ProductLevelNetwork.tsx` (`src/pages/ProductLevelNetwork.tsx:385`) —
 each of these names this column in an explicit `select` list, so the claim
 is about the column and not only about the table.
 
@@ -155,7 +155,7 @@ for one you did.
 |---|---|---|---|
 | no row exists for the node's country | the map renders the node grey and labels it "Unknown" | `default` | RiskDataNotice — the page says the dimension is missing rather than shading it away |
 
-**Rendered on** `FirmLevelNetwork.tsx` (`src/pages/FirmLevelNetwork.tsx:330`), `ProductLevelNetwork.tsx` (`src/pages/ProductLevelNetwork.tsx:385`) —
+**Rendered on** `FirmLevelNetwork.tsx` (`src/pages/FirmLevelNetwork.tsx:349`), `ProductLevelNetwork.tsx` (`src/pages/ProductLevelNetwork.tsx:385`) —
 each of these names this column in an explicit `select` list, so the claim
 is about the column and not only about the table.
 
@@ -253,6 +253,6 @@ When the row was last modified. Server-stamped.
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `b7b5c922471e`, engine `0.8.3`,
 sidecar `supabase/contract/risk_data.contract.yaml`, table created by `20260915000003_risk_data.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

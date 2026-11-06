@@ -24,7 +24,7 @@ surfaces:
   - page: "DataManager.tsx"
     via: "rpc list_projects"
     grain: table
-    evidence: "src/pages/DataManager.tsx:215"
+    evidence: "src/lib/projects/projectsCache.ts:59"
     confirmed: true
   - page: "DeveloperApi.tsx"
     via: "rpc list_projects"
@@ -34,37 +34,37 @@ surfaces:
   - page: "FirmLevelNetwork.tsx"
     via: "rpc list_projects"
     grain: table
-    evidence: "src/pages/FirmLevelNetwork.tsx:273"
+    evidence: "src/lib/projects/projectsCache.ts:59"
     confirmed: true
   - page: "InteractiveNetworkSpace.tsx"
     via: "rpc list_projects"
     grain: table
-    evidence: "src/pages/InteractiveNetworkSpace.tsx:339"
+    evidence: "src/lib/projects/projectsCache.ts:59"
     confirmed: true
   - page: "ProcessLevelNetwork.tsx"
     via: "rpc list_projects"
     grain: table
-    evidence: "src/pages/ProcessLevelNetwork.tsx:286"
+    evidence: "src/lib/projects/projectsCache.ts:59"
     confirmed: true
   - page: "ProductLevelNetwork.tsx"
     via: "rpc list_projects"
     grain: table
-    evidence: "src/pages/ProductLevelNetwork.tsx:259"
+    evidence: "src/lib/projects/projectsCache.ts:59"
     confirmed: true
   - page: "ProjectIntelligence.tsx"
     via: "rpc list_projects"
     grain: table
-    evidence: "src/pages/ProjectIntelligence.tsx:187"
+    evidence: "src/lib/projects/projectsCache.ts:59"
     confirmed: true
   - page: "ProjectPolicies.tsx"
     via: "rpc list_projects"
     grain: table
-    evidence: "src/hooks/useProjects.ts:24"
+    evidence: "src/lib/projects/projectsCache.ts:59"
     confirmed: true
   - page: "SimulationLab.tsx"
     via: "rpc list_projects"
     grain: table
-    evidence: "src/hooks/useProjects.ts:24"
+    evidence: "src/lib/projects/projectsCache.ts:59"
     confirmed: true
 
 governance:

@@ -1,4 +1,5 @@
 // @ts-nocheck — schema mismatch: this file targets a supply-chain schema not yet migrated into this project. Remove once tables/RPCs are created.
+import { clusterPoints, BASE_RADIUS } from '@/lib/network/mapClusters';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -401,45 +402,23 @@ const createMarkerElement = useCallback((node: Node<NodeData>, isSelected: boole
       markers.current.forEach(marker => marker.remove());
       markers.current.clear();
 
-      // Group nearby nodes by location (simple clustering)
-       const clusteredNodes = new Map();
-       const clusterRadius = 0.01; // ~1km clustering radius
-       
-       (supplierCustomerNodes || []).forEach(n => {
-         const lon = Number(n.longitude);
-         const lat = Number(n.latitude);
-         console.log(`MapView: Processing node ${n.node_id} - Raw coords: ${n.longitude}, ${n.latitude} - Parsed: ${lon}, ${lat}`);
-         
-         if (Number.isFinite(lon) && Number.isFinite(lat)) {
-          //  const group = (n.node_type === 'supplier' || n.node_group?.toLowerCase() === 'supplier') ? 'A' : 'D';
+      // Group nearby nodes by location. One marker (and one popup) per cluster, so a map of
+      // a thousand suppliers stays pannable: the radius is ~1 km as it always was, and widens
+      // only when that would leave more than MAX_MARKERS (`lib/network/mapClusters.ts`).
+      const points = [];
+      (supplierCustomerNodes || []).forEach(n => {
+        const lon = Number(n.longitude);
+        const lat = Number(n.latitude);
+        if (Number.isFinite(lon) && Number.isFinite(lat)) {
           const group = (n.node_type?.toLowerCase() === 'supplier' || n.node_group?.toLowerCase() === 'supplier') ? 'A' : 'D';
-
-
-           // Find existing cluster within radius
-           let clustered = false;
-           for (const [clusterKey, cluster] of clusteredNodes) {
-             const [clusterLon, clusterLat] = clusterKey.split(',').map(Number);
-             const distance = Math.sqrt(Math.pow(lon - clusterLon, 2) + Math.pow(lat - clusterLat, 2));
-             
-             if (distance < clusterRadius && cluster.group === group) {
-               cluster.nodes.push(n);
-               cluster.count++;
-               clustered = true;
-               break;
-             }
-           }
-           
-           // Create new cluster if not clustered
-           if (!clustered) {
-             const clusterKey = `${lon},${lat},${group}`;
-             clusteredNodes.set(clusterKey, {
-               lon, lat, group, count: 1, nodes: [n]
-             });
-           }
-         } else {
-           console.log(`MapView: Skipping node ${n.node_id} - Invalid coordinates: lon=${lon}, lat=${lat}`);
-         }
-       });
+          points.push({ lon, lat, group, ref: n });
+        }
+      });
+      const { clusters: builtClusters, radius: clusterRadiusUsed } = clusterPoints(points);
+      const clusteredNodes = new Map(builtClusters.map((c, i) => [String(i), c]));
+      if (clusterRadiusUsed > BASE_RADIUS) {
+        toast.info(`${points.length.toLocaleString('en-US')} locations grouped into ${builtClusters.length} markers — click a marker to list the locations it holds`);
+      }
 
        // Add clustered markers
        let supplierCount = 0;

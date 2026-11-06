@@ -36,12 +36,12 @@ surfaces:
   - page: "ProjectPolicies.tsx"
     via: "rpc get_project_datasets"
     grain: table
-    evidence: "src/lib/policies/projectLanes.ts:82"
+    evidence: "src/lib/policies/projectLanes.ts:108"
     confirmed: true
   - page: "SimulationLab.tsx"
     via: "rpc get_project_datasets"
     grain: table
-    evidence: "src/lib/policies/projectLanes.ts:82"
+    evidence: "src/lib/policies/projectLanes.ts:108"
     confirmed: true
 
 governance:

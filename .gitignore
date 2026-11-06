@@ -61,3 +61,5 @@ build/
 scripts/deploy.env
 deploy.env
 ngan_test
+# Large demo dataset: generated on demand (scripts/demo_project_large/build_dataset.py)
+scripts/demo_project_large/out/

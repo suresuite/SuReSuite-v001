@@ -29,22 +29,22 @@ surfaces:
   - page: "FirmLevelNetwork.tsx"
     via: "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)"
     grain: table
-    evidence: "src/components/MLPrediction.tsx:77"
+    evidence: "src/components/MLPrediction.tsx:84"
     confirmed: true
   - page: "ProcessLevelNetwork.tsx"
     via: "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)"
     grain: table
-    evidence: "src/components/MLPrediction.tsx:77"
+    evidence: "src/components/MLPrediction.tsx:84"
     confirmed: true
   - page: "ProductLevelNetwork.tsx"
     via: "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)"
     grain: table
-    evidence: "src/components/MLPrediction.tsx:77"
+    evidence: "src/components/MLPrediction.tsx:84"
     confirmed: true
   - page: "ProductLevelNetwork.tsx"
     via: "rpc get_product_level_metrics (kind product_metrics, PLAN.md §4 D313)"
     grain: table
-    evidence: "src/pages/ProductLevelNetwork.tsx:289"
+    evidence: "src/pages/ProductLevelNetwork.tsx:285"
     confirmed: true
 
 governance:

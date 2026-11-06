@@ -57,6 +57,8 @@ pages_without_project_data:
   - Auth.tsx                 # sign-in; reaches approved_users only through useAuth
   - AuthForgotPassword.tsx   # /auth's "Forgot password?" form; one RPC, request_password_reset,
                              # which records a note for a super admin and reads no project data
+  - DemoEntry.tsx            # /demo; starts a demo session in sessionStorage and redirects. It reads
+                             # nothing itself: the pages it sends a visitor to do their own reads.
   - Forbidden.tsx            # 403 interstitial; renders a message and a link
   - GettingStarted.tsx       # static onboarding copy
   - Landing.tsx              # unauthenticated landing page

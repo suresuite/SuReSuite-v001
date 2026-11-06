@@ -20,6 +20,7 @@ import { unitDays } from '../../supabase/functions/_shared/grading.ts';
 import { INGEST_DATASETS } from '../../supabase/functions/_shared/ingestSpec.generated.ts';
 // WP 3.4 — the wizard lands a file and then hands the RUN to the review screen.
 // The same component serves an MRP sync; nothing here branches on source_kind.
+import { edgeErrorMessage } from '@/lib/ingest/edgeError';
 import { IngestRunReview } from '@/components/ingest/IngestRunReview';
 import { useIngestRun } from '@/hooks/useIngestRun';
 
@@ -659,7 +660,7 @@ const UploadWizard = ({
     body.append('mode', 'parse');
 
     const { data, error } = await supabase.functions.invoke('ingest-file', { body });
-    if (error) throw new Error(error.message || 'The file could not be read.');
+    if (error) throw new Error(await edgeErrorMessage(error, 'The file could not be read.'));
     if (!data?.success) {
       const findings: ParseFinding[] = data?.findings ?? [];
       throw new Error(findings.map((f) => f.message).join('\n') || data?.error || 'The file could not be read.');
@@ -1196,7 +1197,7 @@ const UploadWizard = ({
         body.append('mode', 'land');
 
         const { data, error } = await supabase.functions.invoke('ingest-file', { body });
-        if (error) throw new Error(error.message || 'The upload failed.');
+        if (error) throw new Error(await edgeErrorMessage(error, 'The upload failed.'));
         if (!data?.success) {
           const findings: ParseFinding[] = data?.findings ?? [];
           throw new Error(

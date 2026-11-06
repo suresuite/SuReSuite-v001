@@ -212,17 +212,17 @@ surfaces:
   - page: "FirmLevelNetwork.tsx"
     via: "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)"
     grain: table
-    evidence: "src/components/MLPrediction.tsx:77"
+    evidence: "src/components/MLPrediction.tsx:84"
     confirmed: true
   - page: "ProcessLevelNetwork.tsx"
     via: "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)"
     grain: table
-    evidence: "src/components/MLPrediction.tsx:77"
+    evidence: "src/components/MLPrediction.tsx:84"
     confirmed: true
   - page: "ProductLevelNetwork.tsx"
     via: "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)"
     grain: table
-    evidence: "src/components/MLPrediction.tsx:77"
+    evidence: "src/components/MLPrediction.tsx:84"
     confirmed: true
   - page: "ProductLevelNetwork.tsx"
     via: "rpc project_freshness (GraphVersionChip → FreshnessBadge, WP 10.1)"

@@ -221,6 +221,6 @@ When the row was first inserted. An upsert of the same key does not re-stamp it.
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `b7b5c922471e`, engine `0.8.3`,
 sidecar `supabase/contract/run_item_series.contract.yaml`, table created by `20260720000001_run_item_series.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*
