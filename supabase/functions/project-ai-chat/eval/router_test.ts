@@ -7,6 +7,7 @@ import {
   AGENT_PRECEDENCE,
   AGENT_ROSTER,
   ROUTER_CONFIDENCE_MIN,
+  AGENT_OWNERSHIP,
   buildClassifierPrompt,
   classifyIntent,
   decideRoute,
@@ -118,6 +119,15 @@ Deno.test("classification prompt lists enabled agents in dependency order (§6.3
   // a disabled agent's intents never leak into the prompt
   const only = buildClassifierPrompt("x", ["data-steward"]);
   assert(!only.includes("exp.design"), "disabled agents are invisible to the router (§13.2)");
+  // §6.3 ownership notes (ai-agents.md §25 Q1): one per ENABLED agent, after
+  // the owner list and in the same precedence order; a disabled agent's note
+  // never reaches the classifier.
+  assertStringIncludes(only, `- data-steward: ${AGENT_OWNERSHIP["data-steward"]}`);
+  assert(!only.includes(AGENT_OWNERSHIP["experiment-designer"]), "a disabled agent's ownership note never leaks");
+  const notes = prompt.slice(prompt.indexOf("Ownership notes"));
+  assert(notes.indexOf("- data-steward:") < notes.indexOf("- vv-analyst:") &&
+    notes.indexOf("- vv-analyst:") < notes.indexOf("- explainer:"), "ownership notes follow precedence order");
+  assert(prompt.indexOf("Ownership notes") > prompt.indexOf("prefer the earliest"), "notes come after the owner list");
 });
 
 Deno.test("classifyIntent honors the §6.1 contract shape", async () => {
@@ -144,4 +154,14 @@ Deno.test("roster: every precedence slug has a mission and intents", () => {
     assert(AGENT_ROSTER[slug].mission.length > 10, `${slug} mission`);
     assert(AGENT_ROSTER[slug].intents.length >= 2, `${slug} intents`);
   }
+});
+
+Deno.test("§6.3 ownership notes: the doc's verbatim table and AGENT_OWNERSHIP are one fact", async () => {
+  const doc = await Deno.readTextFile(new URL("../../../../docs/design/ai-agents.md", import.meta.url));
+  const start = doc.indexOf("`{{enabled_agents_ownership_notes}}`");
+  assert(start >= 0, "§6.3 must document the ownership-notes placeholder");
+  const section = doc.slice(start, doc.indexOf("### 6.4", start));
+  const fromDoc: Record<string, string> = {};
+  for (const m of section.matchAll(/^\| `([a-z-]+)` \| (.+) \|$/gm)) fromDoc[m[1]] = m[2];
+  assertEquals(fromDoc, { ...AGENT_OWNERSHIP });
 });

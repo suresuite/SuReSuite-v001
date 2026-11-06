@@ -7,7 +7,7 @@
 #   agents=<comma list>       which agents to score (§7.4: every enabled agent)
 #   models=<comma list>       which models to score (empty = gpt-5)
 #   mode=full|state-only      state-only skips the two eval tiers
-run=6 §25 Q1 iteration 1 — §6.3 owned-interpretation prompt + §6.6 cache_checkable exclusion, gpt-5 only (2026-11-06)
+run=7 §25 Q1 iteration 2 (ownership notes, injection + mixed rules) + Q2 (refusal text, empty-draft rule, version-id description), gpt-5 only (2026-11-07)
 agents=data-steward,policy-configurator,vv-analyst,experiment-designer,report-builder
 models=gpt-5
 mode=full
