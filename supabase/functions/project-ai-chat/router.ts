@@ -226,7 +226,10 @@ Routes:
   this project's data that no agent below owns.
 - "artifact": the user wants a change made or a formal artifact produced, OR
   asks something an agent below owns by its ownership note — even when it
-  is phrased as a question.
+  is phrased as a question. Interpreting THIS project's own validation
+  evidence, run results or missing data is owned in this sense: its owner
+  answers from that evidence, so it is never "advisory" while the owner is
+  in the list below.
 - "mixed": the message asks a question AND requests a change or artifact
   (for example "explain X, and fix it"); the owner is the request's owner.
 

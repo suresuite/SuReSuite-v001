@@ -1241,7 +1241,10 @@ Routes:
   this project's data that no agent below owns.
 - "artifact": the user wants a change made or a formal artifact produced, OR
   asks something an agent below owns by its ownership note — even when it
-  is phrased as a question.
+  is phrased as a question. Interpreting THIS project's own validation
+  evidence, run results or missing data is owned in this sense: its owner
+  answers from that evidence, so it is never "advisory" while the owner is
+  in the list below.
 - "mixed": the message asks a question AND requests a change or artifact
   (for example "explain X, and fix it"); the owner is the request's owner.
 
@@ -1764,6 +1767,13 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     - §6.6: `cache_checkable` is false for such why-questions, because they need decision traces a completed run does not store.
 
     Iteration 2 is NOT in production; it exists only on this branch, and production runs iteration 1. So nothing regressed for users.
+    (o) **Iteration 3 (run `42313256233`): the best run so far on every agent except the one production runs.** 48 misses (from 58).
+    - **Now meeting both targets:** designer P/R .929/.867 and report .964/1.0.
+    - **Close:** steward .963/.813; configurator .892/.971; advisory false-artifact .043 (from .159; target .03); cache-checkable precision .652 (from .444).
+    - **Met again:** plan integrity 1.0 and schema validity 1.0 for both draft agents.
+    - **Still failing:** `vv-analyst` recall was .485.
+
+    The miss records explain why. In 15 of the 17 V&V misses the classifier picked the RIGHT intent (`vv.interpret` / `vv.next_steps`) at confidence .77–.88, but route `advisory`. It knows the question is the V&V Analyst's and still judges a question answerable without the agent. Iteration 1 is the only prompt that held V&V recall (.818 on two runs), and the only one whose ROUTE definition said in words that interpreting the project's own evidence is owned even as a question. **Iteration 4** restores that sentence in the route definition in general form (validation evidence, run results or missing data), not per agent, and keeps the ownership notes that fixed everything else.
 
 ---
 
@@ -3623,6 +3633,6 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Step | State | Evidence |
 |---|---|---|
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
-| Q1 | **In progress — iteration 3.** Production runs iteration 1 (vv recall .818 on two runs). Iteration 2 (58 misses, best yet) regressed vv recall to .455 because its V&V note named nouns, not the act of interpreting. Iteration 3 fixes that and the decision-explanation leak, and has been fired on `gpt-5` | 38(g), 38(i), 38(k), 38(n) |
+| Q1 | **In progress — iteration 4.** Iteration 3: 48 misses; designer and report meet target; vv recall .485 (production still runs iteration 1, vv .818). Iteration 4 puts the owned-interpretation sentence back in the route definition, and has been fired on `gpt-5` | 38(g), 38(i), 38(k), 38(n), 38(o) |
 | Q2 | **Schema validity met on `gpt-5`** (steward 1.0, configurator 1.0, run `42310636880`) after the two fixes in 38(l). Remaining: confirm on a second run, then score `gpt-5-mini` at Q4 | 38(h), 38(l), 38(n) |
 | Q3–Q5 | Not started | — |
