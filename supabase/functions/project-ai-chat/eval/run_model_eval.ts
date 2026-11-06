@@ -284,8 +284,31 @@ interface RouteMetrics {
    * per enabled model — scored with ROUTER_V2_SIGNALS on. */
   needsRunRecall: number;
   cacheCheckablePrecision: number;
+  /** ai-agents.md §25.3 Q0: every golden row the router got wrong in ANY
+   * scored dimension, with what was expected and what came back — the
+   * per-class counts above say how much is wrong, these say what, so Q1 can
+   * triage utterances instead of guessing from aggregates. */
+  misses?: RouteMiss[];
   pass: boolean;
   failures: string[];
+}
+
+interface RouteMiss {
+  id: string;
+  utterance: string;
+  mode: string | null;
+  /** Which scored checks this row failed: `owner` (wrong/missing agent —
+   * drives per-class P/R), `advisory_false_artifact`, `mixed_missed`,
+   * `needs_run_missed`, `cache_checkable_false_positive`. */
+  kinds: string[];
+  expected: { route: string; agent_id: string | null; intent: string | null; needs_run: boolean; cache_checkable: boolean };
+  got: { route: string; agent_id: string | null; intent: string | null; needs_run: boolean; cache_checkable: boolean; confidence: number };
+  /** Why the deterministic wrapper demoted the classifier's answer to
+   * advisory (`low_confidence`, `agent_not_enabled`, `parse_failure`, …) —
+   * null when the classifier itself chose this route. A fallback zeroes
+   * `got.confidence`, so without this a demotion and a genuine advisory call
+   * are indistinguishable. */
+  fallback: string | null;
 }
 
 async function evalRouting(
@@ -339,6 +362,7 @@ async function evalRouting(
   // §6.6 metric counters: recall over labeled-true needs_run rows; precision
   // over cache_checkable=true predictions (absent labels mean expected false).
   let needsRunTrue = 0, needsRunHit = 0, cachePredicted = 0, cachePredictedRight = 0;
+  const misses: RouteMiss[] = [];
 
   try {
     for (const row of rows) {
@@ -357,7 +381,14 @@ async function evalRouting(
         ? applyModeToRoute(rawDecision, "ask").decision
         : rawDecision;
 
+      const kinds: string[] = [];
       // per-enabled-class precision/recall over the routed owner
+      const gotOwner = decision.route === "artifact" || decision.route === "mixed" ? decision.agent_id : null;
+      const expectedOwner = enabledExpected.agent_id;
+      if (gotOwner !== expectedOwner &&
+          (enabledAgents.includes(expectedOwner ?? "") || enabledAgents.includes(gotOwner ?? ""))) {
+        kinds.push("owner");
+      }
       for (const a of enabledAgents) {
         const expected = enabledExpected.agent_id === a;
         const got = decision.agent_id === a && (decision.route === "artifact" || decision.route === "mixed");
@@ -367,20 +398,50 @@ async function evalRouting(
       }
       if (enabledExpected.route === "advisory") {
         advisoryN++;
-        if (decision.route !== "advisory") advisoryFalse++;
+        if (decision.route !== "advisory") {
+          advisoryFalse++;
+          kinds.push("advisory_false_artifact");
+        }
       }
       if (enabledExpected.route === "mixed") {
         mixedN++;
         if (decision.route === "mixed") mixedHit++;
+        else kinds.push("mixed_missed");
       }
       // §6.6 signals (route-independent; the fallbacks carry them through).
       if (row.expect.needs_run === true) {
         needsRunTrue++;
         if (decision.needs_run) needsRunHit++;
+        else kinds.push("needs_run_missed");
       }
       if (decision.cache_checkable) {
         cachePredicted++;
         if (row.expect.cache_checkable === true) cachePredictedRight++;
+        else kinds.push("cache_checkable_false_positive");
+      }
+      if (kinds.length > 0) {
+        misses.push({
+          id: row.id,
+          utterance: row.utterance,
+          mode: row.mode ?? null,
+          kinds,
+          expected: {
+            route: enabledExpected.route,
+            agent_id: enabledExpected.agent_id,
+            intent: enabledExpected.intent,
+            needs_run: row.expect.needs_run === true,
+            cache_checkable: row.expect.cache_checkable === true,
+          },
+          got: {
+            route: decision.route,
+            agent_id: decision.agent_id,
+            intent: decision.intent,
+            needs_run: decision.needs_run === true,
+            cache_checkable: decision.cache_checkable === true,
+            confidence: decision.confidence,
+          },
+          fallback: rawDecision.short_circuit ?? null,
+        });
       }
     }
   } finally {
@@ -417,6 +478,7 @@ async function evalRouting(
     mixedRecall,
     needsRunRecall,
     cacheCheckablePrecision,
+    misses,
     pass: failures.length === 0,
     failures,
   };
@@ -431,8 +493,24 @@ interface StewardMetrics {
   validDraftCalls: number;
   schemaValidity: number;
   gateViolationRate: number;
+  /** ai-agents.md §25.3 Q0: every live draft call that did NOT produce a
+   * proposal, with the arguments the model sent — the schema-validity rate
+   * says how often, these say which fields Q2 has to tighten. */
+  invalidDraftCalls?: InvalidDraftCall[];
   pass: boolean;
   failures: string[];
+}
+
+interface InvalidDraftCall {
+  fixture: string;
+  tool: string;
+  args: string;
+}
+
+/** Arguments as JSON, capped so one runaway payload cannot bloat the report. */
+function clipArgs(args: unknown): string {
+  const text = JSON.stringify(args) ?? "null";
+  return text.length > 2000 ? `${text.slice(0, 2000)}…(+${text.length - 2000} chars)` : text;
 }
 
 const STEWARD_FIXTURES = [
@@ -444,6 +522,7 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
   Deno.env.set("AGENT_ENABLED_IDS", "data-steward");
   const fixtures: StewardMetrics["fixtures"] = {};
   let draftCalls = 0, validDraftCalls = 0;
+  const invalidDraftCalls: InvalidDraftCall[] = [];
 
   for (const id of STEWARD_FIXTURES) {
     const fixture = await loadFixture(id);
@@ -481,6 +560,7 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
         if (call.name !== "draft_item_master_update") continue;
         draftCalls++;
         if (call.row_count > 0) validDraftCalls++;
+        else invalidDraftCalls.push({ fixture: id, tool: call.name, args: clipArgs(call.args) });
       }
     }
 
@@ -534,6 +614,7 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
     validDraftCalls,
     schemaValidity,
     gateViolationRate,
+    invalidDraftCalls,
     pass: failures.length === 0,
     failures,
   };
@@ -712,6 +793,7 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
   if (cfg.agentId === "report-builder") Deno.env.set("FILE_WORKSPACE_ENABLED", "true");
   const fixtures: StewardMetrics["fixtures"] = {};
   let draftCalls = 0, validDraftCalls = 0;
+  const invalidDraftCalls: InvalidDraftCall[] = [];
 
   for (const id of cfg.fixtures) {
     const fixture = await loadFixtureFrom(cfg.fixtureDir, id);
@@ -750,6 +832,7 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
         if (call.name !== cfg.draftTool) continue;
         draftCalls++;
         if (call.row_count > 0) validDraftCalls++;
+        else invalidDraftCalls.push({ fixture: id, tool: call.name, args: clipArgs(call.args) });
       }
     }
 
@@ -788,6 +871,7 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
     validDraftCalls,
     schemaValidity,
     gateViolationRate,
+    invalidDraftCalls,
     pass: failures.length === 0,
     failures,
   };
@@ -1626,6 +1710,13 @@ export async function runModelEval(opts: {
       `; needs-run-recall=${routing.needsRunRecall.toFixed(3)}` +
       `; cache-checkable-precision=${routing.cacheCheckablePrecision.toFixed(3)}`);
     for (const f of routing.failures) console.log(`  ✗ ${f}`);
+    if (routing.misses && routing.misses.length > 0) {
+      console.log(`  routing misses (${routing.misses.length}/${routing.n}) — full records in the report's routing[].misses:`);
+      for (const m of routing.misses) {
+        console.log(`    · ${m.id} [${m.kinds.join(",")}] expected ${m.expected.route}/${m.expected.agent_id ?? "-"} ` +
+          `got ${m.got.route}/${m.got.agent_id ?? "-"} (conf ${m.got.confidence.toFixed(2)}${m.fallback ? `, fallback ${m.fallback}` : ""}) — ${JSON.stringify(m.utterance)}`);
+      }
+    }
 
     let steward: StewardMetrics | null = null;
     if (agents.includes("data-steward")) {
@@ -1636,6 +1727,7 @@ export async function runModelEval(opts: {
         `gate-violation-attempts=${steward.gateViolationRate.toFixed(3)} ` +
         `fixtures=${Object.values(steward.fixtures).filter((f) => f.pass).length}/${Object.keys(steward.fixtures).length}`);
       for (const f of steward.failures) console.log(`  ✗ ${f}`);
+      for (const c of steward.invalidDraftCalls ?? []) console.log(`    · invalid draft ${c.fixture} ${c.tool} ${c.args.slice(0, 300)}`);
     }
 
     // Stage 2/3 agents (§9.3/§9.4): score every enabled agent's suite.
@@ -1653,6 +1745,7 @@ export async function runModelEval(opts: {
         `gate-violation-attempts=${metrics.gateViolationRate.toFixed(3)} ` +
         `fixtures=${Object.values(metrics.fixtures).filter((f) => f.pass).length}/${Object.keys(metrics.fixtures).length}`);
       for (const f of metrics.failures) console.log(`  ✗ ${f}`);
+      for (const c of metrics.invalidDraftCalls ?? []) console.log(`    · invalid draft ${c.fixture} ${c.tool} ${c.args.slice(0, 300)}`);
     }
 
     // H1 (§7.7-1): the coverage battery + entity-fabrication metric (target

@@ -5,7 +5,9 @@
 # results land on the eval-results branch (results/latest.log).
 #
 #   agents=<comma list>       which agents to score (§7.4: every enabled agent)
+#   models=<comma list>       which models to score (empty = gpt-5)
 #   mode=full|state-only      state-only skips the two eval tiers
-run=4 v1.2 GA flip — pre-flip evidence, take 4 (heredoc fixes the shell-quoting bug in the key-resolve step)
+run=6 §25 Q1 iteration 1 — §6.3 owned-interpretation prompt + §6.6 cache_checkable exclusion, gpt-5 only (2026-11-06)
 agents=data-steward,policy-configurator,vv-analyst,experiment-designer,report-builder
+models=gpt-5
 mode=full

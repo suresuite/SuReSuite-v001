@@ -118,9 +118,16 @@ jobs:
           FLY_APP_NAME: ${{ vars.FLY_APP_NAME || 'suresuite-sim-worker' }}
 
       # AI-agent v1.2 GA server flags (ai-agents.md §9 flag conventions; GA
-      # flip per §9.8, §14.7 M0-M2 and §16 — flipped only after the §7.4 live
-      # model-scored eval passed; see .github/workflows/ai-agent-model-eval.yml
-      # and the eval-results branch). Values are deliberately literal: these
+      # flip per §9.8, §14.7 M0-M2 and §16). CORRECTED 2026-11-06: this said
+      # the flip came "only after the §7.4 live model-scored eval passed". It
+      # did not — the only live run (35201151294, 2026-09-17, eval-results
+      # branch) FAILS, and four of the five agents named here failed their own
+      # suites in it. AGENT_ENABLED_IDS is therefore NARROWED to the one agent
+      # whose suite passed (vv-analyst) until ai-agents.md §25 Phase Q exits;
+      # the other four are re-added one at a time, each on a green live run.
+      # A disabled agent's asks are answered as questions by the persona (the
+      # router never offers it), so nothing errors — the user loses the
+      # "do it for me" card for that room, not the conversation. Values are deliberately literal: these
       # are deployment flags, not secrets, and this step is their single
       # source of truth. To kill a stage, edit the value here and re-run this
       # workflow (workflow_dispatch or ops-request.yml); every flag off ⇒
@@ -147,7 +154,7 @@ jobs:
           supabase secrets set --project-ref wckdrutwkytwcomrlpib \
             AGENT_TELEMETRY_ENABLED=true \
             AGENT_ROUTER_ENABLED=true \
-            AGENT_ENABLED_IDS=data-steward,policy-configurator,vv-analyst,experiment-designer,report-builder \
+            AGENT_ENABLED_IDS=vv-analyst \
             AGENT_EXPERIMENT_TYPES=single \
             CHAT_STORE_ENABLED=true \
             CHAT_SUMMARY_ENABLED=true \

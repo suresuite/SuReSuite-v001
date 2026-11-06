@@ -82,7 +82,11 @@ jobs:
     # the longest real run is well under 20 minutes. 40 leaves generous headroom
     # for a slow provider while still capping a hung run at 40 wasted minutes
     # instead of 150.
-    timeout-minutes: 40
+    # 2026-11-06 (ai-agents.md §25.3 Q0): raised 40 → 75 because §7.4 scores
+    # EVERY enabled model and the registry serves four. ~14 min per model ×
+    # 4 ≈ 56 min of tier 2; 75 caps a hung run while letting the full roster
+    # finish. A one-model run still ends in ~15 min.
+    timeout-minutes: 75
     permissions:
       contents: write   # publish the report to the eval-results branch
     steps:

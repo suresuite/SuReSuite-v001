@@ -174,7 +174,9 @@ export const ROUTER_V2_PROMPT_BLOCK = `Also decide two booleans:
   reads, or configuration changes.
 - "cache_checkable": true only if the user is asking for a RESULT that a
   previously completed simulation run could already contain (e.g. "what
-  would a 6-week outage of S1 do?", "what did the last run show?").`;
+  would a 6-week outage of S1 do?", "what did the last run show?"). It is
+  false for definitions, data lookups, configuration changes, and requests
+  for a file, report or export — even one built from run results.`;
 
 /** §6.3 classification prompt, verbatim template. v2 (§6.6, behind
  * ROUTER_V2_SIGNALS) gains exactly one block; flag off ⇒ the v1 prompt
@@ -188,8 +190,16 @@ export function buildClassifierPrompt(message: string, enabledAgents: string[]):
 Classify the USER MESSAGE into exactly one route.
 
 Routes:
-- "advisory": the user wants an answer or analysis.
-- "artifact": the user wants a change made or a formal artifact produced.
+- "advisory": a general question — a definition or concept, or a lookup of
+  this project's data (suppliers, materials, spend, risk scores, lead times).
+- "artifact": the user wants a change made or a formal artifact produced, OR
+  an interpretation that an agent below owns: what this project's validation
+  evidence says (validation status, warm-up, replications, statistical tests,
+  the credibility badge) or what its simulation runs showed or would show
+  (run results, comparisons, what-if impacts, briefs). Such an
+  interpretation is "artifact" even when it is phrased as a question, but
+  only if an agent in the list below owns it; why the simulation made one
+  specific decision is not a run interpretation.
 - "mixed": the message contains both.
 
 If artifact or mixed, pick exactly ONE owner from this list (these are the

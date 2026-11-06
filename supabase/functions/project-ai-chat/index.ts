@@ -11,6 +11,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { runChat, resolveModel, type ChatRunResult, type ChatTurn,
   isKnownModelId,
+  isHiddenModelId,
 } from "./providers.ts";
 import { makeToolContext, type ToolContext, type ToolDeclaration, type ToolEnvelope } from "./tools.ts";
 // H2 (§6.6 rule 1): the cache reads that join the persona surface when the
@@ -310,6 +311,14 @@ serve(async (req) => {
     if (!isKnownModelId(typeof model === 'string' ? model : null)) {
       return jsonResponse({
         error: `The model "${String(model)}" isn't available in this deployment. Pick another from the model menu.`,
+        type: 'BAD_REQUEST',
+      });
+    }
+    // §25 Q0: a hidden model (unfunded provider account) is refused by name —
+    // a stale client may still send one from before the picker dropped it.
+    if (isHiddenModelId(typeof model === 'string' ? model : null)) {
+      return jsonResponse({
+        error: `${resolveModel(model).label} is temporarily unavailable. Pick GPT-5 or GPT-5 mini from the model menu.`,
         type: 'BAD_REQUEST',
       });
     }

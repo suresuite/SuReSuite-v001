@@ -1236,8 +1236,16 @@ You are an intent classifier for a supply-chain platform assistant.
 Classify the USER MESSAGE into exactly one route.
 
 Routes:
-- "advisory": the user wants an answer or analysis.
-- "artifact": the user wants a change made or a formal artifact produced.
+- "advisory": a general question — a definition or concept, or a lookup of
+  this project's data (suppliers, materials, spend, risk scores, lead times).
+- "artifact": the user wants a change made or a formal artifact produced, OR
+  an interpretation that an agent below owns: what this project's validation
+  evidence says (validation status, warm-up, replications, statistical tests,
+  the credibility badge) or what its simulation runs showed or would show
+  (run results, comparisons, what-if impacts, briefs). Such an
+  interpretation is "artifact" even when it is phrased as a question, but
+  only if an agent in the list below owns it; why the simulation made one
+  specific decision is not a run interpretation.
 - "mixed": the message contains both.
 
 If artifact or mixed, pick exactly ONE owner from this list (these are the
@@ -1293,7 +1301,9 @@ Also decide two booleans:
   reads, or configuration changes.
 - "cache_checkable": true only if the user is asking for a RESULT that a
   previously completed simulation run could already contain (e.g. "what
-  would a 6-week outage of S1 do?", "what did the last run show?").
+  would a 6-week outage of S1 do?", "what did the last run show?"). It is
+  false for definitions, data lookups, configuration changes, and requests
+  for a file, report or export — even one built from run results.
 ```
 
 Both provider structured-output schemas (`GEMINI_ROUTE_SCHEMA` / `OPENAI_ROUTE_SCHEMA`, §12.2 row 2) gain the two boolean properties; on DeepSeek's best-effort `json_object` mode the deterministic parser tolerates their absence (defaults `false`). Eval: `routing.golden.jsonl` rows gain optional `expect.needs_run` / `expect.cache_checkable` labels; §6.5 targets extend with **needs-run recall ≥ 0.80** and **cache-checkable precision ≥ 0.85** per enabled model (a missed `needs_run` degrades to an honest refusal; a false `cache_checkable` costs one wasted read — both safe failures, hence the slightly looser targets). Flag off ⇒ the v1 prompt and schemas byte-identically.
@@ -1655,6 +1665,32 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     (g) **Impact fill mechanics** (§18.4 kept unmet): `update_risk_alert_impact` is a service-role-only RPC that fills a `pending` impact exactly once for an applied `risk_alert`; it is invoked from `agent-apply` on an on-demand re-POST, and `get_risk_alerts` computes the same range at read time via the shared `computeAlertImpact` — no scheduler, no background job, no notification surface. The range is min/max/mean of the scenario's primary KPI over the run's done `run_replications` rows, citation = the run id.
     (h) **Rights + quota**: `risk_alert` rides the experiment rights row (`agent_apply` + `simulation_lab` + `/simulation-lab`) and the §13.4 experiment quota (`checkApplyQuota` treats it as `experiment_spec` — approving an alert dispatches a run). Approving the alert approves-and-applies the linked `experiment_spec` proposal displayed on the card: one informed human approval, the §13.6 dispatch row exercised once — the linked spec is never separately approvable into a second run.
     (i) **Routing golden set**: like Phase 4a/4b, the `sentinel.*` intents are named in the roster and §18.3 but not yet added to `routing.golden.jsonl` (the set grows when the router-classification eval next runs live). A mock run is never flag-flip evidence (§7.4) — enabling `AGENT_ENABLED_IDS+=disruption-sentinel` requires the live model-scored run on every enabled model first.
+38. **[DECIDED — v1.6, §25 Phase Q, Q0 landing notes, 2026-11-06]** The three §25.2 owner decisions, taken at their defaults by the owner, and what Q0 shipped:
+    (a) **Q-D1 answered from evidence, not by asking.** `supabase secrets list` publishes only SHA-256 digests, but the digest of a candidate value can be recomputed: production's `AGENT_ENABLED_IDS` digest (`b136dcf9…`, run `35201151294`) is the digest of exactly `data-steward,policy-configurator,vv-analyst,experiment-designer,report-builder`, and `AGENT_EXPERIMENT_TYPES` is `single` — the literal values `supabase-functions.yml` sets. So four agents that failed their own suites in that run were live. That workflow's comment claimed the GA flip came "only after the §7.4 live model-scored eval passed"; it did not, and the comment is corrected in the same change.
+    (b) **Narrowed to `vv-analyst`** — the only agent whose suite passed (its routing recall did not; that is Q1's). `AGENT_ENABLED_IDS=vv-analyst` in `supabase-functions.yml`, the flags' single source of truth, so it reaches production on MERGE (the workflow is `branches: [main]`); nothing was deployed from a branch. A disabled agent is never offered to the classifier (`deploymentEnabledAgents`), so its asks are answered as questions by the persona — the user loses that room's proposal card, not the conversation. The other four are re-added one per PR, each on a green live run of its own suite AND its routing class.
+    (c) **Q-D2 (budget)** — Q0 and Q4 score every registry model (`gpt-5`, `gpt-5-mini`, `gemini-2.5-flash`, `deepseek-chat`); Q1–Q3 iterations score `gpt-5` only. `ai-agent-model-eval.yml`'s timeout is raised 40 → 75 minutes so a four-model run can finish. A provider whose account is out of quota reports 429/402 as failures — the workflow says so — and Q0 records that as a billing finding about the provider, not a quality finding about the agent.
+    (d) **Q-D3** — the §7.4 / §6.5 thresholds stand unchanged.
+    (e) **Runner diagnostics (report-only, no metric changed):** `run_model_eval.ts` now writes `routing[].misses` — one record per golden row the router got wrong in any scored dimension (`owner`, `advisory_false_artifact`, `mixed_missed`, `needs_run_missed`, `cache_checkable_false_positive`), with expected vs got and the classifier's confidence — and `invalidDraftCalls` per agent (the fixture, the tool, and the arguments the model sent, capped at 2 000 chars). Both fields are optional on the metric types, so the §23 matrix writer and its tests are untouched; the scoring arithmetic is byte-identical (verified: mock run PASS on all four models, deterministic tier 295 passed / 0 failed, and a sabotaged-oracle run produced the expected 32 owner misses before being reverted).
+    (f) **Q0 RESULT — run `42291434086`, 2026-11-06, `eval-results` commit `3fee76d`; tier 1 green, tier 2 FAIL.** Only the two OpenAI models produced quality data. **`gemini-2.5-flash` answered every call with 429 "exceeded your current quota", and `deepseek-chat` with 402 "Insufficient Balance".** Their zeros are billing, not agent quality, and they are recorded as UNMEASURED, not failed. The same accounts serve production, and both models are user-selectable in the picker, so a user who picks either one today gets a typed provider error on every turn. That is an owner action — fund both accounts or hide both models — and Q4 cannot close without it.
+
+    | Metric (target) | `gpt-5` 09-17 | `gpt-5` Q0 | `gpt-5-mini` Q0 |
+    |---|---|---|---|
+    | Routing recall: steward / configurator / vv / designer / report (≥ 0.85) | .688 / .794 / .303 / .267 / 1.0 | .625 / .794 / .333 / .267 / 1.0 | .656 / .588 / .303 / .333 / .963 |
+    | Routing precision, same order (≥ 0.90) | .846 / .750 / .909 / .889 / .844 | .769 / .730 / 1.0 / .889 / .844 | .618 / .714 / .833 / .769 / .897 |
+    | Advisory false-artifact (≤ 0.03) · needs-run recall (≥ 0.80) · cache-checkable precision (≥ 0.85) | .072 · .594 · .239 | .072 · .656 · .222 | .087 · .656 · .200 |
+    | Golden rows wrong in ≥ 1 dimension | — | 124 / 225 | 129 / 225 |
+    | Draft schema validity: steward / configurator (≥ 0.95) | .833 / .714 | .833 / .833 | .625 / .417 |
+    | Entity fabrications (0) | 1 | **0** | 1 (`cov-08`, 90 %) |
+    | Fixture misses | cov-04, cov-08, cl-08, ed-02, rb-01, rb-03 | cov-04, cl-08, **cl-04**, ed-02, **ed-04**, rb-01, rb-03, **pc-02**, **pc-07** | gpt-5's + pc-05, rb-05, cov-08 |
+
+    Bold marks a change since 09-17. `cov-08` passed on `gpt-5` this time, which makes it a stochastic pass rather than a fix, so Q3 still owns it. `cl-04` (plan integrity: two `update_task_plan` writes rejected), `ed-04` (a DOE ask got a proposal instead of the honest refusal) and `pc-02`/`pc-07` (defaults-family mismatch) are new failures in prompts nobody changed. The model behind the `gpt-5` alias has drifted under a fixed prompt, which is the strongest argument yet for a weekly cadence (Q5).
+    (g) **Q1 triage — the per-row misses (`routing[].misses`) name the cause, and it is structural, not a model weakness.** On `gpt-5`, 35 of the 124 rows are the classifier choosing `advisory` for an ask the golden set gives `vv-analyst` (20 — "Is my model validated?", "Was 8 weeks of warm-up enough?") or `experiment-designer` (15 — "What did the last run tell us?", "What would a 6-week outage of S1 do to fill rate?"). It chose them at confidence 0.5–0.9, so these are its own calls, not a demotion. **The §6.3 prompt causes this**: it defines `"advisory": the user wants an answer or analysis`, and an interpretation of V&V evidence or a run brief IS an answer, so the classifier obeys the prompt and contradicts the golden labels, which follow §5.3's `vv.interpret` and §5.4's `exp.brief`. Q1's first decision is therefore one of design, not tuning: either the prompt says interpretive asks about validation evidence and run results belong to those two agents (the §5 reading), or the labels move to advisory and the two agents narrow to drafting. The next three causes are smaller:
+    - `cache_checkable` over-prediction: 45 of 58 false positives are on advisory or report rows. Same treatment: the §6.6 block versus the labels.
+    - Steward/configurator confusion: 8 rows either way.
+    - Only 6 owner misses are fallbacks (confidence 0). `routing[].misses[].fallback` now names why the wrapper demoted, for the next run.
+    (h) **Q2 triage — what the invalid draft args show.** `gpt-5`'s only invalid steward call is `ds-02-no-source` calling `draft_item_master_update` with `rows: []`. The fixture passes (no proposal is expected), but the empty call counts against schema validity. The fix is a prompt rule: never call a draft tool with nothing to draft. The configurator's rejected `pc-01` call sets `review_period_days` on an inventory override, which looks well-formed, and the report cannot say why it was refused, because a `toolCalls` entry carries the arguments but not the tool's error text. **Q2's first commit therefore adds the error text to the eval record**, without which Q2 is guessing.
+    (i) **[DECIDED by the owner, 2026-11-06] Q1's design question.** Interpretive questions about this project's validation evidence and simulation results route to B3/B4, as §5.3 `vv.interpret` and §5.4 `exp.brief` already said. The golden labels stand. The §6.3 prompt changes: `advisory` now means a definition, concept or project-data lookup, and `artifact` gains owned interpretation, even when phrased as a question and only when an enabled agent owns it. Questions asking why the simulation made one specific decision are excluded, because they belong to the disabled B5. The §6.6 block gains one sentence: `cache_checkable` is false for definitions, lookups, configuration changes and file/report/export requests, which addresses 45 of the 58 false positives in (g). §6.3 and §6.6 carry the new text verbatim. Iteration 1 is scored on `gpt-5` alone (Q-D2).
+    (j) **[DECIDED by the owner, 2026-11-06] Gemini 2.5 Flash and DeepSeek are hidden**, not funded. The chat picker offers GPT-5 and GPT-5 mini. Both models stay in `MODEL_REGISTRY` for history, the eval and the §23 matrix, and the server refuses them by name (`HIDDEN_MODEL_IDS`) for stale clients rather than swapping silently (§23.4). `hidden_models_test.ts` holds the client and server lists equal. A user whose administrator allow-listed ONLY a hidden model is left with no servable model. They see the existing "not allowed" reason, and an administrator must grant GPT-5 or GPT-5 mini. Q4 now scores the two served models; restoring a hidden one means funding it, passing Q4 for it, and editing both lists in one change.
 
 ---
 
@@ -3508,3 +3544,12 @@ Building a tenth agent, or flipping `CLOSED_LOOP_ENABLED`, on top of a router th
 ### 25.5 Exit of Phase Q
 
 Phase Q is done when one live run on `eval-results` reports **`overall: PASS` for every enabled model**, or a per-model FAIL that the §23 matrix publishes and §23.4 enforces. At that point `CLOSED_LOOP_ENABLED` and `PLAN_TOOL_ENABLED` are on, and `AGENT_ENABLED_IDS` names only agents with a green suite. Only then does the next roster work start: B5 once traces exist, or the scheduled B8/B9.
+
+### 25.6 Progress
+
+| Step | State | Evidence |
+|---|---|---|
+| Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
+| Q1 | **In progress.** Decision taken (38(i)); §6.3/§6.6 prompt changed; the first `gpt-5` live iteration has been requested | 38(g), 38(i) |
+| Q2 | Ready after the eval records tool error text (38(h)) | 38(h) |
+| Q3–Q5 | Not started | — |
