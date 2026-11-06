@@ -358,28 +358,28 @@
           "page": "FirmLevelNetwork.tsx",
           "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
           "grain": "table",
-          "evidence": "src/components/MLPrediction.tsx:77",
+          "evidence": "src/components/MLPrediction.tsx:84",
           "confirmed": true
         },
         {
           "page": "ProcessLevelNetwork.tsx",
           "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
           "grain": "table",
-          "evidence": "src/components/MLPrediction.tsx:77",
+          "evidence": "src/components/MLPrediction.tsx:84",
           "confirmed": true
         },
         {
           "page": "ProductLevelNetwork.tsx",
           "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
           "grain": "table",
-          "evidence": "src/components/MLPrediction.tsx:77",
+          "evidence": "src/components/MLPrediction.tsx:84",
           "confirmed": true
         },
         {
           "page": "ProductLevelNetwork.tsx",
           "via": "rpc get_product_level_metrics (kind product_metrics, PLAN.md §4 D313)",
           "grain": "table",
-          "evidence": "src/pages/ProductLevelNetwork.tsx:289",
+          "evidence": "src/pages/ProductLevelNetwork.tsx:284",
           "confirmed": true
         }
       ],
@@ -690,21 +690,21 @@
           "page": "FirmLevelNetwork.tsx",
           "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
           "grain": "table",
-          "evidence": "src/components/MLPrediction.tsx:77",
+          "evidence": "src/components/MLPrediction.tsx:84",
           "confirmed": true
         },
         {
           "page": "ProcessLevelNetwork.tsx",
           "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
           "grain": "table",
-          "evidence": "src/components/MLPrediction.tsx:77",
+          "evidence": "src/components/MLPrediction.tsx:84",
           "confirmed": true
         },
         {
           "page": "ProductLevelNetwork.tsx",
           "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
           "grain": "table",
-          "evidence": "src/components/MLPrediction.tsx:77",
+          "evidence": "src/components/MLPrediction.tsx:84",
           "confirmed": true
         },
         {
@@ -1610,7 +1610,7 @@
           "page": "Auth.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1618,7 +1618,7 @@
           "page": "DataManager.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1626,14 +1626,14 @@
           "page": "DeveloperApi.tsx",
           "via": "rpc list_api_keys",
           "grain": "table",
-          "evidence": "src/pages/DeveloperApi.tsx:318",
+          "evidence": "src/pages/DeveloperApi.tsx:326",
           "confirmed": true
         },
         {
           "page": "FirmLevelNetwork.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1641,7 +1641,7 @@
           "page": "Forbidden.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1649,7 +1649,7 @@
           "page": "GettingStarted.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1657,7 +1657,7 @@
           "page": "InteractiveNetworkSpace.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1665,7 +1665,7 @@
           "page": "Landing.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1673,7 +1673,7 @@
           "page": "NotFound.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1681,7 +1681,7 @@
           "page": "ProcessLevelNetwork.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1689,7 +1689,7 @@
           "page": "ProductLevelNetwork.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1704,7 +1704,7 @@
           "page": "ProjectIntelligence.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1712,7 +1712,7 @@
           "page": "ProjectPolicies.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         },
@@ -1720,7 +1720,7 @@
           "page": "SimulationLab.tsx",
           "via": "table read",
           "grain": "shell",
-          "evidence": "src/hooks/useAuth.tsx:149",
+          "evidence": "src/hooks/useAuth.tsx:167",
           "confirmed": true,
           "note": "every module providing this read (src/hooks/useAuth.tsx) is reachable from ≥80% of pages — app-shell access (auth/session), not a place this table's data is rendered"
         }
@@ -2072,7 +2072,7 @@
               "page": "Auth.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2080,7 +2080,7 @@
               "page": "DataManager.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2088,7 +2088,7 @@
               "page": "DeveloperApi.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2096,7 +2096,7 @@
               "page": "FirmLevelNetwork.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2104,7 +2104,7 @@
               "page": "Forbidden.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2112,7 +2112,7 @@
               "page": "GettingStarted.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2120,7 +2120,7 @@
               "page": "InteractiveNetworkSpace.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2128,7 +2128,7 @@
               "page": "Landing.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2136,7 +2136,7 @@
               "page": "NotFound.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2144,7 +2144,7 @@
               "page": "ProcessLevelNetwork.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2152,7 +2152,7 @@
               "page": "ProductLevelNetwork.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2160,7 +2160,7 @@
               "page": "Profile.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2168,7 +2168,7 @@
               "page": "ProjectIntelligence.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2176,7 +2176,7 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             },
@@ -2184,7 +2184,7 @@
               "page": "SimulationLab.tsx",
               "via": "table read",
               "grain": "shell",
-              "evidence": "src/hooks/useAuth.tsx:149",
+              "evidence": "src/hooks/useAuth.tsx:167",
               "confirmed": true,
               "note": "named in an explicit select list, but in src/hooks/useAuth.tsx, which is reachable from ≥80% of pages — app-shell access, not a place this column is rendered"
             }
@@ -3230,35 +3230,35 @@
           "page": "DataManager.tsx",
           "via": "rpc get_project_dataset_status",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:447",
+          "evidence": "src/pages/DataManager.tsx:446",
           "confirmed": true
         },
         {
           "page": "InteractiveNetworkSpace.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/pages/InteractiveNetworkSpace.tsx:478",
+          "evidence": "src/pages/InteractiveNetworkSpace.tsx:473",
           "confirmed": true
         },
         {
           "page": "ProcessLevelNetwork.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/pages/ProcessLevelNetwork.tsx:385",
+          "evidence": "src/pages/ProcessLevelNetwork.tsx:380",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/lib/policies/projectLanes.ts:48",
+          "evidence": "src/lib/policies/projectLanes.ts:49",
           "confirmed": true
         },
         {
           "page": "SimulationLab.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/lib/policies/projectLanes.ts:48",
+          "evidence": "src/lib/policies/projectLanes.ts:49",
           "confirmed": true
         }
       ],
@@ -3558,14 +3558,14 @@
               "page": "InteractiveNetworkSpace.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/pages/InteractiveNetworkSpace.tsx:478",
+              "evidence": "src/pages/InteractiveNetworkSpace.tsx:473",
               "confirmed": true
             },
             {
               "page": "ProcessLevelNetwork.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/pages/ProcessLevelNetwork.tsx:385",
+              "evidence": "src/pages/ProcessLevelNetwork.tsx:380",
               "confirmed": true
             }
           ],
@@ -3859,21 +3859,21 @@
           "page": "DataManager.tsx",
           "via": "rpc get_project_dataset_status",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:447",
+          "evidence": "src/pages/DataManager.tsx:446",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "rpc ensure_item_masters",
           "grain": "table",
-          "evidence": "src/hooks/useItemMasters.tsx:244",
+          "evidence": "src/hooks/useItemMasters.tsx:257",
           "confirmed": true
         },
         {
           "page": "SimulationLab.tsx",
           "via": "rpc ensure_item_masters",
           "grain": "table",
-          "evidence": "src/hooks/useItemMasters.tsx:244",
+          "evidence": "src/hooks/useItemMasters.tsx:257",
           "confirmed": true
         }
       ],
@@ -5159,7 +5159,7 @@
           "page": "DeveloperApi.tsx",
           "via": "rpc list_dataset_versions",
           "grain": "table",
-          "evidence": "src/pages/DeveloperApi.tsx:375",
+          "evidence": "src/pages/DeveloperApi.tsx:383",
           "confirmed": true
         },
         {
@@ -5282,7 +5282,7 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/hooks/useVerifiableExports.tsx:127",
+              "evidence": "src/hooks/useVerifiableExports.tsx:129",
               "confirmed": true
             }
           ],
@@ -5361,7 +5361,7 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/hooks/useVerifiableExports.tsx:127",
+              "evidence": "src/hooks/useVerifiableExports.tsx:129",
               "confirmed": true
             }
           ],
@@ -5401,7 +5401,7 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/hooks/useVerifiableExports.tsx:127",
+              "evidence": "src/hooks/useVerifiableExports.tsx:129",
               "confirmed": true
             }
           ],
@@ -5441,7 +5441,7 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/hooks/useVerifiableExports.tsx:127",
+              "evidence": "src/hooks/useVerifiableExports.tsx:129",
               "confirmed": true
             }
           ],
@@ -5545,7 +5545,7 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/hooks/useVerifiableExports.tsx:127",
+              "evidence": "src/hooks/useVerifiableExports.tsx:129",
               "confirmed": true
             }
           ],
@@ -5585,7 +5585,7 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/hooks/useVerifiableExports.tsx:127",
+              "evidence": "src/hooks/useVerifiableExports.tsx:129",
               "confirmed": true
             }
           ],
@@ -5625,7 +5625,7 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/hooks/useVerifiableExports.tsx:127",
+              "evidence": "src/hooks/useVerifiableExports.tsx:129",
               "confirmed": true
             }
           ],
@@ -11199,21 +11199,21 @@
           "page": "DataManager.tsx",
           "via": "rpc get_project_dataset_status",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:447",
+          "evidence": "src/pages/DataManager.tsx:446",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "rpc ensure_item_masters",
           "grain": "table",
-          "evidence": "src/hooks/useItemMasters.tsx:244",
+          "evidence": "src/hooks/useItemMasters.tsx:257",
           "confirmed": true
         },
         {
           "page": "SimulationLab.tsx",
           "via": "rpc ensure_item_masters",
           "grain": "table",
-          "evidence": "src/hooks/useItemMasters.tsx:244",
+          "evidence": "src/hooks/useItemMasters.tsx:257",
           "confirmed": true
         }
       ],
@@ -18650,21 +18650,21 @@
           "page": "DataManager.tsx",
           "via": "rpc delete_project_dataset",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:737",
+          "evidence": "src/pages/DataManager.tsx:736",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "rpc get_project_datasets",
           "grain": "table",
-          "evidence": "src/lib/policies/projectLanes.ts:82",
+          "evidence": "src/lib/policies/projectLanes.ts:108",
           "confirmed": true
         },
         {
           "page": "SimulationLab.tsx",
           "via": "rpc get_project_datasets",
           "grain": "table",
-          "evidence": "src/lib/policies/projectLanes.ts:82",
+          "evidence": "src/lib/policies/projectLanes.ts:108",
           "confirmed": true
         }
       ],
@@ -19074,7 +19074,7 @@
           "page": "DataManager.tsx",
           "via": "rpc get_project_dataset_status",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:447",
+          "evidence": "src/pages/DataManager.tsx:446",
           "confirmed": true
         }
       ],
@@ -19671,7 +19671,7 @@
           "page": "DataManager.tsx",
           "via": "rpc get_project_dataset_status",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:447",
+          "evidence": "src/pages/DataManager.tsx:446",
           "confirmed": true
         },
         {
@@ -21329,7 +21329,7 @@
           "page": "DataManager.tsx",
           "via": "rpc get_node_list",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:459",
+          "evidence": "src/pages/DataManager.tsx:458",
           "confirmed": true
         },
         {
@@ -22813,7 +22813,7 @@
           "page": "DeveloperApi.tsx",
           "via": "rpc list_api_keys",
           "grain": "table",
-          "evidence": "src/pages/DeveloperApi.tsx:318",
+          "evidence": "src/pages/DeveloperApi.tsx:326",
           "confirmed": true
         }
       ],
@@ -23554,21 +23554,21 @@
           "page": "DataManager.tsx",
           "via": "rpc get_project_dataset_status",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:447",
+          "evidence": "src/pages/DataManager.tsx:446",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "rpc ensure_item_masters",
           "grain": "table",
-          "evidence": "src/hooks/useItemMasters.tsx:244",
+          "evidence": "src/hooks/useItemMasters.tsx:257",
           "confirmed": true
         },
         {
           "page": "SimulationLab.tsx",
           "via": "rpc ensure_item_masters",
           "grain": "table",
-          "evidence": "src/hooks/useItemMasters.tsx:244",
+          "evidence": "src/hooks/useItemMasters.tsx:257",
           "confirmed": true
         }
       ],
@@ -25131,21 +25131,21 @@
           "page": "ProjectIntelligence.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/hooks/usePolicies.tsx:185",
+          "evidence": "src/hooks/usePolicies.tsx:183",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/hooks/usePolicies.tsx:185",
+          "evidence": "src/hooks/usePolicies.tsx:183",
           "confirmed": true
         },
         {
           "page": "SimulationLab.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/hooks/usePolicies.tsx:185",
+          "evidence": "src/hooks/usePolicies.tsx:183",
           "confirmed": true
         }
       ],
@@ -25771,21 +25771,21 @@
           "page": "ProjectIntelligence.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/hooks/usePolicies.tsx:186",
+          "evidence": "src/hooks/usePolicies.tsx:184",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/hooks/usePolicies.tsx:186",
+          "evidence": "src/hooks/usePolicies.tsx:184",
           "confirmed": true
         },
         {
           "page": "SimulationLab.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/hooks/usePolicies.tsx:186",
+          "evidence": "src/hooks/usePolicies.tsx:184",
           "confirmed": true
         }
       ],
@@ -26698,14 +26698,14 @@
           "page": "ProjectPolicies.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/hooks/usePolicies.tsx:514",
+          "evidence": "src/hooks/usePolicies.tsx:512",
           "confirmed": true
         },
         {
           "page": "SimulationLab.tsx",
           "via": "table read",
           "grain": "column",
-          "evidence": "src/hooks/useVerifiableExports.tsx:235",
+          "evidence": "src/hooks/useVerifiableExports.tsx:238",
           "confirmed": true
         }
       ],
@@ -30508,63 +30508,63 @@
           "page": "DataManager.tsx",
           "via": "rpc list_projects",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:215",
+          "evidence": "src/lib/projects/projectsCache.ts:59",
           "confirmed": true
         },
         {
           "page": "DeveloperApi.tsx",
           "via": "rpc list_projects",
           "grain": "table",
-          "evidence": "src/pages/DeveloperApi.tsx:320",
+          "evidence": "src/pages/DeveloperApi.tsx:328",
           "confirmed": true
         },
         {
           "page": "FirmLevelNetwork.tsx",
           "via": "rpc list_projects",
           "grain": "table",
-          "evidence": "src/pages/FirmLevelNetwork.tsx:273",
+          "evidence": "src/lib/projects/projectsCache.ts:59",
           "confirmed": true
         },
         {
           "page": "InteractiveNetworkSpace.tsx",
           "via": "rpc list_projects",
           "grain": "table",
-          "evidence": "src/pages/InteractiveNetworkSpace.tsx:339",
+          "evidence": "src/lib/projects/projectsCache.ts:59",
           "confirmed": true
         },
         {
           "page": "ProcessLevelNetwork.tsx",
           "via": "rpc list_projects",
           "grain": "table",
-          "evidence": "src/pages/ProcessLevelNetwork.tsx:286",
+          "evidence": "src/lib/projects/projectsCache.ts:59",
           "confirmed": true
         },
         {
           "page": "ProductLevelNetwork.tsx",
           "via": "rpc list_projects",
           "grain": "table",
-          "evidence": "src/pages/ProductLevelNetwork.tsx:259",
+          "evidence": "src/lib/projects/projectsCache.ts:59",
           "confirmed": true
         },
         {
           "page": "ProjectIntelligence.tsx",
           "via": "rpc list_projects",
           "grain": "table",
-          "evidence": "src/pages/ProjectIntelligence.tsx:187",
+          "evidence": "src/lib/projects/projectsCache.ts:59",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "rpc list_projects",
           "grain": "table",
-          "evidence": "src/hooks/useProjects.ts:24",
+          "evidence": "src/lib/projects/projectsCache.ts:59",
           "confirmed": true
         },
         {
           "page": "SimulationLab.tsx",
           "via": "rpc list_projects",
           "grain": "table",
-          "evidence": "src/hooks/useProjects.ts:24",
+          "evidence": "src/lib/projects/projectsCache.ts:59",
           "confirmed": true
         }
       ],
@@ -31822,14 +31822,14 @@
           "page": "FirmLevelNetwork.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/pages/FirmLevelNetwork.tsx:330",
+          "evidence": "src/pages/FirmLevelNetwork.tsx:326",
           "confirmed": true
         },
         {
           "page": "ProductLevelNetwork.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/pages/ProductLevelNetwork.tsx:385",
+          "evidence": "src/pages/ProductLevelNetwork.tsx:382",
           "confirmed": true
         }
       ],
@@ -31972,14 +31972,14 @@
               "page": "FirmLevelNetwork.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/pages/FirmLevelNetwork.tsx:330",
+              "evidence": "src/pages/FirmLevelNetwork.tsx:326",
               "confirmed": true
             },
             {
               "page": "ProductLevelNetwork.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/pages/ProductLevelNetwork.tsx:385",
+              "evidence": "src/pages/ProductLevelNetwork.tsx:382",
               "confirmed": true
             }
           ],
@@ -32026,14 +32026,14 @@
               "page": "FirmLevelNetwork.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/pages/FirmLevelNetwork.tsx:330",
+              "evidence": "src/pages/FirmLevelNetwork.tsx:326",
               "confirmed": true
             },
             {
               "page": "ProductLevelNetwork.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/pages/ProductLevelNetwork.tsx:385",
+              "evidence": "src/pages/ProductLevelNetwork.tsx:382",
               "confirmed": true
             }
           ],
@@ -32530,7 +32530,7 @@
           "page": "ProjectPolicies.tsx",
           "via": "component ItemSeriesExplorer (mounted by RunValidateStage) → select kind,item_id,series from run_item_series (every item, paged)",
           "grain": "table",
-          "evidence": "src/components/sim/ItemSeriesExplorer.tsx:119",
+          "evidence": "src/components/sim/ItemSeriesExplorer.tsx:118",
           "confirmed": true,
           "note": "Run & Validate is where an inspection run is STARTED, and the explorer sits under it. It reads every item's row for the run, 100 rows a read, once per run: the inventory explorer's ranked tables need every material and every finished good at once (a few MB for a large project). It used to read an id index and then one item on demand, which could chart an item and could not rank them. The table stays a sibling of `run_replications` so none of this rides the realtime stream."
         },
@@ -32538,7 +32538,7 @@
           "page": "SimulationLab.tsx",
           "via": "component ItemSeriesExplorer (mounted by ResultsDashboard) → select kind,item_id,series from run_item_series (every item, paged)",
           "grain": "table",
-          "evidence": "src/components/sim/ItemSeriesExplorer.tsx:119",
+          "evidence": "src/components/sim/ItemSeriesExplorer.tsx:118",
           "confirmed": true,
           "note": "Simulation Lab dispatches no inspection run, so this panel shows rows only for a run started from Run & Validate, and says so rather than rendering empty without a reason (§4 D113's shape)."
         }
@@ -32770,14 +32770,14 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:119",
+              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:118",
               "confirmed": true
             },
             {
               "page": "SimulationLab.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:119",
+              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:118",
               "confirmed": true
             }
           ],
@@ -32817,14 +32817,14 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:119",
+              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:118",
               "confirmed": true
             },
             {
               "page": "SimulationLab.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:119",
+              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:118",
               "confirmed": true
             }
           ],
@@ -32864,14 +32864,14 @@
               "page": "ProjectPolicies.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:119",
+              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:118",
               "confirmed": true
             },
             {
               "page": "SimulationLab.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:119",
+              "evidence": "src/components/sim/ItemSeriesExplorer.tsx:118",
               "confirmed": true
             }
           ],
@@ -32959,7 +32959,7 @@
           "page": "ProjectPolicies.tsx",
           "via": "hook useSimulationRun → select * from run_replications",
           "grain": "table",
-          "evidence": "src/hooks/useSimulationRun.tsx:119",
+          "evidence": "src/hooks/useSimulationRun.tsx:150",
           "confirmed": true,
           "note": "Both result surfaces reach this table through the SAME hook, so the evidence is the hook's read rather than either page's render. Run & Validate reads every replication of the newest run: the weekly series charts, the financial statement, the per-seed explorer and the inventory chart all render from these rows."
         },
@@ -32967,14 +32967,14 @@
           "page": "SimulationLab.tsx",
           "via": "hook useSimulationRun::loadReps → select * from run_replications",
           "grain": "table",
-          "evidence": "src/hooks/useSimulationRun.tsx:234",
+          "evidence": "src/hooks/useSimulationRun.tsx:265",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "useVerifiableExports → select * from run_replications",
           "grain": "table",
-          "evidence": "src/hooks/useVerifiableExports.tsx:227",
+          "evidence": "src/hooks/useVerifiableExports.tsx:230",
           "confirmed": true,
           "note": "The run-results workbook. This is the path by which a replication row leaves the system, so it is the one A5's Reproducibility Record has to bind (`result-binding`, still owed — WP 10.4, which absorbed WP 9.2)."
         }
@@ -34705,7 +34705,7 @@
           "page": "SimulationLab.tsx",
           "via": "table read",
           "grain": "column",
-          "evidence": "src/hooks/useVerifiableExports.tsx:222",
+          "evidence": "src/hooks/useVerifiableExports.tsx:225",
           "confirmed": true
         }
       ],
@@ -39647,14 +39647,14 @@
           "page": "SimulationLab.tsx",
           "via": "hook useSimulationRun → select * from simulation_runs",
           "grain": "table",
-          "evidence": "src/hooks/useSimulationRun.tsx:109",
+          "evidence": "src/hooks/useSimulationRun.tsx:140",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "useVerifiableExports → select * from simulation_runs",
           "grain": "table",
-          "evidence": "src/hooks/useVerifiableExports.tsx:216",
+          "evidence": "src/hooks/useVerifiableExports.tsx:219",
           "confirmed": true,
           "note": "The run-results workbook, whose reproducibility sheet binds the run from this row (WP 10.4)."
         }
@@ -41705,7 +41705,7 @@
           "page": "DataManager.tsx",
           "via": "rpc combine_project_into_supply_chain",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:674",
+          "evidence": "src/pages/DataManager.tsx:673",
           "confirmed": true
         },
         {
@@ -42648,28 +42648,28 @@
           "page": "DataManager.tsx",
           "via": "rpc combine_project_into_supply_chain",
           "grain": "table",
-          "evidence": "src/pages/DataManager.tsx:674",
+          "evidence": "src/pages/DataManager.tsx:673",
           "confirmed": true
         },
         {
           "page": "InteractiveNetworkSpace.tsx",
           "via": "table read",
           "grain": "table",
-          "evidence": "src/pages/InteractiveNetworkSpace.tsx:355",
+          "evidence": "src/pages/InteractiveNetworkSpace.tsx:350",
           "confirmed": true
         },
         {
           "page": "ProcessLevelNetwork.tsx",
           "via": "rpc get_supply_chain_data_multi_tier",
           "grain": "table",
-          "evidence": "src/services/network.ts:41",
+          "evidence": "src/services/network.ts:38",
           "confirmed": true
         },
         {
           "page": "ProjectPolicies.tsx",
           "via": "rpc get_supply_chain_data_multi_tier",
           "grain": "table",
-          "evidence": "src/hooks/useProjectContext.tsx:49",
+          "evidence": "src/hooks/useProjectContext.tsx:48",
           "confirmed": true
         }
       ],
@@ -42850,7 +42850,7 @@
               "page": "InteractiveNetworkSpace.tsx",
               "via": "table read",
               "grain": "column",
-              "evidence": "src/pages/InteractiveNetworkSpace.tsx:355",
+              "evidence": "src/pages/InteractiveNetworkSpace.tsx:350",
               "confirmed": true
             }
           ],
@@ -42954,7 +42954,7 @@
               "page": "ProcessLevelNetwork.tsx",
               "via": "rpc get_supply_chain_data_multi_tier",
               "grain": "column",
-              "evidence": "src/services/network.ts:41",
+              "evidence": "src/services/network.ts:38",
               "confirmed": true
             }
           ],
@@ -43154,7 +43154,7 @@
               "page": "ProcessLevelNetwork.tsx",
               "via": "rpc get_supply_chain_data_multi_tier",
               "grain": "column",
-              "evidence": "src/services/network.ts:41",
+              "evidence": "src/services/network.ts:38",
               "confirmed": true
             }
           ],
@@ -45273,5 +45273,5 @@
   },
   "orphans": [],
   "phantom_tables": [],
-  "contract_version": "984857e696e8"
+  "contract_version": "62a6e8587a37"
 }

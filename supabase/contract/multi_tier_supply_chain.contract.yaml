@@ -31,17 +31,17 @@ surfaces:
   - page: "DataManager.tsx"
     via: "rpc delete_project_dataset"
     grain: table
-    evidence: "src/pages/DataManager.tsx:737"
+    evidence: "src/pages/DataManager.tsx:736"
     confirmed: true
   - page: "ProjectPolicies.tsx"
     via: "rpc get_project_datasets"
     grain: table
-    evidence: "src/lib/policies/projectLanes.ts:82"
+    evidence: "src/lib/policies/projectLanes.ts:108"
     confirmed: true
   - page: "SimulationLab.tsx"
     via: "rpc get_project_datasets"
     grain: table
-    evidence: "src/lib/policies/projectLanes.ts:82"
+    evidence: "src/lib/policies/projectLanes.ts:108"
     confirmed: true
 
 governance:

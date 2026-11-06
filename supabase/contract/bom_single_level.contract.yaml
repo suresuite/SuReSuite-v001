@@ -40,17 +40,17 @@ surfaces:
   - page: "DataManager.tsx"
     via: "rpc get_project_dataset_status"
     grain: table
-    evidence: "src/pages/DataManager.tsx:447"
+    evidence: "src/pages/DataManager.tsx:446"
     confirmed: true
   - page: "ProjectPolicies.tsx"
     via: "rpc ensure_item_masters"
     grain: table
-    evidence: "src/hooks/useItemMasters.tsx:244"
+    evidence: "src/hooks/useItemMasters.tsx:257"
     confirmed: true
   - page: "SimulationLab.tsx"
     via: "rpc ensure_item_masters"
     grain: table
-    evidence: "src/hooks/useItemMasters.tsx:244"
+    evidence: "src/hooks/useItemMasters.tsx:257"
     confirmed: true
 
 governance:

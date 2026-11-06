@@ -40,27 +40,27 @@ surfaces:
   - page: "DataManager.tsx"
     via: "rpc get_project_dataset_status"
     grain: table
-    evidence: "src/pages/DataManager.tsx:447"
+    evidence: "src/pages/DataManager.tsx:446"
     confirmed: true
   - page: "InteractiveNetworkSpace.tsx"
     via: "table read"
     grain: table
-    evidence: "src/pages/InteractiveNetworkSpace.tsx:478"
+    evidence: "src/pages/InteractiveNetworkSpace.tsx:473"
     confirmed: true
   - page: "ProcessLevelNetwork.tsx"
     via: "table read"
     grain: table
-    evidence: "src/pages/ProcessLevelNetwork.tsx:385"
+    evidence: "src/pages/ProcessLevelNetwork.tsx:380"
     confirmed: true
   - page: "ProjectPolicies.tsx"
     via: "table read"
     grain: table
-    evidence: "src/lib/policies/projectLanes.ts:48"
+    evidence: "src/lib/policies/projectLanes.ts:49"
     confirmed: true
   - page: "SimulationLab.tsx"
     via: "table read"
     grain: table
-    evidence: "src/lib/policies/projectLanes.ts:48"
+    evidence: "src/lib/policies/projectLanes.ts:49"
     confirmed: true
 
 governance:
@@ -181,12 +181,12 @@ fields:
       - page: "InteractiveNetworkSpace.tsx"
         via: "table read"
         grain: column
-        evidence: "src/pages/InteractiveNetworkSpace.tsx:478"
+        evidence: "src/pages/InteractiveNetworkSpace.tsx:473"
         confirmed: true
       - page: "ProcessLevelNetwork.tsx"
         via: "table read"
         grain: column
-        evidence: "src/pages/ProcessLevelNetwork.tsx:385"
+        evidence: "src/pages/ProcessLevelNetwork.tsx:380"
         confirmed: true
     resolution:
       default_mode: asserted

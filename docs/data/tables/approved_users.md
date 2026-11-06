@@ -66,7 +66,7 @@ READ THE POLICIES BEFORE TRUSTING THIS ROW. The table carries two policies and t
 
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
-| `DeveloperApi.tsx` | rpc list_api_keys | `src/pages/DeveloperApi.tsx:318` | yes |
+| `DeveloperApi.tsx` | rpc list_api_keys | `src/pages/DeveloperApi.tsx:326` | yes |
 | `Profile.tsx` | rpc change_own_password | `src/pages/Profile.tsx:146` | yes |
 
 Each row says the page READS the table by that path, at that line. It does
@@ -77,19 +77,19 @@ unnoticed.
 
 <details><summary>13 app-shell read(s) — not lineage</summary>
 
-* `Auth.tsx` — `src/hooks/useAuth.tsx:149`
-* `DataManager.tsx` — `src/hooks/useAuth.tsx:149`
-* `FirmLevelNetwork.tsx` — `src/hooks/useAuth.tsx:149`
-* `Forbidden.tsx` — `src/hooks/useAuth.tsx:149`
-* `GettingStarted.tsx` — `src/hooks/useAuth.tsx:149`
-* `InteractiveNetworkSpace.tsx` — `src/hooks/useAuth.tsx:149`
-* `Landing.tsx` — `src/hooks/useAuth.tsx:149`
-* `NotFound.tsx` — `src/hooks/useAuth.tsx:149`
-* `ProcessLevelNetwork.tsx` — `src/hooks/useAuth.tsx:149`
-* `ProductLevelNetwork.tsx` — `src/hooks/useAuth.tsx:149`
-* `ProjectIntelligence.tsx` — `src/hooks/useAuth.tsx:149`
-* `ProjectPolicies.tsx` — `src/hooks/useAuth.tsx:149`
-* `SimulationLab.tsx` — `src/hooks/useAuth.tsx:149`
+* `Auth.tsx` — `src/hooks/useAuth.tsx:167`
+* `DataManager.tsx` — `src/hooks/useAuth.tsx:167`
+* `FirmLevelNetwork.tsx` — `src/hooks/useAuth.tsx:167`
+* `Forbidden.tsx` — `src/hooks/useAuth.tsx:167`
+* `GettingStarted.tsx` — `src/hooks/useAuth.tsx:167`
+* `InteractiveNetworkSpace.tsx` — `src/hooks/useAuth.tsx:167`
+* `Landing.tsx` — `src/hooks/useAuth.tsx:167`
+* `NotFound.tsx` — `src/hooks/useAuth.tsx:167`
+* `ProcessLevelNetwork.tsx` — `src/hooks/useAuth.tsx:167`
+* `ProductLevelNetwork.tsx` — `src/hooks/useAuth.tsx:167`
+* `ProjectIntelligence.tsx` — `src/hooks/useAuth.tsx:167`
+* `ProjectPolicies.tsx` — `src/hooks/useAuth.tsx:167`
+* `SimulationLab.tsx` — `src/hooks/useAuth.tsx:167`
 
 These reach the table only through modules the shell mounts on every page.
 Listing them as surfaces would be true about the imports and false about
@@ -447,6 +447,6 @@ for one you did.
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `62a6e8587a37`, engine `0.8.3`,
 sidecar `supabase/contract/approved_users.contract.yaml`, table created by `20250815000000_approved_users_base.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

@@ -61,9 +61,9 @@ it rather than duplicating it.
 
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
-| `ProjectPolicies.tsx` | hook useSimulationRun → select * from run_replications | `src/hooks/useSimulationRun.tsx:119` | yes |
-| `SimulationLab.tsx` | hook useSimulationRun::loadReps → select * from run_replications | `src/hooks/useSimulationRun.tsx:234` | yes |
-| `ProjectPolicies.tsx` | useVerifiableExports → select * from run_replications | `src/hooks/useVerifiableExports.tsx:227` | yes |
+| `ProjectPolicies.tsx` | hook useSimulationRun → select * from run_replications | `src/hooks/useSimulationRun.tsx:150` | yes |
+| `SimulationLab.tsx` | hook useSimulationRun::loadReps → select * from run_replications | `src/hooks/useSimulationRun.tsx:265` | yes |
+| `ProjectPolicies.tsx` | useVerifiableExports → select * from run_replications | `src/hooks/useVerifiableExports.tsx:230` | yes |
 
 Each row says the page READS the table by that path, at that line. It does
 not say every column below is displayed there — a column carries its own
@@ -291,6 +291,6 @@ When the row was inserted.
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `62a6e8587a37`, engine `0.8.3`,
 sidecar `supabase/contract/run_replications.contract.yaml`, table created by `20260607121406_fcbd47e9-93de-4b3b-988f-7f4718159c91.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

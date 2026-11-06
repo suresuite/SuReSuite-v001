@@ -25,7 +25,7 @@ surfaces:
   - page: "DeveloperApi.tsx"
     via: "rpc list_dataset_versions"
     grain: table
-    evidence: "src/pages/DeveloperApi.tsx:375"
+    evidence: "src/pages/DeveloperApi.tsx:383"
     confirmed: true
   - page: "ProductLevelNetwork.tsx"
     via: "rpc project_freshness (GraphVersionChip → FreshnessBadge, WP 10.1)"
@@ -87,7 +87,7 @@ fields:
       - page: "ProjectPolicies.tsx"
         via: "table read"
         grain: column
-        evidence: "src/hooks/useVerifiableExports.tsx:127"
+        evidence: "src/hooks/useVerifiableExports.tsx:129"
         confirmed: true
     resolution: null
   project_id:
@@ -128,7 +128,7 @@ fields:
       - page: "ProjectPolicies.tsx"
         via: "table read"
         grain: column
-        evidence: "src/hooks/useVerifiableExports.tsx:127"
+        evidence: "src/hooks/useVerifiableExports.tsx:129"
         confirmed: true
     resolution: null
     note: >-
@@ -155,7 +155,7 @@ fields:
       - page: "ProjectPolicies.tsx"
         via: "table read"
         grain: column
-        evidence: "src/hooks/useVerifiableExports.tsx:127"
+        evidence: "src/hooks/useVerifiableExports.tsx:129"
         confirmed: true
     resolution: null
     note: >-
@@ -193,7 +193,7 @@ fields:
       - page: "ProjectPolicies.tsx"
         via: "table read"
         grain: column
-        evidence: "src/hooks/useVerifiableExports.tsx:127"
+        evidence: "src/hooks/useVerifiableExports.tsx:129"
         confirmed: true
     resolution: null
     note: >-
@@ -233,7 +233,7 @@ fields:
       - page: "ProjectPolicies.tsx"
         via: "table read"
         grain: column
-        evidence: "src/hooks/useVerifiableExports.tsx:127"
+        evidence: "src/hooks/useVerifiableExports.tsx:129"
         confirmed: true
     resolution: null
     note: >-
@@ -266,7 +266,7 @@ fields:
       - page: "ProjectPolicies.tsx"
         via: "table read"
         grain: column
-        evidence: "src/hooks/useVerifiableExports.tsx:127"
+        evidence: "src/hooks/useVerifiableExports.tsx:129"
         confirmed: true
     resolution: null
     note: >-
@@ -343,7 +343,7 @@ fields:
       - page: "ProjectPolicies.tsx"
         via: "table read"
         grain: column
-        evidence: "src/hooks/useVerifiableExports.tsx:127"
+        evidence: "src/hooks/useVerifiableExports.tsx:129"
         confirmed: true
     resolution: null
   hash_product:

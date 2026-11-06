@@ -29,12 +29,12 @@ surfaces:
   - page: "FirmLevelNetwork.tsx"
     via: "table read"
     grain: table
-    evidence: "src/pages/FirmLevelNetwork.tsx:330"
+    evidence: "src/pages/FirmLevelNetwork.tsx:326"
     confirmed: true
   - page: "ProductLevelNetwork.tsx"
     via: "table read"
     grain: table
-    evidence: "src/pages/ProductLevelNetwork.tsx:385"
+    evidence: "src/pages/ProductLevelNetwork.tsx:382"
     confirmed: true
 
 governance:
@@ -83,12 +83,12 @@ fields:
       - page: "FirmLevelNetwork.tsx"
         via: "table read"
         grain: column
-        evidence: "src/pages/FirmLevelNetwork.tsx:330"
+        evidence: "src/pages/FirmLevelNetwork.tsx:326"
         confirmed: true
       - page: "ProductLevelNetwork.tsx"
         via: "table read"
         grain: column
-        evidence: "src/pages/ProductLevelNetwork.tsx:385"
+        evidence: "src/pages/ProductLevelNetwork.tsx:382"
         confirmed: true
     resolution: null
   risk_class:
@@ -117,12 +117,12 @@ fields:
       - page: "FirmLevelNetwork.tsx"
         via: "table read"
         grain: column
-        evidence: "src/pages/FirmLevelNetwork.tsx:330"
+        evidence: "src/pages/FirmLevelNetwork.tsx:326"
         confirmed: true
       - page: "ProductLevelNetwork.tsx"
         via: "table read"
         grain: column
-        evidence: "src/pages/ProductLevelNetwork.tsx:385"
+        evidence: "src/pages/ProductLevelNetwork.tsx:382"
         confirmed: true
     resolution: null
     note: >-
