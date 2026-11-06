@@ -53,7 +53,7 @@ import {
 } from "../router.ts";
 import { executeTool, type ToolContext, type ToolEnvelope } from "../tools.ts";
 // Importing agentTurn.ts registers every staged draft tool (B1-B4 + memory).
-import { runAgentTurn, runDataStewardTurn } from "../agentTurn.ts";
+import { runAgentTurn } from "../agentTurn.ts";
 import { applyModeToRoute } from "../modes.ts";
 import { personaToolDeclarations } from "../personaTools.ts";
 import {
@@ -505,6 +505,20 @@ interface InvalidDraftCall {
   fixture: string;
   tool: string;
   args: string;
+  /** The gate's own refusal (§4.5 failure envelope): its code — e.g.
+   * `invalid_params`, `dependency_missing` — and its reason text. Captured
+   * through the turn's onToolResult callback, so the production tool-call
+   * record is unchanged; null when no envelope was observed. */
+  code: string | null;
+  reason: string | null;
+}
+
+const NO_REFUSAL = { code: null, reason: null } as const;
+
+/** The refusal a draft tool returned: its §4.5 failure code and reason text. */
+function refusalOf(env: { data: unknown; meta: { note?: string } }): { code: string | null; reason: string | null } {
+  const reason = typeof env.data === "string" ? env.data : JSON.stringify(env.data) ?? null;
+  return { code: env.meta.note ?? null, reason: reason ? reason.slice(0, 500) : null };
 }
 
 /** Arguments as JSON, capped so one runaway payload cannot bloat the report. */
@@ -555,12 +569,21 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
         }
       }
     } else {
-      const turn = await runDataStewardTurn({ modelId: model.id, utterance: fixture.utterance, ctx });
+      const refusals: Array<{ code: string | null; reason: string | null }> = [];
+      const turn = await runAgentTurn({
+        agentId: "data-steward",
+        modelId: model.id,
+        utterance: fixture.utterance,
+        ctx,
+        onToolResult: (name, _args, env) => {
+          if (name === "draft_item_master_update" && env.meta.row_count === 0) refusals.push(refusalOf(env));
+        },
+      });
       for (const call of turn.toolCalls) {
         if (call.name !== "draft_item_master_update") continue;
         draftCalls++;
         if (call.row_count > 0) validDraftCalls++;
-        else invalidDraftCalls.push({ fixture: id, tool: call.name, args: clipArgs(call.args) });
+        else invalidDraftCalls.push({ fixture: id, tool: call.name, args: clipArgs(call.args), ...(refusals.shift() ?? NO_REFUSAL) });
       }
     }
 
@@ -826,13 +849,22 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
         }
       }
     } else {
-      const turn = await runAgentTurn({ agentId: cfg.agentId, modelId: model.id, utterance: fixture.utterance, ctx });
+      const refusals: Array<{ code: string | null; reason: string | null }> = [];
+      const turn = await runAgentTurn({
+        agentId: cfg.agentId,
+        modelId: model.id,
+        utterance: fixture.utterance,
+        ctx,
+        onToolResult: (name, _args, env) => {
+          if (name === cfg.draftTool && env.meta.row_count === 0) refusals.push(refusalOf(env));
+        },
+      });
       reply = turn.reply;
       for (const call of turn.toolCalls) {
         if (call.name !== cfg.draftTool) continue;
         draftCalls++;
         if (call.row_count > 0) validDraftCalls++;
-        else invalidDraftCalls.push({ fixture: id, tool: call.name, args: clipArgs(call.args) });
+        else invalidDraftCalls.push({ fixture: id, tool: call.name, args: clipArgs(call.args), ...(refusals.shift() ?? NO_REFUSAL) });
       }
     }
 
@@ -1727,7 +1759,7 @@ export async function runModelEval(opts: {
         `gate-violation-attempts=${steward.gateViolationRate.toFixed(3)} ` +
         `fixtures=${Object.values(steward.fixtures).filter((f) => f.pass).length}/${Object.keys(steward.fixtures).length}`);
       for (const f of steward.failures) console.log(`  ✗ ${f}`);
-      for (const c of steward.invalidDraftCalls ?? []) console.log(`    · invalid draft ${c.fixture} ${c.tool} ${c.args.slice(0, 300)}`);
+      for (const c of steward.invalidDraftCalls ?? []) console.log(`    · invalid draft ${c.fixture} ${c.tool} [${c.code ?? "?"}: ${c.reason ?? "-"}] ${c.args.slice(0, 300)}`);
     }
 
     // Stage 2/3 agents (§9.3/§9.4): score every enabled agent's suite.
@@ -1745,7 +1777,7 @@ export async function runModelEval(opts: {
         `gate-violation-attempts=${metrics.gateViolationRate.toFixed(3)} ` +
         `fixtures=${Object.values(metrics.fixtures).filter((f) => f.pass).length}/${Object.keys(metrics.fixtures).length}`);
       for (const f of metrics.failures) console.log(`  ✗ ${f}`);
-      for (const c of metrics.invalidDraftCalls ?? []) console.log(`    · invalid draft ${c.fixture} ${c.tool} ${c.args.slice(0, 300)}`);
+      for (const c of metrics.invalidDraftCalls ?? []) console.log(`    · invalid draft ${c.fixture} ${c.tool} [${c.code ?? "?"}: ${c.reason ?? "-"}] ${c.args.slice(0, 300)}`);
     }
 
     // H1 (§7.7-1): the coverage battery + entity-fabrication metric (target
