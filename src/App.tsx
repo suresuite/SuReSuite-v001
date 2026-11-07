@@ -4,7 +4,6 @@ import { Suspense, useState, type ReactNode } from 'react';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { CapabilitiesProvider, useCapabilities } from '@/hooks/useCapabilities';
 import { GlobalProjectProvider } from '@/hooks/useGlobalProject';
-import { DemoProjectSelector } from '@/components/demo/DemoProjectSelector';
 import { ViewportProvider } from '@/hooks/useViewport';
 import { ConfirmProvider } from '@/components/shared/confirm/ConfirmProvider';
 import { ThemeProvider } from 'next-themes';
@@ -33,7 +32,15 @@ const FloatingChatBubble = lazyChunk(() =>
 // are paid for up front; the 25 pages behind the login are not.
 import Landing from './pages/Landing';
 import Auth from './pages/Auth';
-import DemoEntry from './pages/DemoEntry';
+// `/demo` is NOT one of the two eager entry points above: imported eagerly it
+// pushed the initial graph past the bundle-size ceiling (audit:bundle), so it
+// is lazy like every other page.
+const DemoEntry = lazyChunk(() => import('./pages/DemoEntry'));
+// Renders nothing and acts only in a demo session — no reason to be in the
+// initial graph either.
+const DemoProjectSelector = lazyChunk(() =>
+  import('@/components/demo/DemoProjectSelector').then((m) => ({ default: m.DemoProjectSelector })),
+);
 
 const OrbitMrpCallback = lazyChunk(() => import('./pages/OrbitMrpCallback'));
 const DataManager = lazyChunk(() => import('./pages/DataManager'));
@@ -307,7 +314,9 @@ function App() {
                   </Suspense>
                 </RouteErrorBoundary>
               </HideInDemo>
-              <DemoProjectSelector />
+              <Suspense fallback={null}>
+                <DemoProjectSelector />
+              </Suspense>
               </ConfirmProvider>
             </Router>
           </GlobalProjectProvider>

@@ -10,10 +10,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useToast } from '@/hooks/use-toast';
 import { Check } from 'lucide-react';
-import AuthHeroStrip from '@/components/AuthHeroStrip';
 
 // Loaded on demand: /auth is in the initial graph, and the panel is rarely opened.
 const ForgotPasswordPanel = lazyChunk(() => import('@/pages/AuthForgotPassword'));
+// The marketing carousel beside the form is not what /auth is FOR: lazy, so the sign-in
+// form is the critical path and the initial graph stays under its ceiling
+// (scripts/audit-bundle-size.mjs).
+const AuthHeroStrip = lazyChunk(() => import('@/components/AuthHeroStrip'));
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -253,7 +256,9 @@ const Auth = () => {
         </div>
       </div>
 
-      <AuthHeroStrip />
+      <Suspense fallback={null}>
+        <AuthHeroStrip />
+      </Suspense>
     </div>
   );
 };
