@@ -488,7 +488,7 @@ async function evalRouting(
 
 interface StewardMetrics {
   model: string;
-  fixtures: Record<string, { pass: boolean; detail: string }>;
+  fixtures: Record<string, FixtureResult>;
   draftCalls: number;
   validDraftCalls: number;
   schemaValidity: number;
@@ -511,6 +511,32 @@ interface InvalidDraftCall {
    * record is unchanged; null when no envelope was observed. */
   code: string | null;
   reason: string | null;
+}
+
+/** ai-agents.md §25.3 Q3: what the model actually did on a FAILED live
+ * fixture — its reply, the proposal it filed, the tools it called. A verdict
+ * line ("expected 1 sections, got 2") says that a fixture failed; this says
+ * why, so a persistent failure can be told apart from a too-strict fixture
+ * without re-running. Clipped, report-only, recorded on failure only. */
+interface Observed {
+  reply?: string;
+  proposal?: string;
+  tools?: string[];
+}
+
+type FixtureResult = { pass: boolean; detail: string; observed?: Observed };
+
+function clip(text: string | undefined | null, n: number): string | undefined {
+  if (!text) return undefined;
+  return text.length > n ? `${text.slice(0, n)}…(+${text.length - n} chars)` : text;
+}
+
+function observe(reply: string | undefined, proposals: Row[] | undefined, tools: string[]): Observed {
+  return {
+    reply: clip(reply, 1200),
+    proposal: clip(proposals && proposals.length > 0 ? JSON.stringify(proposals[0].payload) : undefined, 2000),
+    tools,
+  };
 }
 
 const NO_REFUSAL = { code: null, reason: null } as const;
@@ -539,6 +565,8 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
   const invalidDraftCalls: InvalidDraftCall[] = [];
 
   for (const id of STEWARD_FIXTURES) {
+    let stewardReply = "";
+    let stewardTools: string[] = [];
     const fixture = await loadFixture(id);
     const tables = structuredClone(fixture.project_snapshot) as Record<string, Row[]>;
     const db = makeStubDb(tables, makeAgentRpcs(tables));
@@ -579,6 +607,8 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
           if (name === "draft_item_master_update" && env.meta.row_count === 0) refusals.push(refusalOf(env));
         },
       });
+      stewardReply = turn.reply;
+      stewardTools = turn.toolCalls.map((c) => `${c.name}:${c.row_count}`);
       for (const call of turn.toolCalls) {
         if (call.name !== "draft_item_master_update") continue;
         draftCalls++;
@@ -615,7 +645,9 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
       pass = false;
       detail = `expected ${exp.proposal_count} proposals, got ${proposals.length}`;
     }
-    fixtures[id] = { pass, detail };
+    fixtures[id] = !mock && !pass
+      ? { pass, detail, observed: observe(stewardReply, tables.proposals, stewardTools) }
+      : { pass, detail };
   }
 
   const schemaValidity = draftCalls === 0 ? 1 : validDraftCalls / draftCalls;
@@ -728,9 +760,16 @@ function scoreAgentOutcome(cfg: AgentEvalConfig, proposals: Row[], exp: Record<s
     if (exp.proposal.overrides !== undefined && (diff.overrides ?? []).length !== exp.proposal.overrides) {
       return { pass: false, detail: `expected ${exp.proposal.overrides} overrides, got ${(diff.overrides ?? []).length}` };
     }
-    if (exp.proposal.defaults_families &&
-        JSON.stringify(Object.keys(diff.defaults ?? {}).sort()) !== JSON.stringify([...exp.proposal.defaults_families].sort())) {
-      return { pass: false, detail: `defaults families mismatch: ${Object.keys(diff.defaults ?? {})}` };
+    if (exp.proposal.defaults_families) {
+      // ai-agents.md §10 entry 38(s): a fixture may name further family sets
+      // the policy catalog makes equally valid (`defaults_families_also_accept`)
+      // — scored here only; the deterministic tier pins the primary set.
+      const got = JSON.stringify(Object.keys(diff.defaults ?? {}).sort());
+      const accepted = [exp.proposal.defaults_families, ...(exp.proposal.defaults_families_also_accept ?? [])]
+        .map((f: string[]) => JSON.stringify([...f].sort()));
+      if (!accepted.includes(got)) {
+        return { pass: false, detail: `defaults families mismatch: ${Object.keys(diff.defaults ?? {})}` };
+      }
     }
     if (exp.proposal.newly_required_includes &&
         !((payload.newly_required as string[]) ?? []).includes(exp.proposal.newly_required_includes)) {
@@ -765,9 +804,24 @@ function scoreAgentOutcome(cfg: AgentEvalConfig, proposals: Row[], exp: Record<s
     if (exp.proposal.scenario_id && payload.scenario_id !== exp.proposal.scenario_id) {
       return { pass: false, detail: `expected scenario ${exp.proposal.scenario_id}, got ${payload.scenario_id}` };
     }
-    if (exp.proposal.new_scenario_name &&
-        (payload.new_scenario as { name?: string } | undefined)?.name !== exp.proposal.new_scenario_name) {
-      return { pass: false, detail: `expected new scenario "${exp.proposal.new_scenario_name}"` };
+    // §10 entry 38(s): the live tier scores what the ask MEANS — a new
+    // scenario carrying the asked outage (target + duration) — not the
+    // free-text name the mocked args happen to use. The deterministic tier
+    // (experiment_designer_test.ts) still pins the mocked name verbatim.
+    if (exp.proposal.new_scenario_name) {
+      const ns = payload.new_scenario as
+        | { name?: string; disruption_schedule?: Array<{ target?: string; duration_days?: number }> }
+        | undefined;
+      if (!ns || !ns.name) return { pass: false, detail: "expected a new scenario, none in the spec" };
+      const want = exp.proposal.new_scenario_outage as { target: string; duration_days: number } | undefined;
+      if (want && !(ns.disruption_schedule ?? []).some((e) =>
+        e.target === want.target && e.duration_days === want.duration_days)) {
+        return {
+          pass: false,
+          detail: `new scenario lacks the asked outage (${want.target}, ${want.duration_days} days): ` +
+            JSON.stringify(ns.disruption_schedule ?? []).slice(0, 200),
+        };
+      }
     }
     if (exp.proposal.grounding_policy_hash &&
         (p.grounding as Record<string, unknown> | null)?.policy_hash !== exp.proposal.grounding_policy_hash) {
@@ -837,6 +891,7 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
     };
 
     let reply = "";
+    let toolsUsed: string[] = [];
     if (mock) {
       // offline: exercise the pipeline with the fixture's mocked args (the
       // adversarial fixtures inject deliberately bad args to prove the gate
@@ -860,6 +915,7 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
         },
       });
       reply = turn.reply;
+      toolsUsed = turn.toolCalls.map((c) => `${c.name}:${c.row_count}`);
       for (const call of turn.toolCalls) {
         if (call.name !== cfg.draftTool) continue;
         draftCalls++;
@@ -881,7 +937,9 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
         }
       }
     }
-    fixtures[id] = { pass, detail };
+    fixtures[id] = !mock && !pass
+      ? { pass, detail, observed: observe(reply, tables.proposals, toolsUsed) }
+      : { pass, detail };
   }
 
   const schemaValidity = draftCalls === 0 ? 1 : validDraftCalls / draftCalls;
@@ -1014,7 +1072,7 @@ async function judgeReply(
 
 interface CoverageMetrics {
   model: string;
-  battery: Record<string, { pass: boolean; detail: string; fabrications: number }>;
+  battery: Record<string, FixtureResult & { fabrications: number }>;
   fabrications: number;
   layer2Violations: number;
   judgedFaithful: number;
@@ -1083,6 +1141,7 @@ async function evalCoverage(model: ModelSpec, mock: boolean): Promise<CoverageMe
       let pass = true;
       let detail = "ok";
       let fixtureFabrications = 0;
+      let liveReply = "";
       try {
         const result = await runChat(model.id, fixture.utterance, [], ctx, null, {
           tools: personaToolDeclarations(),
@@ -1090,6 +1149,7 @@ async function evalCoverage(model: ModelSpec, mock: boolean): Promise<CoverageMe
             calls.push({ name, args, envelope });
           },
         });
+        liveReply = result.reply ?? "";
         const { citations, toolCallRefs } = await assembleCitations(calls);
         const verdict = await verifyReply({
           reply: result.reply ?? "", calls, citations,
@@ -1137,7 +1197,13 @@ async function evalCoverage(model: ModelSpec, mock: boolean): Promise<CoverageMe
         pass = false;
         detail = `turn failed: ${e instanceof Error ? e.message : e}`;
       }
-      battery[id] = { pass, detail, fabrications: fixtureFabrications };
+      battery[id] = pass
+        ? { pass, detail, fabrications: fixtureFabrications }
+        : {
+          pass, detail, fabrications: fixtureFabrications,
+          observed: observe(liveReply, undefined,
+            calls.map((c) => `${c.name}:${c.envelope.meta.row_count}${c.envelope.meta.note ? `:${String(c.envelope.meta.note).slice(0, 60)}` : ""}`)),
+        };
     }
   } finally {
     Deno.env.delete("COVERAGE_TOOLS_ENABLED");
@@ -1285,7 +1351,7 @@ function substituteTokens<T>(value: T, subs: Record<string, string>): T {
 }
 
 interface SuiteScore {
-  fixtures: Record<string, { pass: boolean; detail: string }>;
+  fixtures: Record<string, FixtureResult>;
   score: number;
 }
 
@@ -1313,9 +1379,10 @@ async function evalLoop(model: ModelSpec, mock: boolean): Promise<LoopMetrics> {
   const runNeeded: SuiteScore["fixtures"] = {};
   const planIntegrity: SuiteScore["fixtures"] = {};
 
-  const runSingleTurn = async (fixture: LoopFixture): Promise<{ pass: boolean; detail: string }> => {
+  const runSingleTurn = async (fixture: LoopFixture): Promise<FixtureResult> => {
     const h = makeLoopHarness(fixture, model);
     let reply = "";
+    let loopTools: string[] = [];
     try {
       if (mock) {
         // Replay the fixture's scripted calls through the REAL handlers —
@@ -1334,11 +1401,15 @@ async function evalLoop(model: ModelSpec, mock: boolean): Promise<LoopMetrics> {
         });
         if (!turn.ok) return { pass: false, detail: `turn failed: ${turn.error}` };
         reply = turn.reply;
+        loopTools = turn.toolCalls.map((c) => `${c.name}:${c.row_count}`);
       }
     } catch (e) {
       return { pass: false, detail: `turn failed: ${e instanceof Error ? e.message : e}` };
     }
-    return scoreLoopOutcome(fixture, h.tables, reply);
+    const scored = scoreLoopOutcome(fixture, h.tables, reply);
+    return !mock && !scored.pass
+      ? { ...scored, observed: observe(reply, h.tables.proposals, loopTools) }
+      : scored;
   };
 
   // The pi-* laws the MODEL owns, scored on the plan-shaped miss turn:
@@ -1346,7 +1417,7 @@ async function evalLoop(model: ModelSpec, mock: boolean): Promise<LoopMetrics> {
   // write legal (pi-02/03/04 — a rejection is an attempted violation); no
   // step left 'active' at turn end (pi-01, the model's side of the §21.3
   // law); the card step waiting on the filed proposal; nothing dispatched.
-  const runPlanTurn = async (fixture: LoopFixture): Promise<{ pass: boolean; detail: string }> => {
+  const runPlanTurn = async (fixture: LoopFixture): Promise<FixtureResult> => {
     const h = makeLoopHarness(fixture, model);
     const planEnvelopes: ToolEnvelope[] = [];
     try {
@@ -1387,7 +1458,14 @@ async function evalLoop(model: ModelSpec, mock: boolean): Promise<LoopMetrics> {
     if (!plan) return { pass: false, detail: "no plan filed (§20.4 step 2: the plan comes before any other tool)" };
     const rejected = planEnvelopes.filter((e) => e.kind !== "plan").length;
     if (rejected > 0) {
-      return { pass: false, detail: `${rejected} update_task_plan write(s) rejected — an attempted §21.1 rule violation` };
+      return {
+        pass: false,
+        detail: `${rejected} update_task_plan write(s) rejected — an attempted §21.1 rule violation`,
+        observed: {
+          tools: planEnvelopes.filter((e) => e.kind !== "plan")
+            .map((e) => `update_task_plan:${String(e.meta.note ?? "")}:${clip(typeof e.data === "string" ? e.data : JSON.stringify(e.data), 300)}`),
+        },
+      };
     }
     const steps = (plan.steps as PlanStep[]) ?? [];
     if (steps.length === 0) return { pass: false, detail: "the filed plan declares no steps" };

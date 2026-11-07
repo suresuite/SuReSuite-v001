@@ -1818,6 +1818,25 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     - cache-checkable precision .750.
 
     The next iteration needs the owner's labeling decision in (q). The rest are near target, and with ±.10 run-to-run noise a further prompt change should be judged on two runs, as this one was.
+    (s) **[DECIDED by the owner, 2026-11-07: "go with your defaults"] Three decisions left open by (q), (m) and (r), and the start of Q3.**
+    1. **"Make the (pre-run) gate pass", with no data or policy named, is the Policy Configurator's.** The run-readiness contract's obligations 3–5 are policy selections, and `policy-21`…`25` already say so. `mixed-12` ("What does the gate say, and make it pass") is relabelled from `data-steward` to `policy-configurator` / `policy.run_ready`. Asks about the data-completeness check, or about which data is missing, stay the steward's (its ownership note).
+    2. **`pc-02` and `pc-07` accept every reading Phase 14's catalog makes valid**, through a new fixture field `defaults_families_also_accept` that only the live scorer reads. The deterministic tier still pins the primary set against the mocked args.
+       - `pc-02` also accepts `{inventory, production}`: "everywhere" may include the plant's `fg_policy`.
+       - `pc-07` also accepts `fulfillment` or `{inventory, fulfillment}`: a fill-rate target may be the customer row's SLA floor. The fixture's point is the no-KPI-prediction reply rule, and that rule is unchanged.
+    3. **No agent is re-enabled by Q3.** `AGENT_ENABLED_IDS` stays `vv-analyst`; each agent is re-added in its own PR once its suite is green.
+
+    **Q3 triage across the eight saved live runs** (Q0 through iteration 5 repeat, `gpt-5`):
+
+    | Fixture | Failed | Reading |
+    |---|---|---|
+    | `cov-04`, `ed-02`, `rb-01`, `rb-03`, `pc-02` | 8 / 8 | persistent, so a fixture-vs-system disagreement is as likely as model noise |
+    | `pc-06`, `cl-08` | 7 / 8 | near-persistent |
+    | `cl-04` | 6 / 8 | intermittent plan-rule violation |
+    | `ed-04` | 3 / 8 | intermittent |
+    | `pc-07`, `cl-05`, `pc-04`, `cov-08` | ≤ 2 / 8 | intermittent |
+
+    **First Q3 change: evidence before fixes.** A failed live fixture now records `observed`: the model's reply, the proposal payload it filed and the tools it called (clipped, report-only, failures only). For a rejected plan write, it records the rejection reason. Without this, a persistent failure cannot be told from a too-strict fixture without guessing.
+    - One case did not need it. `ed-02`'s live scorer compared the new scenario's free-text NAME to the mocked args' `"S1 outage — 6 weeks"`, which no fixture description asks for. It now checks what the ask means: a new scenario whose schedule carries an S1 outage of 42 days (`new_scenario_outage`), with replications checked as before. The deterministic tier still pins the mocked name.
 
 ---
 
@@ -3679,4 +3698,5 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
 | Q1 | **Iteration 5 recommended for merge; Q1 not done.** On two runs: 35–36 misses (Q0 124, production today 75–79); vv .90/.82–.88 (production today .82–.84/.82); designer, report and draft schema validity meet target. Open: steward recall (owner labeling decision, 38(q)), configurator precision .895, advisory false-artifact .06–.09, needs-run .78, cache-checkable .75 | 38(g), 38(i), 38(k), 38(n)–(r) |
 | Q2 | **Met on `gpt-5`, five runs in a row** (steward and configurator schema validity 1.0, gate-violation attempts 0). `gpt-5-mini` is scored at Q4 | 38(h), 38(l), 38(n), 38(r) |
-| Q3–Q5 | Not started | — |
+| Q3 | **In progress.** Owner defaults applied (38(s)); failure evidence (`observed`) now recorded; `ed-02` scored by meaning. A diagnostic `gpt-5` run has been fired to read the persistent failures | 38(s) |
+| Q4–Q5 | Not started | — |
