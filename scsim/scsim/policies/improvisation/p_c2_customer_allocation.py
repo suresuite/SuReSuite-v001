@@ -138,6 +138,19 @@ class CustomerAllocation(PolicyPlugin):
         "accounts / SLA tiers / spread pain. Inert for single-customer MTO. Hook: PH-60."
     )
     Params: ClassVar[type[PolicyParams]] = CustomerAllocationParams
+    # Facet 11: in a scarce week, one record per customer × product row that
+    # was served less than it demanded, naming the allocation rule that put it
+    # there. A row served in full is no decision.
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "short_fair_share":
+            "Supply was short; it was split pro rata (fcfs, proportional and fair share coincide at weekly buckets), so this row got its share.",
+        "short_priority":
+            "Supply was short; higher-priority customers were served first, so this row got what was left.",
+        "short_sla_tier":
+            "Supply was short; each segment's SLA fill floor was met first, then the rest by priority, so this row got what was left.",
+        "short_revenue_max":
+            "Supply was short; it went to the highest-price rows first, so this row got what was left.",
+    }
     data_requirements: ClassVar[tuple[DataRequirement, ...]] = (
         DataRequirement(
             field="outbound_logistics.volume", level="required",
@@ -314,6 +327,10 @@ class CustomerAllocation(PolicyPlugin):
                               minlength=m.n_custs)
             state["demand_seg"][:, t] = state["seg_of"] @ d_c
             state["served_seg"][:, t] = state["seg_of"] @ s_c
+            if ctx.decisions.enabled:
+                for r in np.flatnonzero(named & (ctx.served_new_rows < ctx.demand_rows - 1e-9)):
+                    self._record(ctx, m.row_ids[r], float(ctx.demand_rows[r]),
+                                 float(ctx.served_new_rows[r]), "units")
             return
         P, C = m.n_prods, m.n_custs
         # Value-weighted weekly split (engine fill-rate convention).
@@ -334,6 +351,19 @@ class CustomerAllocation(PolicyPlugin):
 
         state["demand_seg"][:, t] = state["seg_of"] @ d_pc.sum(axis=0)
         state["served_seg"][:, t] = state["seg_of"] @ s_pc.sum(axis=0)
+        if ctx.decisions.enabled:
+            for j, c in zip(*np.nonzero(s_pc < d_pc - 1e-9)):
+                self._record(ctx, f"{m.cust_ids[c]}::{m.prod_ids[j]}", float(d_pc[j, c]),
+                             float(s_pc[j, c]), "value")
+
+    def _record(self, ctx: SimContext, row: str, demanded: float, served: float, basis: str) -> None:
+        # Reads values on_phase already computed; changes nothing (facet 11).
+        p: CustomerAllocationParams = self.params
+        self.decide(
+            ctx, rationale=f"short_{_HELPER_RULE[p.rule]}", node_kind="customer_product", node=row,
+            inputs={"rule": p.rule, "demanded": demanded, "basis": basis},
+            decision={"served": served, "short_by": demanded - served},
+        )
 
     def kpi_contribution(self, ctx: SimContext, t_w: int, window_end: int) -> dict[str, float]:
         if ctx.model.n_custs < 2:

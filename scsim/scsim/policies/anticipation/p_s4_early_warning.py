@@ -77,6 +77,14 @@ class EarlyWarningFailover(PolicyPlugin):
         "week of warning worth?' a first-class experiment. Hook: PH-20."
     )
     Params: ClassVar[type[PolicyParams]] = EarlyWarningFailoverParams
+    # Facet 11: the policy makes ONE decision per replication — the detection
+    # lag every reactive policy then sees — so it records once, at setup (week 0).
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "lag_compressed":
+            "Monitoring shortened the disruption-start to firm-knows delay below the scenario's own lag.",
+        "lag_not_compressed":
+            "The scenario's own detection lag was already no longer than the monitored lag, so monitoring bought no earlier warning.",
+    }
 
     @property
     def hooks(self) -> list[Hook]:
@@ -121,6 +129,16 @@ class EarlyWarningFailover(PolicyPlugin):
         # Applied at setup so week-1 consumers in earlier phases already see
         # the compressed lag; re-asserted at PH-20 (the declared residency).
         ctx.detection_lag_override = self._effective_lag(ctx)
+        p: EarlyWarningFailoverParams = self.params
+        world = int(ctx.model.settings.detection_lag_weeks)
+        self.decide(
+            ctx,
+            rationale="lag_compressed" if ctx.detection_lag_override < world else "lag_not_compressed",
+            node_kind="network", node="*",
+            inputs={"scenario_lag_weeks": world, "monitored_lag_weeks": int(p.detection_lag_weeks)},
+            decision={"effective_lag_weeks": int(ctx.detection_lag_override),
+                      "monitoring_cost_per_week": float(p.monitoring_cost) / 52.0},
+        )
 
     def on_phase(self, phase: PhaseId, ctx: SimContext) -> None:
         ctx.detection_lag_override = self._effective_lag(ctx)

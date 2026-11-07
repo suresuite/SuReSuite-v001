@@ -114,7 +114,7 @@
       "path": "scsim/scsim/policies/strategic/p_p3_safety_stock.py",
       "symbols": "apply",
       "manual_page": "how-policies-work",
-      "sha256": "f22d656ccf366fd078f355ac5ce00a7703cc94196b5071c4a99bb1b2bb94dd03"
+      "sha256": "3654d824726df1337a02ef6b5aacecba07c9c16b6dd37b52522eecad654be780"
     }
   ],
   "initial_commit": "7698ac2d541242de35383d488cfa3cc1ab5a31c2"

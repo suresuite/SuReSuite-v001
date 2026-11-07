@@ -70,6 +70,16 @@ class ExpeditedShipments(PolicyPlugin):
         "cut never shipped (supplier queue is out of reach)."
     )
     Params: ClassVar[type[PolicyParams]] = ExpeditedShipmentsParams
+    # Facet 11: recorded for each in-scope material with a shortfall this week
+    # (need > 0) — expedited, or why not. No shortfall is no decision.
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "expedited_shortfall":
+            "Next week's need exceeded stock plus what lands next week, so in-transit units were pulled forward at a premium.",
+        "held_value_below_premium":
+            "There was a shortfall, but the material's marginal value was not above the expediting premium, so nothing was pulled forward.",
+        "held_nothing_in_transit":
+            "There was a shortfall, but nothing later in the pipeline could be pulled forward.",
+    }
 
     @property
     def hooks(self) -> list[Hook]:
@@ -108,19 +118,26 @@ class ExpeditedShipments(PolicyPlugin):
             gap = float(need[mat])
             if gap <= 1e-9:
                 continue
+            seen = {"shortfall": gap, "decision_rule": p.decision}
             if p.decision == "revenue_positive":
                 # Marginal value of one unit of m across its consumers vs the premium.
                 col = m.bom_csc.getcol(int(mat))
                 value = float((m.unit_price[col.indices] / col.data).max()) if col.nnz else 0.0
                 premium_unit = m.mat_cost[mat] * p.premium_pct_of_cost / 100.0
+                seen.update(unit_value=value, unit_premium=float(premium_unit))
                 if value <= premium_unit:
+                    self.decide(ctx, rationale="held_value_below_premium", node_kind="material",
+                                node=m.mat_ids[mat], inputs=seen, decision={"pulled_forward": 0.0})
                     continue
             pulled = self._pull_forward(ctx, int(mat), gap)
+            premium = pulled * m.mat_cost[mat] * p.premium_pct_of_cost / 100.0
             if pulled > 0:
-                ctx.cost.add(
-                    "expediting",
-                    pulled * m.mat_cost[mat] * p.premium_pct_of_cost / 100.0,
-                )
+                ctx.cost.add("expediting", premium)
+            self.decide(
+                ctx, rationale="expedited_shortfall" if pulled > 0 else "held_nothing_in_transit",
+                node_kind="material", node=m.mat_ids[mat], inputs=seen,
+                decision={"pulled_forward": float(pulled), "premium": float(premium) if pulled > 0 else 0.0},
+            )
 
     def _pull_forward(self, ctx: SimContext, mat: int, qty: float) -> float:
         """Move up to ``qty`` from the earliest future slots into next week's landing."""

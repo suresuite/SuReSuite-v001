@@ -96,6 +96,14 @@ class ProactiveMultiSourcing(PolicyPlugin):
         "disruption hits only its slice."
     )
     Params: ClassVar[type[PolicyParams]] = ProactiveMultiSourcingParams
+    # Facet 11: recorded for each multi-sourced material whose order was split
+    # this week. A week with no order for the material is no decision.
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "split_planned_shares":
+            "The order was split across the warm sources at their planned shares.",
+        "split_rebalanced_around_disruption":
+            "Some sources were disrupted (as the firm sees it), so their shares moved to the healthy sources.",
+    }
     data_requirements: ClassVar[tuple[DataRequirement, ...]] = (
         DataRequirement(
             field="inbound_logistics.volume", level="recommended",
@@ -198,6 +206,7 @@ class ProactiveMultiSourcing(PolicyPlugin):
             if qty <= 0:
                 continue
             shares = state["shares"][links].copy()
+            rebalanced = False
             if disrupted.any():
                 healthy = ~disrupted[links]
                 if healthy.any() and not healthy.all():
@@ -205,17 +214,32 @@ class ProactiveMultiSourcing(PolicyPlugin):
                     total = shares.sum()
                     if total > 0:
                         shares = shares / total
+                        rebalanced = True
             orders[primary] = 0.0
+            split: dict[str, float] = {}
+            mat_premium = 0.0
             for k, link in enumerate(links):
                 slice_qty = qty * float(shares[k])
                 if slice_qty <= 0:
                     continue
                 orders[link] += slice_qty
+                split[m.sup_ids[m.link_sup[link]]] = split.get(m.sup_ids[m.link_sup[link]], 0.0) + slice_qty
                 if link != primary:
-                    premium_total += slice_qty * (
+                    # Accumulated per slice exactly as before (float order is behaviour).
+                    slice_premium = slice_qty * (
                         float(m.link_cost[link] - m.link_cost[primary]) + p.secondary_premium
                     )
+                    premium_total += slice_premium
+                    mat_premium += slice_premium
             changed = True
+            self.decide(
+                ctx,
+                rationale="split_rebalanced_around_disruption" if rebalanced else "split_planned_shares",
+                node_kind="material", node=m.mat_ids[mat],
+                inputs={"order_qty": float(qty),
+                        "disrupted_sources": ",".join(m.sup_ids[m.link_sup[l]] for l in links if disrupted[l])},
+                decision={**{f"qty_{s}": q for s, q in split.items()}, "premium": float(mat_premium)},
+            )
         if changed:
             ctx.write_purchase_orders(orders)
             if premium_total > 0:

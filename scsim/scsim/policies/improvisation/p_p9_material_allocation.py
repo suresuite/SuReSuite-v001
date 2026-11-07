@@ -91,6 +91,20 @@ class MaterialAllocation(PolicyPlugin):
         "with the shared-material index."
     )
     Params: ClassVar[type[PolicyParams]] = MaterialAllocationParams
+    # Facet 11: in an active week, one record per product the allocation held
+    # below what it could otherwise make (demand + backlog within capacity) —
+    # which product lost out, by how much, and under which method. A week in
+    # which no shared material binds is one network-level record.
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "rationed_lp":
+            "Shared materials were scarce; the rolling LP allocated them to higher-weight products, so this product got less than it wanted.",
+        "rationed_greedy":
+            "Shared materials were scarce; the weight-ranked greedy rule served higher-weight products first, so this product got less than it wanted.",
+        "rationed_greedy_lp_failed":
+            "The LP solver failed this week, so the weight-ranked greedy rule allocated instead, and this product got less than it wanted.",
+        "held_no_binding_material":
+            "No shared material was scarce over the planning window, so the default plan was kept.",
+    }
     data_requirements: ClassVar[tuple[DataRequirement, ...]] = (
         DataRequirement(
             field="products.sell_price", level="recommended",
@@ -130,15 +144,35 @@ class MaterialAllocation(PolicyPlugin):
         weights = self._weights(ctx)
 
         if p.solver == "greedy":
-            ctx.write_production_plan(self._greedy_plan(ctx, want, cap_now, weights))
+            plan = self._greedy_plan(ctx, want, cap_now, weights)
+            ctx.write_production_plan(plan)
+            self._record(ctx, "rationed_greedy", plan, want, cap_now, weights)
             return
         status, plan = self._lp_plan(ctx, want, cap_now, weights)
         if status == "no_binding":
+            self.decide(ctx, rationale="held_no_binding_material", node_kind="network", node="*",
+                        inputs={"window_weeks": int(p.window_weeks)}, decision={"plan_changed": False})
             return  # default plan is already optimal — nothing to allocate
         if status == "fail":
             state["lp_fallbacks"] += 1  # R3 flag: solver trouble, greedy heuristic used
             plan = self._greedy_plan(ctx, want, cap_now, weights)
         ctx.write_production_plan(plan)
+        self._record(ctx, "rationed_lp" if status == "ok" else "rationed_greedy_lp_failed",
+                     plan, want, cap_now, weights)
+
+    def _record(self, ctx: SimContext, rationale: str, plan, want, cap_now, weights) -> None:
+        # Reads values on_phase already computed; changes nothing (facet 11).
+        if not ctx.decisions.enabled:
+            return
+        m = ctx.model
+        wanted = np.minimum(want, cap_now)
+        for j in np.flatnonzero(plan < wanted - 1e-9):
+            self.decide(
+                ctx, rationale=rationale, node_kind="product", node=m.prod_ids[j],
+                inputs={"wanted": float(wanted[j]), "weight": float(weights[j]),
+                        "objective": self.params.objective},
+                decision={"planned": float(plan[j]), "short_by": float(wanted[j] - plan[j])},
+            )
 
     # ----------------------------------------------------------------- pieces
 

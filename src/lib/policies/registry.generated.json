@@ -1760,7 +1760,11 @@
         "title": "UnmetDemandParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "unmet_backordered": "Demand could not be served this week and the rule is backorder, so the unmet units wait in the backlog.",
+        "unmet_lost_sales": "Demand could not be served this week and the rule is lost sales, so the unmet units were lost.",
+        "unmet_partially_backordered": "Demand could not be served this week; part of the unmet units wait in the backlog and the rest were lost."
+      },
       "requires_predeployment": false,
       "stage": "customer",
       "status": "implemented",
@@ -1886,7 +1890,12 @@
         "title": "CustomerAllocationParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "short_fair_share": "Supply was short; it was split pro rata (fcfs, proportional and fair share coincide at weekly buckets), so this row got its share.",
+        "short_priority": "Supply was short; higher-priority customers were served first, so this row got what was left.",
+        "short_revenue_max": "Supply was short; it went to the highest-price rows first, so this row got what was left.",
+        "short_sla_tier": "Supply was short; each segment's SLA fill floor was met first, then the rest by priority, so this row got what was left."
+      },
       "requires_predeployment": false,
       "stage": "customer",
       "status": "implemented",
@@ -1998,7 +2007,10 @@
         "title": "ForwardVisibilityParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "horizon_from_params": "The customer commits orders over the visibility horizon set on the policy.",
+        "horizon_from_settings": "No horizon was set on the policy, so the scenario's drawn forward schedule length was used."
+      },
       "requires_predeployment": true,
       "stage": "customer",
       "status": "implemented",
@@ -2296,7 +2308,15 @@
         "title": "InventoryControlParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "held_not_review_week": "Inventory position was below the reorder point, but this is not the material's review week, so no order was released.",
+        "ordered_base_stock": "Inventory position was below the base-stock level S, so the difference was ordered.",
+        "ordered_min_max": "Inventory position (on hand + on order) fell below the reorder point s in a review week, so an order up to S was released.",
+        "ordered_mrp": "MRP netting: projected need over the lead time plus safety stock exceeded on hand plus on order, so the net was ordered.",
+        "ordered_periodic": "A review week for this material, and position was below S, so the difference was ordered.",
+        "ordered_rop_q": "Inventory position fell below the reorder point, so the fixed lot Q was ordered.",
+        "ordered_rop_q_no_lot": "Inventory position fell below the reorder point and no lot Q was set, so it ordered up to S instead (the declared fallback)."
+      },
       "requires_predeployment": false,
       "stage": "plant",
       "status": "implemented",
@@ -2614,7 +2634,15 @@
         "title": "SafetyStockParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "buffer_abc_xyz": "The buffer was sized from the material's ABC-XYZ class service level, demand variability and lead time (Eqs. 20-21).",
+        "buffer_fixed_days": "The buffer was set as a fixed number of days of expected demand.",
+        "buffer_king": "The buffer was sized by King's formula: demand variability over the lead time plus lead-time variability.",
+        "buffer_material_days": "The buffer was set from the days of cover stated for this material.",
+        "buffer_uniform": "The buffer was sized from one uniform service level, demand variability and lead time.",
+        "buffer_window_raised": "A disruption buffer window for this material was open this week, so its levels were raised for the window.",
+        "buffer_zero_stated_level": "The material has a stated reorder level, which is never raised, so no buffer was added."
+      },
       "requires_predeployment": true,
       "stage": "plant",
       "status": "implemented",
@@ -2737,7 +2765,12 @@
         "title": "FgSafetyStockParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "buffer_fixed_days": "The FG buffer was sized as a fixed number of days of forecast demand.",
+        "buffer_fixed_units": "The FG buffer was set to a fixed number of units.",
+        "buffer_service_level": "The FG buffer was sized from the service level and demand variability (z \u00d7 \u03c3).",
+        "buffer_zero_typed_level": "The product has a typed FG level (S, (s, S) or D), which IS the target, so no buffer was added on top."
+      },
       "requires_predeployment": true,
       "stage": "plant",
       "status": "implemented",
@@ -2814,7 +2847,11 @@
         "title": "ShortTermCapacityParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "granted_during_disruption": "A disruption was visible to the firm and overtime would raise output, so overtime was granted.",
+        "granted_revenue_positive": "Overtime would raise output and the extra revenue exceeded the overtime premium, so overtime was granted.",
+        "held_premium_exceeds_gain": "Overtime would raise output, but the overtime premium was not below the extra revenue, so it was not granted."
+      },
       "requires_predeployment": false,
       "stage": "plant",
       "status": "implemented",
@@ -3086,7 +3123,12 @@
         "title": "MaterialAllocationParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "held_no_binding_material": "No shared material was scarce over the planning window, so the default plan was kept.",
+        "rationed_greedy": "Shared materials were scarce; the weight-ranked greedy rule served higher-weight products first, so this product got less than it wanted.",
+        "rationed_greedy_lp_failed": "The LP solver failed this week, so the weight-ranked greedy rule allocated instead, and this product got less than it wanted.",
+        "rationed_lp": "Shared materials were scarce; the rolling LP allocated them to higher-weight products, so this product got less than it wanted."
+      },
       "requires_predeployment": false,
       "stage": "plant",
       "status": "implemented",
@@ -3317,7 +3359,10 @@
         "title": "ProactiveMultiSourcingParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "split_planned_shares": "The order was split across the warm sources at their planned shares.",
+        "split_rebalanced_around_disruption": "Some sources were disrupted (as the firm sees it), so their shares moved to the healthy sources."
+      },
       "requires_predeployment": true,
       "stage": "supplier",
       "status": "implemented",
@@ -3417,7 +3462,10 @@
         "title": "EarlyWarningFailoverParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "lag_compressed": "Monitoring shortened the disruption-start to firm-knows delay below the scenario's own lag.",
+        "lag_not_compressed": "The scenario's own detection lag was already no longer than the monitored lag, so monitoring bought no earlier warning."
+      },
       "requires_predeployment": true,
       "stage": "supplier",
       "status": "implemented",
@@ -3591,7 +3639,11 @@
         "title": "ExpeditedShipmentsParams",
         "type": "object"
       },
-      "rationale_codes": {},
+      "rationale_codes": {
+        "expedited_shortfall": "Next week's need exceeded stock plus what lands next week, so in-transit units were pulled forward at a premium.",
+        "held_nothing_in_transit": "There was a shortfall, but nothing later in the pipeline could be pulled forward.",
+        "held_value_below_premium": "There was a shortfall, but the material's marginal value was not above the expediting premium, so nothing was pulled forward."
+      },
       "requires_predeployment": false,
       "stage": "transport",
       "status": "implemented",

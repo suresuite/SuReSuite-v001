@@ -52,8 +52,10 @@ def test_recording_is_behaviour_neutral(monkeypatch):
 
 
 def test_backup_supplier_records_the_outage_reroutes():
-    recs = run_scenario(_scenario(inspection=True)).decision_trace["records"]
-    assert {r["policy"] for r in recs} == {"backup_supplier"}
+    # The always-on built-ins (P-P.1, P-C.1) record too since slice 2; this
+    # test is about P-S.1's records (test_decision_traces_policies covers the rest).
+    recs = [r for r in run_scenario(_scenario(inspection=True)).decision_trace["records"]
+            if r["policy"] == "backup_supplier"]
     for r in recs:
         assert r["catalog_ref"] == "P-S.1" and r["node_kind"] == "material" and r["node"] == "m1"
         assert r["rationale"] in BackupSupplier.rationale_codes
@@ -71,9 +73,10 @@ def test_backup_supplier_records_the_outage_reroutes():
     assert max(r["week"] for r in recs) < OUTAGE.start + OUTAGE.duration + 8
 
 
-def test_no_policy_means_no_records():
+def test_no_configured_strategy_means_only_the_built_ins_record():
+    # P-P.1 ordering and P-C.1 unmet demand run on every scenario (built-ins).
     tr = run_scenario(_scenario(inspection=True, policies={})).decision_trace
-    assert tr["records"] == []
+    assert {r["policy"] for r in tr["records"]} <= {"inventory_control", "unmet_demand_handling"}
 
 
 def test_an_undeclared_rationale_is_refused():

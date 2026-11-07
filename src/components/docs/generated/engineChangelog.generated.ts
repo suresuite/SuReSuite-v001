@@ -59,6 +59,12 @@ export const ENGINE_CHANGES: EngineChange[] = [
         "commit": null,
         "tier": 1,
         "summary": "Decision traces, first slice (policy facet 11; platform blueprint §6.1, ai-agents.md §5.5). A single-replication inspection run (`trace_verbosity=full_debug`, one replication) now carries `ScenarioResult.decision_trace`: one record per policy decision with its week, policy, material, the rationale code that decided, the values the rule read and what it did. P-S.1 (backup supplier) is the first policy that records, including why it did NOT reroute. Each policy declares its rationale codes (`rationale_codes`), which the registry export publishes. Recording only reads values the policy already computed, so no KPI, series or frozen reference run moved, and an ordinary Monte Carlo run is unchanged."
+      },
+      {
+        "date": "2026-11-07",
+        "commit": null,
+        "tier": 1,
+        "summary": "Decision traces, second slice: every implemented policy now records its decisions on an inspection run, each from its own declared rationale codes. Ordering (P-P.1: which rule released an order, or why a short material waited for its review week), unmet demand (P-C.1: lost or backordered), customer allocation (P-C.2: which rule left a row short), material allocation (P-P.9: which product was rationed), expediting (P-T.2), multi- sourcing splits (P-S.2), material and finished-goods safety stock (P-P.3, P-P.4, recorded when a buffer is set or changes), overtime (P-P.5), and the two setup decisions (P-C.6 visibility horizon, P-S.4 detection lag, recorded once at week 0). Recording only reads values the policies already computed, so no KPI, series or frozen reference run moved."
       }
     ],
     "backfilled": false,

@@ -94,6 +94,18 @@ class FgSafetyStock(PolicyPlugin):
         "for short disruptions (same window, opposite sides of the CODP)."
     )
     Params: ClassVar[type[PolicyParams]] = FgSafetyStockParams
+    # Facet 11: recorded for each MTS product in the week its buffer is first
+    # set and in any week it changes — not every week it stays the same.
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "buffer_service_level":
+            "The FG buffer was sized from the service level and demand variability (z × σ).",
+        "buffer_fixed_days":
+            "The FG buffer was sized as a fixed number of days of forecast demand.",
+        "buffer_fixed_units":
+            "The FG buffer was set to a fixed number of units.",
+        "buffer_zero_typed_level":
+            "The product has a typed FG level (S, (s, S) or D), which IS the target, so no buffer was added on top.",
+    }
     data_requirements: ClassVar[tuple[DataRequirement, ...]] = (
         DataRequirement(
             field="products.sell_price", level="required",
@@ -165,8 +177,33 @@ class FgSafetyStock(PolicyPlugin):
 
     def on_phase(self, phase: PhaseId, ctx: SimContext) -> None:
         ss = self._ss(ctx)
+        prev = ctx.policy_state[self.id].get("ss_recorded")
         ctx.policy_state[self.id]["ss_last"] = ss
+        base = ctx.fg_target
         ctx.write_fg_target(ctx.fg_target + ss)
+        if ctx.decisions.enabled:
+            self._record(ctx, ss, base, prev)
+
+    def _record(self, ctx: SimContext, ss: np.ndarray, base: np.ndarray, prev) -> None:
+        # Reads values on_phase already computed; changes nothing (facet 11).
+        p: FgSafetyStockParams = self.params
+        m = ctx.model
+        rationale = {"service_level": "buffer_service_level", "fixed_days": "buffer_fixed_days"}.get(
+            p.sizing, "buffer_fixed_units")
+        state = ctx.policy_state[self.id]
+        for i in np.flatnonzero(m.mts_mask):
+            if prev is not None and prev[i] == ss[i]:
+                continue
+            typed = bool(m.fg_typed[i])
+            self.decide(
+                ctx, rationale="buffer_zero_typed_level" if typed else rationale,
+                node_kind="product", node=m.prod_ids[i],
+                inputs={"sizing": p.sizing, "base_target": float(base[i]),
+                        "z": float(state["z"][i]), "sigma": float(state["sigma"][i]),
+                        "forecast": float(ctx.forecast[i])},
+                decision={"safety_stock": float(ss[i]), "fg_target": float(base[i] + ss[i])},
+            )
+        state["ss_recorded"] = ss.copy()
 
     def cost_contribution(self, ctx: SimContext) -> CostBreakdown:
         # Weekly holding on the planned FG buffer at full COGS (h^FG/52 · COGS · SS).

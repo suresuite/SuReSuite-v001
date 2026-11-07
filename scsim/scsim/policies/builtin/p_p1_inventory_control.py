@@ -220,6 +220,26 @@ class InventoryControl(PolicyPlugin):
         "dedicated resilience."
     )
     Params: ClassVar[type[PolicyParams]] = InventoryControlParams
+    # Facet 11: one record per material per week an order is released (PH-80),
+    # naming the rule that released it, plus the one "why not" a planner asks
+    # most — a min-max or periodic material below its reorder point in a week
+    # that is not its review week.
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "ordered_min_max":
+            "Inventory position (on hand + on order) fell below the reorder point s in a review week, so an order up to S was released.",
+        "ordered_base_stock":
+            "Inventory position was below the base-stock level S, so the difference was ordered.",
+        "ordered_rop_q":
+            "Inventory position fell below the reorder point, so the fixed lot Q was ordered.",
+        "ordered_rop_q_no_lot":
+            "Inventory position fell below the reorder point and no lot Q was set, so it ordered up to S instead (the declared fallback).",
+        "ordered_periodic":
+            "A review week for this material, and position was below S, so the difference was ordered.",
+        "ordered_mrp":
+            "MRP netting: projected need over the lead time plus safety stock exceeded on hand plus on order, so the net was ordered.",
+        "held_not_review_week":
+            "Inventory position was below the reorder point, but this is not the material's review week, so no order was released.",
+    }
     data_requirements: ClassVar[tuple[DataRequirement, ...]] = (
         DataRequirement(
             field="materials.moq", level="defaulted",
@@ -512,6 +532,44 @@ class InventoryControl(PolicyPlugin):
         nonzero = orders_mat > 0
         orders[m.primary_link[nonzero]] = orders_mat[nonzero]
         ctx.write_purchase_orders(orders)
+        if ctx.decisions.enabled:
+            self._record(ctx, type_code, qv, review, short, deficit, position, on_order, moq, orders_mat)
+
+    def _record(self, ctx: SimContext, type_code, qv, review, short, deficit, position, on_order,
+                moq, orders_mat) -> None:
+        # Reads values _release already computed; changes nothing (facet 11).
+        p: InventoryControlParams = self.params
+        m = ctx.model
+        tc = self._TYPE_CODE
+        mm_review = ctx.week % p.review_cadence_weeks == 0
+        for i in range(m.n_mats):
+            t_i = int(type_code[i])
+            if orders_mat[i] > 0:
+                if t_i == tc["min_max"]:
+                    why = "ordered_min_max"
+                elif t_i == tc["base_stock"]:
+                    why = "ordered_base_stock"
+                elif t_i == tc["rop_q"]:
+                    why = "ordered_rop_q_no_lot" if np.isnan(qv[i]) else "ordered_rop_q"
+                elif t_i == tc["periodic"]:
+                    why = "ordered_periodic"
+                else:
+                    why = "ordered_mrp"
+            elif short[i] and ((t_i == tc["min_max"] and not mm_review)
+                               or (t_i == tc["periodic"] and ctx.week % int(review[i]) != 0)):
+                why = "held_not_review_week"
+            else:
+                continue
+            self.decide(
+                ctx, rationale=why, node_kind="material", node=m.mat_ids[i],
+                inputs={"on_hand": float(ctx.on_hand[i]), "on_order": float(on_order[i]),
+                        "position": float(position[i]), "reorder_point": float(ctx.level_s[i]),
+                        "order_up_to": float(ctx.level_S[i]), "moq": float(moq[i])},
+                decision={"order_qty": float(orders_mat[i]),
+                          "supplier": m.sup_ids[m.link_sup[m.primary_link[i]]] if orders_mat[i] > 0 else None,
+                          "moq_raised_it": bool(orders_mat[i] > 0 and moq[i] > 0
+                                                and orders_mat[i] == moq[i])},
+            )
 
     # ------------------------------------------------------------- MRP KPIs
 

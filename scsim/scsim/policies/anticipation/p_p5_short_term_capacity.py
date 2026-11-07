@@ -69,6 +69,17 @@ class ShortTermCapacity(PolicyPlugin):
         "binds — in material-constrained networks that is rare; check utilization first."
     )
     Params: ClassVar[type[PolicyParams]] = ShortTermCapacityParams
+    # Facet 11: recorded for each product overtime COULD have raised output for
+    # this week (capacity binds) — granted, or why not. A week in which
+    # capacity does not bind is no decision and records nothing.
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "granted_revenue_positive":
+            "Overtime would raise output and the extra revenue exceeded the overtime premium, so overtime was granted.",
+        "granted_during_disruption":
+            "A disruption was visible to the firm and overtime would raise output, so overtime was granted.",
+        "held_premium_exceeds_gain":
+            "Overtime would raise output, but the overtime premium was not below the extra revenue, so it was not granted.",
+    }
     data_requirements: ClassVar[tuple[DataRequirement, ...]] = (
         DataRequirement(
             field="products.production_capacity", level="required",
@@ -104,15 +115,35 @@ class ShortTermCapacity(PolicyPlugin):
         if extra.sum() <= 1e-9:
             return
 
+        gain = cost = None
         if p.activation == "revenue_positive":
             gain = float((extra * m.unit_price).sum())
             cost = float((extra * m.unit_price).sum()) * p.overtime_premium_pct_of_price / 100.0
             if gain <= cost:
+                self._record(ctx, "held_premium_exceeds_gain", extra, q_base, gain, cost, None)
                 return
 
         headroom = np.where(extra > 1e-9, m.capacity * (p.max_overtime_factor - 1.0), 0.0)
         ctx.write_overtime_extra(headroom)
         ctx.policy_state.setdefault(self.id, {})["granted"] = headroom > 0
+        self._record(
+            ctx,
+            "granted_revenue_positive" if p.activation == "revenue_positive" else "granted_during_disruption",
+            extra, q_base, gain, cost, headroom,
+        )
+
+    def _record(self, ctx: SimContext, rationale: str, extra, q_base, gain, cost, headroom) -> None:
+        # Reads values on_phase already computed; changes nothing (facet 11).
+        m = ctx.model
+        for i in np.flatnonzero(extra > 1e-9):
+            self.decide(
+                ctx, rationale=rationale, node_kind="product", node=m.prod_ids[i],
+                inputs={"base_capacity": float(m.capacity[i]), "base_output": float(q_base[i]),
+                        "extra_output_possible": float(extra[i]),
+                        "week_gain_all_products": gain, "week_premium_all_products": cost},
+                decision={"overtime_granted": headroom is not None,
+                          "headroom_units": float(headroom[i]) if headroom is not None else 0.0},
+            )
 
     def cost_contribution(self, ctx: SimContext) -> CostBreakdown:
         # Premium on overtime units actually produced this week (Q_p beyond O_p).

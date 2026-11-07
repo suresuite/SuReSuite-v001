@@ -159,6 +159,24 @@ class SafetyStockMaterials(PolicyPlugin):
         "disruptions; depletes — beyond ~7–9 weeks expediting wins (run the crossover sweep)."
     )
     Params: ClassVar[type[PolicyParams]] = SafetyStockParams
+    # Facet 11: recorded for each material in the week its buffer is first set
+    # and in any week it changes (a disruption window opening or closing).
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "buffer_abc_xyz":
+            "The buffer was sized from the material's ABC-XYZ class service level, demand variability and lead time (Eqs. 20-21).",
+        "buffer_king":
+            "The buffer was sized by King's formula: demand variability over the lead time plus lead-time variability.",
+        "buffer_uniform":
+            "The buffer was sized from one uniform service level, demand variability and lead time.",
+        "buffer_fixed_days":
+            "The buffer was set as a fixed number of days of expected demand.",
+        "buffer_material_days":
+            "The buffer was set from the days of cover stated for this material.",
+        "buffer_zero_stated_level":
+            "The material has a stated reorder level, which is never raised, so no buffer was added.",
+        "buffer_window_raised":
+            "A disruption buffer window for this material was open this week, so its levels were raised for the window.",
+    }
     data_requirements: ClassVar[tuple[DataRequirement, ...]] = (
         DataRequirement(
             field="products.demand_cv", level="recommended",
@@ -291,7 +309,43 @@ class SafetyStockMaterials(PolicyPlugin):
         # A stated S is never raised: a buffered formula s above it is lowered.
         if state["stated_S"] is not None and state["stated_S"].any():
             s = np.where(state["stated_S"], np.minimum(s, S), s)
+        base_s, base_S = ctx.level_s, ctx.level_S
         ctx.write_levels(s, S)
+        if ctx.decisions.enabled:
+            self._record(ctx, base_s, base_S, ctx.level_s, ctx.level_S)
+
+    def _record(self, ctx: SimContext, base_s, base_S, s, S) -> None:
+        # Reads values on_phase already computed; changes nothing (facet 11).
+        p: SafetyStockParams = self.params
+        m = ctx.model
+        state = ctx.policy_state[self.id]
+        added = np.asarray(state["ss_s"], dtype=float) + np.asarray(state["win_extra"], dtype=float)
+        prev = state.get("added_recorded")
+        by_class = {"abc_xyz": "buffer_abc_xyz", "king": "buffer_king", "uniform": "buffer_uniform",
+                    "fixed_days": "buffer_fixed_days"}
+        stated = state["stated_s"]
+        for i in range(m.n_mats):
+            if prev is not None and prev[i] == added[i]:
+                continue
+            mid = m.mat_ids[i]
+            if stated is not None and (bool(stated[i]) or bool(state["stated_S"][i])) \
+                    and state["ss_s"][i] == 0.0:
+                why = "buffer_zero_stated_level"
+            elif state["win_extra"][i] > 0:
+                why = "buffer_window_raised"
+            elif mid in (p.fixed_days_by_material or {}):
+                why = "buffer_material_days"
+            else:
+                why = by_class.get(p.classification, "buffer_abc_xyz")
+            self.decide(
+                ctx, rationale=why, node_kind="material", node=mid,
+                inputs={"classification": p.classification, "base_reorder_point": float(base_s[i]),
+                        "base_order_up_to": float(base_S[i])},
+                decision={"safety_stock": float(state["ss_s"][i]),
+                          "window_extra": float(state["win_extra"][i]),
+                          "reorder_point": float(s[i]), "order_up_to": float(S[i])},
+            )
+        state["added_recorded"] = added.copy()
 
     def cost_contribution(self, ctx: SimContext) -> CostBreakdown:
         # Incremental holding on the planned reorder-point buffer (weekly).

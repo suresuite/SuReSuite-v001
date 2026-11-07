@@ -70,6 +70,14 @@ class ForwardVisibility(PolicyPlugin):
         "mean — the customer-side half of the Forward-visible basis (§II.4). Hook: PH-10."
     )
     Params: ClassVar[type[PolicyParams]] = ForwardVisibilityParams
+    # Facet 11: the policy makes ONE decision per replication — the horizon the
+    # plant may see the order book over — so it records once, at setup (week 0).
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "horizon_from_params":
+            "The customer commits orders over the visibility horizon set on the policy.",
+        "horizon_from_settings":
+            "No horizon was set on the policy, so the scenario's drawn forward schedule length was used.",
+    }
 
     @property
     def hooks(self) -> list[Hook]:
@@ -117,6 +125,15 @@ class ForwardVisibility(PolicyPlugin):
         # Published at setup so the week-0 warm start (PH-70 chain) already
         # plans against the book; re-asserted at PH-10 (declared residency).
         ctx.visibility_horizon = self._tau_star(ctx)
+        p: ForwardVisibilityParams = self.params
+        self.decide(
+            ctx,
+            rationale="horizon_from_params" if p.visibility_horizon is not None else "horizon_from_settings",
+            node_kind="network", node="*",
+            inputs={"policy_horizon_weeks": p.visibility_horizon,
+                    "schedule_horizon_weeks": int(ctx.model.settings.visibility_horizon)},
+            decision={"visibility_horizon_weeks": int(ctx.visibility_horizon)},
+        )
 
     def on_phase(self, phase: PhaseId, ctx: SimContext) -> None:
         ctx.visibility_horizon = self._tau_star(ctx)

@@ -109,6 +109,17 @@ class UnmetDemandHandling(PolicyPlugin):
         "convert lost revenue into delay cost, changing the economics of every strategy."
     )
     Params: ClassVar[type[PolicyParams]] = UnmetDemandParams
+    # Facet 11: one record per product (or customer × product row, when
+    # fulfillment runs per row) whose demand this week was not served in full —
+    # what happened to the unmet part. Demand served in full is no decision.
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "unmet_lost_sales":
+            "Demand could not be served this week and the rule is lost sales, so the unmet units were lost.",
+        "unmet_backordered":
+            "Demand could not be served this week and the rule is backorder, so the unmet units wait in the backlog.",
+        "unmet_partially_backordered":
+            "Demand could not be served this week; part of the unmet units wait in the backlog and the rest were lost.",
+    }
 
     @property
     def hooks(self) -> list[Hook]:
@@ -180,6 +191,12 @@ class UnmetDemandHandling(PolicyPlugin):
 
         ctx.write_fulfillment(fulfilled, served_new, lost)
         ctx.set_backlog(new_backlog)
+        if ctx.decisions.enabled:
+            waits = {"lost_sales": 0.0, "backorder": 1.0}.get(p.rule, p.partial_accept_prob)
+            for j in np.flatnonzero(unmet_new > 1e-9):
+                self._record(ctx, "product", ctx.model.prod_ids[j], waits, float(D[j]),
+                             float(served_new[j]), float(unmet_new[j]), float(lost[j]),
+                             float(new_backlog[j]))
 
     # ------------------------------------------------------------ per row
 
@@ -277,6 +294,22 @@ class UnmetDemandHandling(PolicyPlugin):
         st["served_new"][:, t] = s_new
         st["lost"][:, t] = lost
         st["cost"][:, t] = cost_rows
+        if ctx.decisions.enabled:
+            for r in np.flatnonzero(s_new < d_rows - 1e-9):
+                self._record(ctx, "customer_product", m.row_ids[r], float(st["accept"][r]),
+                             float(d_rows[r]), float(s_new[r]), float(d_rows[r] - s_new[r]),
+                             float(lost[r]), float(backlog_rows[r]))
+
+    def _record(self, ctx: SimContext, node_kind: str, node: str, waits: float, demanded: float,
+                served: float, unmet: float, lost: float, backlog: float) -> None:
+        # Reads values on_phase already computed; changes nothing (facet 11).
+        why = ("unmet_lost_sales" if waits <= 0.0 else
+               "unmet_backordered" if waits >= 1.0 else "unmet_partially_backordered")
+        self.decide(
+            ctx, rationale=why, node_kind=node_kind, node=node,
+            inputs={"demanded": demanded, "served_new": served, "share_that_waits": waits},
+            decision={"unmet": unmet, "lost_this_week": lost, "backlog_after": backlog},
+        )
 
     def kpi_contribution(self, ctx: SimContext, t_w: int, window_end: int) -> dict[str, float]:
         """Per row and per customer, only when fulfillment ran per row: a
