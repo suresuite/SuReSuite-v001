@@ -1760,6 +1760,7 @@
         "title": "UnmetDemandParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "customer",
       "status": "implemented",
@@ -1885,6 +1886,7 @@
         "title": "CustomerAllocationParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "customer",
       "status": "implemented",
@@ -1948,6 +1950,7 @@
         "title": "DemandShapingParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "customer",
       "status": "planned",
@@ -1995,6 +1998,7 @@
         "title": "ForwardVisibilityParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": true,
       "stage": "customer",
       "status": "implemented",
@@ -2292,6 +2296,7 @@
         "title": "InventoryControlParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "plant",
       "status": "implemented",
@@ -2350,6 +2355,7 @@
         "title": "RepurposingParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "plant",
       "status": "planned",
@@ -2413,6 +2419,7 @@
         "title": "LotSizingParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "plant",
       "status": "planned",
@@ -2607,6 +2614,7 @@
         "title": "SafetyStockParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": true,
       "stage": "plant",
       "status": "implemented",
@@ -2729,6 +2737,7 @@
         "title": "FgSafetyStockParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": true,
       "stage": "plant",
       "status": "implemented",
@@ -2805,6 +2814,7 @@
         "title": "ShortTermCapacityParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "plant",
       "status": "implemented",
@@ -2844,6 +2854,7 @@
         "title": "StandingCapacityReserveParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": true,
       "stage": "plant",
       "status": "planned",
@@ -2896,6 +2907,7 @@
         "title": "ProcessFlexibilityParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": true,
       "stage": "plant",
       "status": "planned",
@@ -2959,6 +2971,7 @@
         "title": "AlternativeBomParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": true,
       "stage": "plant",
       "status": "planned",
@@ -3073,6 +3086,7 @@
         "title": "MaterialAllocationParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "plant",
       "status": "implemented",
@@ -3208,6 +3222,13 @@
         "title": "BackupSupplierParams",
         "type": "object"
       },
+      "rationale_codes": {
+        "held_coverage_above_threshold": "The primary was disrupted, but stock on hand and on order still covered the threshold, so no reroute.",
+        "held_no_backup_available": "The primary was disrupted, but every alternative source was disrupted too, so no reroute.",
+        "held_no_order_this_week": "The primary was disrupted, but no order was released this week, so there was nothing to reroute.",
+        "rerouted_cooldown": "The event had cleared, but the cooldown kept this week's order on the backup.",
+        "rerouted_primary_disrupted": "The primary source was disrupted (as the firm sees it), so this week's order went to the backup."
+      },
       "requires_predeployment": true,
       "stage": "supplier",
       "status": "implemented",
@@ -3296,6 +3317,7 @@
         "title": "ProactiveMultiSourcingParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": true,
       "stage": "supplier",
       "status": "implemented",
@@ -3343,6 +3365,7 @@
         "title": "CapacityReservationParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": true,
       "stage": "supplier",
       "status": "planned",
@@ -3394,6 +3417,7 @@
         "title": "EarlyWarningFailoverParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": true,
       "stage": "supplier",
       "status": "implemented",
@@ -3495,6 +3519,7 @@
         "title": "MultimodalLanePortfolioParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": true,
       "stage": "transport",
       "status": "planned",
@@ -3566,6 +3591,7 @@
         "title": "ExpeditedShipmentsParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "transport",
       "status": "implemented",
@@ -3623,6 +3649,7 @@
         "title": "ModeShiftParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "transport",
       "status": "planned",
@@ -3673,6 +3700,7 @@
         "title": "LeadtimeHedgingParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "transport",
       "status": "planned",
@@ -3789,6 +3817,7 @@
         "title": "RecoveryPlaybookParams",
         "type": "object"
       },
+      "rationale_codes": {},
       "requires_predeployment": false,
       "stage": "cross",
       "status": "planned",

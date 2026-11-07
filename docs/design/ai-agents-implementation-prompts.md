@@ -996,8 +996,11 @@ HARD LIMITS (the owner is not there to catch a mistake):
   set we score on would publish a number that does not hold for users.
 - Every prompt text in code that ai-agents.md carries verbatim changes in the
   doc in the same commit (the CLAUDE.md doc-and-code law).
-- A live eval costs ~15 min of gpt-5 calls. Score gpt-5 only (Q-D2), fire a
-  run only by changing .github/model-eval-request, and never fire two at once.
+- NEVER spend provider credits (owner directive 2026-11-07, ai-agents.md
+  §10 entry 38(z)). A live eval bills the owner's OpenAI/Gemini/DeepSeek
+  accounts; only the OWNER runs one, by dispatching ai-agent-model-eval.yml
+  with spend_provider_credits: true. Do not dispatch it, and do not ask for
+  one as a routine step — say what is unmeasured instead.
 
 WORK, IN ORDER:
 1. main must be green first (PLAN.md §4 D35: nothing merges over a red
@@ -1022,8 +1025,9 @@ WORK, IN ORDER:
 5. Q2: fix the draft-validity causes the records show, smallest first —
    e.g. a draft tool called with nothing to draft is a prompt rule, not a
    validator change.
-6. After the last code change, fire one live gpt-5 run and wait for it.
-   Record its numbers whatever they are.
+6. Do NOT run a live eval (see the spend rule above). List, for the owner,
+   which changes are verified only by the deterministic tier and what a live
+   run would have to show; the owner decides whether and when to pay for it.
 7. Verify: contract:check, npm test, npm run typecheck, check:docs,
    audit:ui, eslint on touched files, and the deterministic agent eval
    (deno test in eval/). All green, or say exactly which is not and why.

@@ -1,13 +1,10 @@
-# Git-native trigger for .github/workflows/ai-agent-model-eval.yml — the §7.4
-# model-scored eval tier + live deployment-state capture. Exists for
-# environments that can push but cannot call the Actions API (the
-# ops-request/seed-request idiom). Change any line and push to fire a run;
-# results land on the eval-results branch (results/latest.log).
+# RETIRED 2026-11-07 (owner directive; docs/design/ai-agents.md §10 entry 38(z)).
 #
-#   agents=<comma list>       which agents to score (§7.4: every enabled agent)
-#   models=<comma list>       which models to score (empty = gpt-5)
-#   mode=full|state-only      state-only skips the two eval tiers
-run=16 §25 Q3 pc-06 narrow fix (gate 3b + run-readiness rows) + ed-04 rule; gpt-5 only (2026-11-07)
-agents=data-steward,policy-configurator,vv-analyst,experiment-designer,report-builder
-models=gpt-5
-mode=full
+# Pushing a change to this file USED to start the paid tier-2 model eval
+# (.github/workflows/ai-agent-model-eval.yml), with the deployment's own
+# OpenAI/Gemini/DeepSeek keys. It no longer triggers anything: the workflow's
+# push trigger was removed, because pushes and merges touching this file spent
+# provider credits nobody had approved.
+#
+# A live eval now runs only when the OWNER dispatches the workflow by hand with
+# `spend_provider_credits: true`. Agents must not do that.

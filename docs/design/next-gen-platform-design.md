@@ -429,7 +429,7 @@ Every policy — implemented, planned, or future — is described by twelve face
 | 8 | **State** | private per-replication state and its participation in warm snapshots | implicit | **new**: declared, so `SnapshotStore` reuse (§11.3) is provably correct per policy |
 | 9 | **Feasibility** | `feasibility(scenario)` composition rules; portfolio-level submodularity/overlap warnings | ✅ + `check_portfolio` | — |
 | 10 | **Cost** | `cost_contribution()` into the C^res ledger (`ST_COST_LEDGER`, append-only) | ✅ | — |
-| 11 | **Observability** | structured **decision-trace record** per firing: week, node, trigger, input snapshot, decision, rationale code | **new** | the transparency pillar made concrete; substrate for LLM explanation (§12) |
+| 11 | **Observability** | structured **decision-trace record** per firing: week, node, trigger, input snapshot, decision, rationale code | **slice 1 landed (engine 0.8.3 amendment, 2026-11-07)**: `scsim/core/decisions.py` + `ScenarioResult.decision_trace` on single-replication inspection runs, behaviour-neutral; per-policy closed `rationale_codes` in the registry; P-S.1 records. Slices 2–5 in `ai-agents.md` §9.6 | the transparency pillar made concrete; substrate for LLM explanation (§12) |
 | 12 | **Versioning** | params hashed into `policy_versions.policy_hash`; implementation version into the engine fingerprint | ✅ params side | complete both halves (§9.2) |
 
 ### 6.2 One source of truth: the registry export becomes platform law

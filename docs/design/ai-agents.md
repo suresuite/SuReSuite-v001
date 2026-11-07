@@ -1456,7 +1456,7 @@ overall: FAIL
 
 So the gate is sound and **the product misses its §7.4 targets**. Nothing here is a CI defect, and no flag should be flipped on the strength of "the eval runs."
 
-**CADENCE AMENDED 2026-09-18 — nightly removed, on-demand kept.** The `schedule:` trigger produced 35 consecutive failing runs in 30 days, each re-establishing the result above at ~15 billable CI minutes plus live provider spend, and none was acted on. `ai-agent-model-eval.yml` keeps `workflow_dispatch` and the `.github/model-eval-request` push trigger, so **the "before any flag flip" clause — the half that gates a release — is untouched**. What is lost is the trend line; restoring it is one `schedule:` block, and weekly is the cheaper honest cadence if it is wanted. The deviation is recorded in that workflow's header as well.
+**CADENCE AMENDED 2026-09-18 — nightly removed, on-demand kept.** The `schedule:` trigger produced 35 consecutive failing runs in 30 days, each re-establishing the result above at ~15 billable CI minutes plus live provider spend, and none was acted on. `ai-agent-model-eval.yml` keeps `workflow_dispatch` (the `.github/model-eval-request` push trigger it also kept was removed on 2026-11-07, see the spend guard below and §10 entry 38(z)), so **the "before any flag flip" clause — the half that gates a release — is untouched**. What is lost is the trend line; restoring it is one `schedule:` block, and weekly is the cheaper honest cadence if it is wanted. The deviation is recorded in that workflow's header as well.
 
 Two consequences, both load-bearing:
 
@@ -1578,7 +1578,17 @@ Scope: `draft_experiment_spec`; apply mapping through `dispatchExperimentRun`; B
 
 ### 9.6 Stage 5 — Explainer
 
-Scope: `get_decision_traces`, `draft_trace_explanation`; B5 suite. Flag: `AGENT_ENABLED_IDS+=explainer`. Entry gate — stated plainly: **facet-11 decision traces exist end-to-end** (engine emits, worker persists, a Run-panel surface reads them) — none of which exists today. Exit: `ex-*` suite green; citation coverage ≥ 0.90 in nightly eval; refusal formula verified on unsupported questions.
+Scope: `get_decision_traces`, `draft_trace_explanation`; B5 suite. Flag: `AGENT_ENABLED_IDS+=explainer`. Entry gate — stated plainly: **facet-11 decision traces exist end-to-end** (engine emits, worker persists, a Run-panel surface reads them) — at v1.0 none of this existed.
+
+**Progress toward the entry gate (added 2026-11-07, v1.6).** This work is built and verified WITHOUT provider spend (the owner directive in §10 entry 38(z)). Every slice below is deterministic engine, worker, data-layer or UI work, checked by the offline tiers.
+
+| Slice | What | State |
+|---|---|---|
+| 1 | **Engine emits.** `scsim/core/decisions.py` (`DecisionLog`, a per-replication store); `PolicyPlugin.rationale_codes` (closed vocabulary, published in the registry export) and `PolicyPlugin.decide()`; `ScenarioResult.decision_trace` on single-replication inspection runs only (the `item_series` rule). P-S.1 records every decision branch, including WHY it did not reroute (`held_no_order_this_week`, `held_coverage_above_threshold`, `held_no_backup_available`). Behaviour-neutral, proved by `test_decision_traces.py` (log on vs off: identical KPIs and series), by unchanged golden digests, and by a regenerated 0.8.3 release report whose only change is the build id. Engine 0.8.3 amendment (tier 1). | **Done** |
+| 2 | **Every implemented policy records.** P-P.1 ordering (reorder point vs position, quantity), P-P.3/P-P.4 safety stock, P-C.1/P-C.2 unmet demand and allocation, P-P.9 material allocation, P-T.2 expediting, P-S.2/P-S.4 multi-sourcing and early warning, P-P.5 and P-C.6. Each policy declares its codes, and a test drives each branch | Next |
+| 3 | **Worker persists.** `sim_worker` writes the inspection run's `decision_trace` to storage beside `series_object` (the same pattern, so no new table holds trace rows), with a data-contract sidecar for the reference column | Planned |
+| 4 | **Run-panel surface.** A "Decisions" view on an inspection run, filterable by week, policy and entity. The read path B5 must reuse (no privileged path, §5.5) | Planned |
+| 5 | **B5 tools.** `get_decision_traces` (wrapping slice 4's read) and `draft_trace_explanation`, plus the `ex-*` deterministic suite. Enabling B5 still needs a live eval, which only the owner may pay for (§10 entry 38(z)) | Planned | Exit: `ex-*` suite green; citation coverage ≥ 0.90 in nightly eval; refusal formula verified on unsupported questions.
 
 ### 9.7 What changes in `agents.ts` / `tools.ts` / `index.ts`, cumulative view
 
@@ -1904,6 +1914,12 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
 
     **What this does NOT do, stated so it is not mistaken for more:** the browser remains the only grader of obligations 3–4, and the server dispatch gate still does not enforce them. Blueprint §12's run-readiness contract is corrected in the same change to say so.
     (y) **The live run of (x) (`09454316`, 2026-11-07) is VOID: the OpenAI account stopped serving.** All 46 provider calls returned 429 `billing_not_active` ("Your account is not active, please check your billing details"). Every agent therefore filed nothing and called no tool, and routing read 0 recall across the board. That is a fact about the account, not about the code. The workflow resolves the SAME provider keys the deployed functions use, and since 38(j) the chat serves only OpenAI models (GPT-5, GPT-5 mini). So the production assistant almost certainly fails every turn until billing is restored. **Owner action**, outside the repository. (x) remains verified by the deterministic tier (304 passed, gate 3b mutation-checked). Its live measurement, and `ed-04`'s, is owed on the first run after billing returns.
+    (z) **[OWNER DIRECTIVE, 2026-11-07] No more provider spend by agents. Phase Q's live steps are PAUSED.** This session ran the paid tier-2 eval about 16 times in two days: 13 runs it fired by pushing `.github/model-eval-request` (one across four models), plus three more started by nothing but the MERGES of #426, #428 and #430, because each carried a change to that file. The owner's OpenAI account was exhausted (38(y)), and the owner directed that the agent stop using the API. Run counts and costs should have been surfaced BEFORE each run, and were not. What changed:
+    - **Spend guard in `ai-agent-model-eval.yml`:** the push trigger is removed, so no push or merge can start a paid run. Tier 2 runs only on a manual dispatch with the new input `spend_provider_credits: true` (default false). A dispatch without it runs only the free half: tier 1 with a mocked LLM, and the state capture, whose provider probe is the unbilled `GET /v1/models`.
+    - **`.github/model-eval-request` is a tombstone.**
+    - **The Phase Q unattended-session prompt** forbids an agent from dispatching a paid run, and tells it to list what is unmeasured instead.
+
+    **What Phase Q can still do without spend:** deterministic work only — code, prompts, fixtures and the offline tier — each change recorded as "verified offline, live-unmeasured". **What it cannot do:** close Q1 (routing targets), measure `pc-06`/`ed-04`, Q4 (every model) or Q5 (flag flips), because each is defined by a live run. Those resume only when the owner pays for a run.
 
 ---
 
@@ -3768,5 +3784,5 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
 | Q1 | **Iteration 5 recommended for merge; Q1 not done.** On two runs: 35–36 misses (Q0 124, production today 75–79); vv .90/.82–.88 (production today .82–.84/.82); designer, report and draft schema validity meet target. Open: steward recall (owner labeling decision, 38(q)), configurator precision .895, advisory false-artifact .06–.09, needs-run .78, cache-checkable .75 | 38(g), 38(i), 38(k), 38(n)–(r) |
 | Q2 | **Met on `gpt-5`, five runs in a row** (steward and configurator schema validity 1.0, gate-violation attempts 0). `gpt-5-mini` is scored at Q4 | 38(h), 38(l), 38(n), 38(r) |
-| Q3 | **Agent tier green on `gpt-5`** (runs `c28b0554`, `32fb484a`) except `pc-06`, now addressed by the owner-chosen narrow fix (gate 3b + run-readiness rows, 38(x)), and `ed-04` (sharpened). **Live measurement of both is BLOCKED: the OpenAI account returned `billing_not_active` (38(y))** | 38(s)–(y) |
-| Q4–Q5 | Not started | — |
+| Q3 | **Agent tier green on `gpt-5`** (runs `c28b0554`, `32fb484a`) except `pc-06` (narrow fix merged, 38(x)) and `ed-04` (sharpened); both **live-unmeasured**. Live steps are PAUSED by owner directive: no provider spend (38(z)) | 38(s)–(z) |
+| Q4–Q5 | Not started. **Paused**: both are defined by live runs, which only the owner may now pay for (38(z)) | 38(z) |

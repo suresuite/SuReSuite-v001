@@ -184,9 +184,31 @@ class PolicyPlugin(ABC):
     Params: ClassVar[type[PolicyParams]]
     # Facet 5 (§8.1): entity fields the policy reads; () = params-only policy.
     data_requirements: ClassVar[tuple[DataRequirement, ...]] = ()
+    # Facet 11 (§6.1, scsim/core/decisions.py): the CLOSED vocabulary of
+    # rationale codes this policy's decision-trace records may carry,
+    # code → plain-words meaning. Empty = the policy records no decisions yet.
+    rationale_codes: ClassVar[dict[str, str]] = {}
 
     def __init__(self, params: PolicyParams):
         self.params = params
+
+    def decide(
+        self,
+        ctx: "SimContext",
+        *,
+        rationale: str,
+        node_kind: str,
+        node: str,
+        inputs: Optional[dict] = None,
+        decision: Optional[dict] = None,
+    ) -> None:
+        """Record one decision-trace record (facet 11). A no-op unless the run
+        is a single-replication inspection run; never changes the simulation."""
+        ctx.decisions.record(
+            week=ctx.week, policy_id=self.id, catalog_ref=self.catalog_ref,
+            declared=self.rationale_codes, rationale=rationale,
+            node_kind=node_kind, node=node, inputs=inputs, decision=decision,
+        )
 
     # ------------------------------------------------------------------ hooks
 
