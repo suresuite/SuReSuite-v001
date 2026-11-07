@@ -93,6 +93,20 @@ class BackupSupplier(PolicyPlugin):
         "single-sourced: one missing material still blocks the product."
     )
     Params: ClassVar[type[PolicyParams]] = BackupSupplierParams
+    # Facet 11: every branch of on_phase that decides for a material whose
+    # primary is disrupted (or in cooldown) records exactly one of these.
+    rationale_codes: ClassVar[dict[str, str]] = {
+        "rerouted_primary_disrupted":
+            "The primary source was disrupted (as the firm sees it), so this week's order went to the backup.",
+        "rerouted_cooldown":
+            "The event had cleared, but the cooldown kept this week's order on the backup.",
+        "held_coverage_above_threshold":
+            "The primary was disrupted, but stock on hand and on order still covered the threshold, so no reroute.",
+        "held_no_backup_available":
+            "The primary was disrupted, but every alternative source was disrupted too, so no reroute.",
+        "held_no_order_this_week":
+            "The primary was disrupted, but no order was released this week, so there was nothing to reroute.",
+    }
     data_requirements: ClassVar[tuple[DataRequirement, ...]] = (
         DataRequirement(
             field="inbound_logistics.unit_price", level="recommended",
@@ -183,14 +197,34 @@ class BackupSupplier(PolicyPlugin):
             qty = orders[primary]
             primary_disrupted = disrupted[primary]
             in_cooldown = ctx.week <= state["reroute_until"][mat]
-            if not (primary_disrupted or in_cooldown) or qty <= 0:
+            if not (primary_disrupted or in_cooldown):
+                continue
+            # Facet 11: what the rule read — recorded, never acted on.
+            seen = {
+                "primary_supplier": m.sup_ids[m.link_sup[primary]],
+                "primary_disrupted": bool(primary_disrupted),
+                "in_cooldown": bool(in_cooldown),
+                "order_qty": float(qty),
+            }
+            if qty <= 0:
+                if primary_disrupted:
+                    self.decide(ctx, rationale="held_no_order_this_week", node_kind="material",
+                                node=m.mat_ids[mat], inputs=seen, decision={"rerouted": False})
                 continue
             if primary_disrupted and p.activation_trigger == "coverage_threshold":
                 exp_d = max(ctx.material_demand[mat], 1e-9)
-                if position[mat] / exp_d >= p.coverage_threshold_weeks:
+                coverage = position[mat] / exp_d
+                if coverage >= p.coverage_threshold_weeks:
+                    self.decide(ctx, rationale="held_coverage_above_threshold", node_kind="material",
+                                node=m.mat_ids[mat],
+                                inputs={**seen, "coverage_weeks": float(coverage),
+                                        "threshold_weeks": float(p.coverage_threshold_weeks)},
+                                decision={"rerouted": False})
                     continue
             backup = self._select_backup(ctx, mat, disrupted)
             if backup is None:
+                self.decide(ctx, rationale="held_no_backup_available", node_kind="material",
+                            node=m.mat_ids[mat], inputs=seen, decision={"rerouted": False})
                 continue
             orders[backup] += qty
             orders[primary] = 0.0
@@ -200,6 +234,15 @@ class BackupSupplier(PolicyPlugin):
             ctx.cost.add("backup_premium", max(0.0, float(premium)))
             if primary_disrupted:
                 state["reroute_until"][mat] = ctx.week + p.cooldown_weeks
+            self.decide(
+                ctx,
+                rationale="rerouted_primary_disrupted" if primary_disrupted else "rerouted_cooldown",
+                node_kind="material", node=m.mat_ids[mat],
+                inputs={**seen, "selection_rule": p.selection_rule},
+                decision={"rerouted": True, "backup_supplier": m.sup_ids[m.link_sup[backup]],
+                          "qty": float(qty), "premium": max(0.0, float(premium)),
+                          "cooldown_until_week": int(state["reroute_until"][mat])},
+            )
             changed = True
 
         if changed:

@@ -1578,7 +1578,17 @@ Scope: `draft_experiment_spec`; apply mapping through `dispatchExperimentRun`; B
 
 ### 9.6 Stage 5 — Explainer
 
-Scope: `get_decision_traces`, `draft_trace_explanation`; B5 suite. Flag: `AGENT_ENABLED_IDS+=explainer`. Entry gate — stated plainly: **facet-11 decision traces exist end-to-end** (engine emits, worker persists, a Run-panel surface reads them) — none of which exists today. Exit: `ex-*` suite green; citation coverage ≥ 0.90 in nightly eval; refusal formula verified on unsupported questions.
+Scope: `get_decision_traces`, `draft_trace_explanation`; B5 suite. Flag: `AGENT_ENABLED_IDS+=explainer`. Entry gate — stated plainly: **facet-11 decision traces exist end-to-end** (engine emits, worker persists, a Run-panel surface reads them) — at v1.0 none of this existed.
+
+**Progress toward the entry gate (added 2026-11-07, v1.6).** This work is built and verified WITHOUT provider spend (the owner directive in §10 entry 38(z)). Every slice below is deterministic engine, worker, data-layer or UI work, checked by the offline tiers.
+
+| Slice | What | State |
+|---|---|---|
+| 1 | **Engine emits.** `scsim/core/decisions.py` (`DecisionLog`, a per-replication store); `PolicyPlugin.rationale_codes` (closed vocabulary, published in the registry export) and `PolicyPlugin.decide()`; `ScenarioResult.decision_trace` on single-replication inspection runs only (the `item_series` rule). P-S.1 records every decision branch, including WHY it did not reroute (`held_no_order_this_week`, `held_coverage_above_threshold`, `held_no_backup_available`). Behaviour-neutral, proved by `test_decision_traces.py` (log on vs off: identical KPIs and series), by unchanged golden digests, and by a regenerated 0.8.3 release report whose only change is the build id. Engine 0.8.3 amendment (tier 1). | **Done** |
+| 2 | **Every implemented policy records.** P-P.1 ordering (reorder point vs position, quantity), P-P.3/P-P.4 safety stock, P-C.1/P-C.2 unmet demand and allocation, P-P.9 material allocation, P-T.2 expediting, P-S.2/P-S.4 multi-sourcing and early warning, P-P.5 and P-C.6. Each policy declares its codes, and a test drives each branch | Next |
+| 3 | **Worker persists.** `sim_worker` writes the inspection run's `decision_trace` to storage beside `series_object` (the same pattern, so no new table holds trace rows), with a data-contract sidecar for the reference column | Planned |
+| 4 | **Run-panel surface.** A "Decisions" view on an inspection run, filterable by week, policy and entity. The read path B5 must reuse (no privileged path, §5.5) | Planned |
+| 5 | **B5 tools.** `get_decision_traces` (wrapping slice 4's read) and `draft_trace_explanation`, plus the `ex-*` deterministic suite. Enabling B5 still needs a live eval, which only the owner may pay for (§10 entry 38(z)) | Planned | Exit: `ex-*` suite green; citation coverage ≥ 0.90 in nightly eval; refusal formula verified on unsupported questions.
 
 ### 9.7 What changes in `agents.ts` / `tools.ts` / `index.ts`, cumulative view
 

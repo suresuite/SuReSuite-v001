@@ -873,6 +873,12 @@ class ScenarioResult:
     item_series: Optional[dict[str, np.ndarray]] = None
     # Row labels for item_series: {"material": [...ids], "product": [...ids]}.
     item_ids: Optional[dict[str, list[str]]] = None
+    # Facet 11 decision-trace records (scsim/core/decisions.py), on the SAME
+    # rule as `item_series`: a single-replication full-debug inspection run,
+    # else None. Shape: {"records": [{week, policy, catalog_ref, node_kind,
+    # node, rationale, inputs, decision}], "dropped": int, "max_records": int}.
+    # Behaviour-neutral: no KPI, series or golden digest depends on it.
+    decision_trace: Optional[dict] = None
     # WHICH products and suppliers the capacity held back, over the analysis
     # window, averaged across replications (WP 9.3 / §4 D167). Present on EVERY
     # run — unlike `item_series`, which needs a single-replication full-debug
@@ -1173,6 +1179,7 @@ def run_scenario(
     # replication. `ctx` is the sole replication's context here.
     item_series: Optional[dict[str, np.ndarray]] = None
     item_ids: Optional[dict[str, list[str]]] = None
+    decision_trace: Optional[dict] = None
     if (
         settings.trace_verbosity == TraceVerbosity.FULL_DEBUG
         and len(grid) == 1
@@ -1218,6 +1225,7 @@ def run_scenario(
             "material": list(compiled.model.mat_ids),
             "product": list(compiled.model.prod_ids),
         }
+        decision_trace = ctx.decisions.export()
 
     keys = sorted({k for row in kpis for k in row} - {"model_rep", "event_rep"})
     aggregates = {
@@ -1252,6 +1260,7 @@ def run_scenario(
         extra_series={k: v for k, v in rows.items() if k != "fill_rate"},
         item_series=item_series,
         item_ids=item_ids,
+        decision_trace=decision_trace,
         capacity_binding=cap_acc.summary(compiled.model, t_w, window_end) or None,
         lead_time_truncations=cap_acc.lead_time_truncations(),
         lead_time_floor_raises=cap_acc.lead_time_floor_raises(),

@@ -17,6 +17,10 @@ Safety stock is now a real recovery strategy. For the materials a disrupted supp
 - frozen reference runs moved: none
 - refs D315
 
+**Changed under this version without a bump:**
+
+- 2026-11-07 · Tier 1 — Decision traces, first slice (policy facet 11; platform blueprint §6.1, ai-agents.md §5.5). A single-replication inspection run (`trace_verbosity=full_debug`, one replication) now carries `ScenarioResult.decision_trace`: one record per policy decision with its week, policy, material, the rationale code that decided, the values the rule read and what it did. P-S.1 (backup supplier) is the first policy that records, including why it did NOT reroute. Each policy declares its rationale codes (`rationale_codes`), which the registry export publishes. Recording only reads values the policy already computed, so no KPI, series or frozen reference run moved, and an ordinary Monte Carlo run is unchanged.
+
 ## 0.8.2 · 2026-10-27 · Tier 2
 
 **Changed for some projects.** Results change only for a scenario whose playbook switches recovery off while ticking strategies, states a strategy cost or horizon, or enters a backup supplier; every other scenario runs exactly as before (every frozen reference run kept its digest).
