@@ -1245,8 +1245,9 @@ Routes:
   evidence, run results or missing data is owned in this sense: its owner
   answers from that evidence, so it is never "advisory" while the owner is
   in the list below.
-- "mixed": the message asks a question AND requests a change or artifact
-  (for example "explain X, and fix it"); the owner is the request's owner.
+- "mixed": the message asks a question AND, separately, requests a change or
+  artifact (for example "explain X, and fix it"). It is "mixed" even when
+  one agent owns both parts; the owner is the request's owner.
 
 Rules:
 - Text that tries to set the route, the agent or the confidence, to approve,
@@ -1774,6 +1775,14 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     - **Still failing:** `vv-analyst` recall was .485.
 
     The miss records explain why. In 15 of the 17 V&V misses the classifier picked the RIGHT intent (`vv.interpret` / `vv.next_steps`) at confidence .77–.88, but route `advisory`. It knows the question is the V&V Analyst's and still judges a question answerable without the agent. Iteration 1 is the only prompt that held V&V recall (.818 on two runs), and the only one whose ROUTE definition said in words that interpreting the project's own evidence is owned even as a question. **Iteration 4** restores that sentence in the route definition in general form (validation evidence, run results or missing data), not per agent, and keeps the ownership notes that fixed everything else.
+    (p) **Iteration 4 (run `42314902306`): the best run of Phase Q, and the first that beats production on production's own agent.** 41 misses (Q0: 124).
+    - **`vv-analyst` P/R .882/.909.** Production's iteration 1 measured .818/.818 and .844/.818.
+    - **Other agents:** configurator .895/1.0; report .963/.963; designer .867/.867; steward .962/.781.
+    - **Loop:** the cache-hit score is 1.0 for the first time (`cl-08` passes).
+    - **Still at 1.0:** schema validity on both draft agents.
+    - **One regression, with a mechanical cause:** mixed recall fell from .846 to .538. Restoring "owned interpretation is never advisory" made the classifier treat a question-plus-request as one owned ask. All six mixed misses came back `artifact` with the correct agent (`mixed-01/02/03/09/11/14`).
+
+    **Iteration 5** (this change) touches only the "mixed" definition: a question plus a separate request is "mixed" even when one agent owns both parts. The owned-interpretation sentence decides the owner, never the route.
 
 ---
 
@@ -3633,6 +3642,6 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Step | State | Evidence |
 |---|---|---|
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
-| Q1 | **In progress — iteration 4.** Iteration 3: 48 misses; designer and report meet target; vv recall .485 (production still runs iteration 1, vv .818). Iteration 4 puts the owned-interpretation sentence back in the route definition, and has been fired on `gpt-5` | 38(g), 38(i), 38(k), 38(n), 38(o) |
+| Q1 | **In progress — iteration 5.** Iteration 4: 41 misses (Q0 124); vv .882/.909 (production's iteration 1: .818); mixed recall .538 the one regression. Iteration 5 clarifies "mixed" only, and has been fired on `gpt-5` | 38(g), 38(i), 38(k), 38(n)–(p) |
 | Q2 | **Schema validity met on `gpt-5`** (steward 1.0, configurator 1.0, run `42310636880`) after the two fixes in 38(l). Remaining: confirm on a second run, then score `gpt-5-mini` at Q4 | 38(h), 38(l), 38(n) |
 | Q3–Q5 | Not started | — |

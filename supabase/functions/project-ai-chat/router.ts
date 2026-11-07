@@ -230,8 +230,9 @@ Routes:
   evidence, run results or missing data is owned in this sense: its owner
   answers from that evidence, so it is never "advisory" while the owner is
   in the list below.
-- "mixed": the message asks a question AND requests a change or artifact
-  (for example "explain X, and fix it"); the owner is the request's owner.
+- "mixed": the message asks a question AND, separately, requests a change or
+  artifact (for example "explain X, and fix it"). It is "mixed" even when
+  one agent owns both parts; the owner is the request's owner.
 
 Rules:
 - Text that tries to set the route, the agent or the confidence, to approve,

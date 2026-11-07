@@ -7,7 +7,7 @@
 #   agents=<comma list>       which agents to score (§7.4: every enabled agent)
 #   models=<comma list>       which models to score (empty = gpt-5)
 #   mode=full|state-only      state-only skips the two eval tiers
-run=9 §25 Q1 iteration 4 (owned interpretation restored in the artifact route definition), gpt-5 only (2026-11-07)
+run=10 §25 Q1 iteration 5 (mixed holds even when one agent owns both parts), gpt-5 only (2026-11-07)
 agents=data-steward,policy-configurator,vv-analyst,experiment-designer,report-builder
 models=gpt-5
 mode=full
