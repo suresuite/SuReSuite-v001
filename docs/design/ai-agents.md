@@ -1791,6 +1791,33 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     - **One coverage fabrication returned** (`cov-08-run-results`, as at Q0 and in September; it passed in iterations 1–4). The coverage battery calls `runChat` directly and never the router, so no change in this series can have caused it. It stays a Q3 item, and in production the §22.3 verifier would block the reply.
 
     **The remaining misses are not one cause.** In the steward/configurator overlap ("why is my run blocked", "make the gate pass"), the golden set itself assigns near-identical asks to both agents (`policy-21` "Make the pre-run gate pass" is the configurator's; `mixed-12` "…and make it pass" is the steward's). That is a labeling question for the owner, not a prompt cause, and it caps steward recall. A repeat run of iteration 5 has been fired, so the shipped decision rests on two samples, not one (38(n): ±.10 on identical code).
+    (r) **Q1's result for this session, on two samples of the final prompt (iteration 5: runs `42316688033` and `42318426205`, `gpt-5`).**
+
+    | Metric (target) | Q0 | Iteration 1 (production today, 2 runs) | **Iteration 5 (2 runs)** |
+    |---|---|---|---|
+    | Routing rows wrong / 225 | 124 | 79 · 75 | **36 · 35** |
+    | `vv-analyst` P / R (≥ .90 / ≥ .85) | 1.0 / .333 | .818 / .818 · .844 / .818 | **.906 / .879 · .900 / .818** |
+    | designer P / R | .889 / .267 | .857 / .400 · .857 / .400 | **.929 / .867 · .963 / .867** ✓ |
+    | report P / R | .844 / 1.0 | .614 / 1.0 · .643 / 1.0 | **.964 / 1.0 · .931 / 1.0** ✓ |
+    | configurator P / R | .730 / .794 | .735 / .735 · .714 / .882 | .895 / 1.0 · .895 / 1.0 |
+    | steward P / R | .769 / .625 | .750 / .563 · .800 / .625 | .926 / .781 · .962 / .781 |
+    | Advisory false-artifact (≤ .03) · mixed (≥ .70) | .072 · .769 | .145 · .538 / .174 · .462 | .087 · .692 / .058 · **.769** |
+    | Needs-run (≥ .80) · cache-checkable precision (≥ .85) | .656 · .222 | .750 · .441 / .813 · .421 | .781 · .750 / .781 · .750 |
+    | Draft schema validity, steward / configurator (≥ .95) | .833 / .833 | .714 / .667 · .833 / .571 | **1.0 / 1.0 · 1.0 / 1.0** ✓ |
+
+    **Decision recommended to the owner: ship iteration 5.**
+    - For production's only agent, it beats what runs today on both samples: precision rises from ~.83 to ~.90, which meets target, and recall stays at or above .818.
+    - Every other agent improves sharply, and three targets now pass (designer, report, schema validity).
+
+    **Q1 is NOT done**, and these targets still fail:
+    - steward recall .781 (capped by the labeling overlap in (q));
+    - configurator precision .895 (.005 short);
+    - vv recall .818–.879;
+    - advisory false-artifact .058–.087 (target .03);
+    - needs-run recall .781;
+    - cache-checkable precision .750.
+
+    The next iteration needs the owner's labeling decision in (q). The rest are near target, and with ±.10 run-to-run noise a further prompt change should be judged on two runs, as this one was.
 
 ---
 
@@ -3650,6 +3677,6 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Step | State | Evidence |
 |---|---|---|
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
-| Q1 | **Candidate: iteration 5.** 36 misses (Q0 124); vv .906/.879; designer and report meet target. A repeat run is fired to confirm it on a second sample | 38(g), 38(i), 38(k), 38(n)–(q) |
-| Q2 | **Schema validity met on `gpt-5`** (steward 1.0, configurator 1.0, run `42310636880`) after the two fixes in 38(l). Remaining: confirm on a second run, then score `gpt-5-mini` at Q4 | 38(h), 38(l), 38(n) |
+| Q1 | **Iteration 5 recommended for merge; Q1 not done.** On two runs: 35–36 misses (Q0 124, production today 75–79); vv .90/.82–.88 (production today .82–.84/.82); designer, report and draft schema validity meet target. Open: steward recall (owner labeling decision, 38(q)), configurator precision .895, advisory false-artifact .06–.09, needs-run .78, cache-checkable .75 | 38(g), 38(i), 38(k), 38(n)–(r) |
+| Q2 | **Met on `gpt-5`, five runs in a row** (steward and configurator schema validity 1.0, gate-violation attempts 0). `gpt-5-mini` is scored at Q4 | 38(h), 38(l), 38(n), 38(r) |
 | Q3–Q5 | Not started | — |
