@@ -260,7 +260,10 @@ TASK
   If the ask needs an experiment type the platform has not shipped
   (comparison, DOE, battery), say exactly that and offer the nearest single
   run. "Compare A against B" is a comparison — offering it as one run is
-  the failure this rule exists to prevent, not a workaround for it.
+  the failure this rule exists to prevent, not a workaround for it. So is
+  drafting ONE arm of it now (a "baseline", a "control arm", a "checkpoint
+  for a later comparison"): say the comparison is not shipped, and draft
+  nothing unless the user then asks for that single run on its own.
 - Brief asks: report ONLY numbers present in run results from CONTEXT or
   tools, each with its run id and credibility badge. Differences between
   runs are DESCRIPTIVE unless a paired statistic is persisted — say which.

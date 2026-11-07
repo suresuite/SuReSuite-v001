@@ -1067,7 +1067,10 @@ TASK
   If the ask needs an experiment type the platform has not shipped
   (comparison, DOE, battery), say exactly that and offer the nearest single
   run. "Compare A against B" is a comparison — offering it as one run is
-  the failure this rule exists to prevent, not a workaround for it.
+  the failure this rule exists to prevent, not a workaround for it. So is
+  drafting ONE arm of it now (a "baseline", a "control arm", a "checkpoint
+  for a later comparison"): say the comparison is not shipped, and draft
+  nothing unless the user then asks for that single run on its own.
 - Brief asks: report ONLY numbers present in run results from CONTEXT or
   tools, each with its run id and credibility badge. Differences between
   runs are DESCRIPTIVE unless a paired statistic is persisted — say which.
@@ -1875,6 +1878,12 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     - **`overall: FAIL` now rests on routing alone (Q1):** steward .893/.806, configurator .892/.943, advisory false-artifact .101, cache-checkable precision .810. V&V (.906/.879), designer (.929/.867) and report (.931/1.0) pass.
 
     **`pc-06` passed, and that pass is not yet trusted.** Its scorer counted override rows and never checked WHICH rows, so a model could pass by selecting the wrong supplier. On this one-supplier, one-material snapshot `list_project_entities` makes the right rows guessable, so the pass may be legitimate, but the score could not tell. The fixture now names the rows the ask must select (`override_targets: S1::MAT-4, C1::P1`), and a wrong row fails. The capability gap in (t) is unchanged: on a real project with many suppliers the agent still cannot see which rows block the gate. One more run measures `pc-06` under the stricter scorer and is the second Q3 sample.
+    (w) **Second Q3 sample (`32fb484a`, `gpt-5`).**
+    - **Still passing:** steward, V&V and report suites; coverage 9/9 with 0 fabrications; loop 1.0 on all three.
+    - **`pc-06` fails, and it SHOULD.** Scored by its target rows, the model's proposal was wrong: `target_key: "S1"` (not `S1::MAT-4`) and an invented sourcing firm `"Acme"` for row `S1`. Production would have shown that as an approvable card. This is the (t) capability gap observed directly. The agent cannot see which rows block the gate, so it guesses. The count-only scorer had been passing a wrong card, and the target-row check is what exposed it.
+    - **`ed-04` failed (4 of 11 runs):** the model drafted a single "baseline checkpoint … control arm for a later comparison", a comparison split into its first arm. The §5.4 refusal rule now names that pattern ("a baseline, a control arm, a checkpoint for a later comparison") as the same failure. This change is unmeasured; the next live run measures it.
+
+    **Q3 status:** on `gpt-5`, the agent tier passes on two runs except for (1) `pc-06`, blocked on the shared run-readiness gate (a work package; until then the configurator is NOT safe for run-readiness asks on real projects), and (2) `ed-04`, intermittent, with its prompt sharpened. The Experiment Designer and Report Builder suites passed on the confirmation run. Re-enabling either remains one PR per agent, on two green live runs of its suite.
 
 ---
 
@@ -3739,5 +3748,5 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
 | Q1 | **Iteration 5 recommended for merge; Q1 not done.** On two runs: 35–36 misses (Q0 124, production today 75–79); vv .90/.82–.88 (production today .82–.84/.82); designer, report and draft schema validity meet target. Open: steward recall (owner labeling decision, 38(q)), configurator precision .895, advisory false-artifact .06–.09, needs-run .78, cache-checkable .75 | 38(g), 38(i), 38(k), 38(n)–(r) |
 | Q2 | **Met on `gpt-5`, five runs in a row** (steward and configurator schema validity 1.0, gate-violation attempts 0). `gpt-5-mini` is scored at Q4 | 38(h), 38(l), 38(n), 38(r) |
-| Q3 | **Met on `gpt-5` on the confirmation run** (`c28b0554`): all five agent suites, coverage 9/9 with 0 fabrications, loop 1.0 on all three. A second sample with `pc-06` scored by its target rows has been fired. **`pc-06`'s capability gap (run-readiness graded only in the browser) remains a work package** | 38(s)–(v) |
+| Q3 | **Agent tier green on `gpt-5` except two items** (runs `c28b0554`, `32fb484a`): coverage 9/9 with 0 fabrications and loop 1.0 on both runs; steward, V&V and report suites passed on both. Open: **`pc-06`** (scored by target rows it fails, because the configurator cannot see run-readiness blockers; needs the shared gate, a work package) and **`ed-04`** (intermittent; the refusal rule was sharpened and is unmeasured) | 38(s)–(w) |
 | Q4–Q5 | Not started | — |
