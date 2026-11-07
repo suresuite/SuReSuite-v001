@@ -16,7 +16,8 @@
     }
   },
   "expect": {
-    "proposal": { "overrides": 2, "defaults_families": [], "provenance": "llm_drafted" },
+    "proposal": { "overrides": 2,
+      "override_targets": ["S1::MAT-4", "C1::P1"], "defaults_families": [], "provenance": "llm_drafted" },
     "apply": { "post_grade_blocks": 0, "overrides_rows": 2 }
   },
   "retired_reason": null

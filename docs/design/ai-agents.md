@@ -1868,6 +1868,13 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
       - The description now says to set `active` in one call and move the step on in a LATER call.
       - The rejection message itself tells the model how to recover, since the envelope is what the model reads next.
       - Rule 3 itself is unchanged.
+    (v) **Q3 confirmation run (`c28b0554`, `gpt-5`): the first fully green agent tier of Phase Q.**
+    - **Agent suites:** all five pass (steward 8/8, configurator 7/7, V&V 5/5, designer 6/6, report 4/4); schema validity 1.0, zero gate-violation attempts.
+    - **Coverage:** 9/9 with 0 fabrications.
+    - **Loop:** cache-hit, run-needed and plan-integrity all 1.0 (`cl-04` passes after the wording fix).
+    - **`overall: FAIL` now rests on routing alone (Q1):** steward .893/.806, configurator .892/.943, advisory false-artifact .101, cache-checkable precision .810. V&V (.906/.879), designer (.929/.867) and report (.931/1.0) pass.
+
+    **`pc-06` passed, and that pass is not yet trusted.** Its scorer counted override rows and never checked WHICH rows, so a model could pass by selecting the wrong supplier. On this one-supplier, one-material snapshot `list_project_entities` makes the right rows guessable, so the pass may be legitimate, but the score could not tell. The fixture now names the rows the ask must select (`override_targets: S1::MAT-4, C1::P1`), and a wrong row fails. The capability gap in (t) is unchanged: on a real project with many suppliers the agent still cannot see which rows block the gate. One more run measures `pc-06` under the stricter scorer and is the second Q3 sample.
 
 ---
 
@@ -3732,5 +3739,5 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
 | Q1 | **Iteration 5 recommended for merge; Q1 not done.** On two runs: 35–36 misses (Q0 124, production today 75–79); vv .90/.82–.88 (production today .82–.84/.82); designer, report and draft schema validity meet target. Open: steward recall (owner labeling decision, 38(q)), configurator precision .895, advisory false-artifact .06–.09, needs-run .78, cache-checkable .75 | 38(g), 38(i), 38(k), 38(n)–(r) |
 | Q2 | **Met on `gpt-5`, five runs in a row** (steward and configurator schema validity 1.0, gate-violation attempts 0). `gpt-5-mini` is scored at Q4 | 38(h), 38(l), 38(n), 38(r) |
-| Q3 | **Nearly done.** Fix run `b25408b7`: steward, V&V, designer and report suites all pass; coverage 9/9, 0 fabrications; cache-hit and run-needed 1.0. Open: `cl-04` (plan-call wording, fixed and re-run) and **`pc-06`, blocked on the shared run-readiness gate (a work package)** | 38(s)–(u) |
+| Q3 | **Met on `gpt-5` on the confirmation run** (`c28b0554`): all five agent suites, coverage 9/9 with 0 fabrications, loop 1.0 on all three. A second sample with `pc-06` scored by its target rows has been fired. **`pc-06`'s capability gap (run-readiness graded only in the browser) remains a work package** | 38(s)–(v) |
 | Q4–Q5 | Not started | — |

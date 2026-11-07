@@ -767,6 +767,15 @@ function scoreAgentOutcome(cfg: AgentEvalConfig, proposals: Row[], exp: Record<s
     if (exp.proposal.overrides !== undefined && (diff.overrides ?? []).length !== exp.proposal.overrides) {
       return { pass: false, detail: `expected ${exp.proposal.overrides} overrides, got ${(diff.overrides ?? []).length}` };
     }
+    // §10 entry 38(v): a count alone passes WRONG rows. When the fixture names
+    // the rows the ask must select, every one must be targeted.
+    if (Array.isArray(exp.proposal.override_targets)) {
+      const targets = new Set(((diff.overrides ?? []) as Array<{ target_key?: string }>).map((o) => String(o.target_key)));
+      const missing = (exp.proposal.override_targets as string[]).filter((t) => !targets.has(t));
+      if (missing.length > 0) {
+        return { pass: false, detail: `overrides miss the asked rows: ${missing.join(", ")} (got ${[...targets].join(", ")})` };
+      }
+    }
     if (exp.proposal.defaults_families) {
       // ai-agents.md §10 entry 38(s): a fixture may name further family sets
       // the policy catalog makes equally valid (`defaults_families_also_accept`)
