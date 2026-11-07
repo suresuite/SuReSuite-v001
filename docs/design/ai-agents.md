@@ -1783,6 +1783,14 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     - **One regression, with a mechanical cause:** mixed recall fell from .846 to .538. Restoring "owned interpretation is never advisory" made the classifier treat a question-plus-request as one owned ask. All six mixed misses came back `artifact` with the correct agent (`mixed-01/02/03/09/11/14`).
 
     **Iteration 5** (this change) touches only the "mixed" definition: a question plus a separate request is "mixed" even when one agent owns both parts. The owned-interpretation sentence decides the owner, never the route.
+    (q) **Iteration 5 (run `42316688033`): 36 misses, the best of Phase Q.**
+    - **`vv-analyst` .906/.879:** precision meets target; recall is .021 short.
+    - **Mixed recall .692** (from .538); cache-checkable precision .750 (from .593).
+    - **Other agents:** report .964/1.0 and designer .929/.867 meet target; configurator .895/1.0 and steward .926/.781.
+    - **Schema validity** still 1.0.
+    - **One coverage fabrication returned** (`cov-08-run-results`, as at Q0 and in September; it passed in iterations 1–4). The coverage battery calls `runChat` directly and never the router, so no change in this series can have caused it. It stays a Q3 item, and in production the §22.3 verifier would block the reply.
+
+    **The remaining misses are not one cause.** In the steward/configurator overlap ("why is my run blocked", "make the gate pass"), the golden set itself assigns near-identical asks to both agents (`policy-21` "Make the pre-run gate pass" is the configurator's; `mixed-12` "…and make it pass" is the steward's). That is a labeling question for the owner, not a prompt cause, and it caps steward recall. A repeat run of iteration 5 has been fired, so the shipped decision rests on two samples, not one (38(n): ±.10 on identical code).
 
 ---
 
@@ -3642,6 +3650,6 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Step | State | Evidence |
 |---|---|---|
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
-| Q1 | **In progress — iteration 5.** Iteration 4: 41 misses (Q0 124); vv .882/.909 (production's iteration 1: .818); mixed recall .538 the one regression. Iteration 5 clarifies "mixed" only, and has been fired on `gpt-5` | 38(g), 38(i), 38(k), 38(n)–(p) |
+| Q1 | **Candidate: iteration 5.** 36 misses (Q0 124); vv .906/.879; designer and report meet target. A repeat run is fired to confirm it on a second sample | 38(g), 38(i), 38(k), 38(n)–(q) |
 | Q2 | **Schema validity met on `gpt-5`** (steward 1.0, configurator 1.0, run `42310636880`) after the two fixes in 38(l). Remaining: confirm on a second run, then score `gpt-5-mini` at Q4 | 38(h), 38(l), 38(n) |
 | Q3–Q5 | Not started | — |
