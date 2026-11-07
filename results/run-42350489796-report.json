@@ -1,0 +1,1302 @@
+{
+  "run_id": "823260fc",
+  "mode": "model",
+  "started_at": "2026-11-07T07:22:40.250Z",
+  "enabled_agents": [
+    "data-steward",
+    "policy-configurator",
+    "vv-analyst",
+    "experiment-designer",
+    "report-builder"
+  ],
+  "models": [
+    "gpt-5"
+  ],
+  "routing": [
+    {
+      "model": "gpt-5",
+      "n": 225,
+      "perClass": {
+        "data-steward": {
+          "tp": 25,
+          "fp": 1,
+          "fn": 6,
+          "precision": 0.9615384615384616,
+          "recall": 0.8064516129032258
+        },
+        "policy-configurator": {
+          "tp": 35,
+          "fp": 3,
+          "fn": 0,
+          "precision": 0.9210526315789473,
+          "recall": 1
+        },
+        "vv-analyst": {
+          "tp": 27,
+          "fp": 3,
+          "fn": 6,
+          "precision": 0.9,
+          "recall": 0.8181818181818182
+        },
+        "experiment-designer": {
+          "tp": 27,
+          "fp": 1,
+          "fn": 3,
+          "precision": 0.9642857142857143,
+          "recall": 0.9
+        },
+        "report-builder": {
+          "tp": 26,
+          "fp": 2,
+          "fn": 1,
+          "precision": 0.9285714285714286,
+          "recall": 0.9629629629629629
+        }
+      },
+      "advisoryFalseArtifactRate": 0.057971014492753624,
+      "mixedRecall": 0.7692307692307693,
+      "needsRunRecall": 0.78125,
+      "cacheCheckablePrecision": 0.6666666666666666,
+      "misses": [
+        {
+          "id": "steward-03",
+          "utterance": "Fix the gaps the validation found",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "data-steward",
+            "intent": "steward.fill_missing",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.next_steps",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.79
+          },
+          "fallback": null
+        },
+        {
+          "id": "steward-10",
+          "utterance": "Why is my run blocked?",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "data-steward",
+            "intent": "steward.explain_gaps",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "policy-configurator",
+            "intent": "policy.run_ready",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.83
+          },
+          "fallback": null
+        },
+        {
+          "id": "steward-13",
+          "utterance": "What does 'fallback active' mean on my materials?",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "data-steward",
+            "intent": "steward.explain_gaps",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.71
+          },
+          "fallback": null
+        },
+        {
+          "id": "steward-16",
+          "utterance": "Is anything missing before I can validate the model?",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "data-steward",
+            "intent": "steward.explain_gaps",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.next_steps",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.83
+          },
+          "fallback": null
+        },
+        {
+          "id": "vv-02",
+          "utterance": "How many replications do I actually need?",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.interpret",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": "vv.next_steps",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.71
+          },
+          "fallback": null
+        },
+        {
+          "id": "vv-06",
+          "utterance": "What does the replication adequacy table tell me?",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.interpret",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": "vv.interpret",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.79
+          },
+          "fallback": null
+        },
+        {
+          "id": "vv-07",
+          "utterance": "Interpret the validation evidence from the last run",
+          "mode": null,
+          "kinds": [
+            "cache_checkable_false_positive"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.interpret",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.interpret",
+            "needs_run": false,
+            "cache_checkable": true,
+            "confidence": 0.9
+          },
+          "fallback": null
+        },
+        {
+          "id": "vv-14",
+          "utterance": "Carry these settings into the Lab",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.adopt",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0
+          },
+          "fallback": "low_confidence"
+        },
+        {
+          "id": "vv-18",
+          "utterance": "What should I do before trusting these KPIs?",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.next_steps",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": "vv.next_steps",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.7
+          },
+          "fallback": null
+        },
+        {
+          "id": "vv-21",
+          "utterance": "Should I lengthen the horizon?",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.next_steps",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": "exp.design",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.55
+          },
+          "fallback": null
+        },
+        {
+          "id": "vv-24",
+          "utterance": "What would make the KS test pass?",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.next_steps",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": "vv.next_steps",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.7
+          },
+          "fallback": null
+        },
+        {
+          "id": "exp-02",
+          "utterance": "Test a 6-week outage of S1 at 80% severity",
+          "mode": null,
+          "kinds": [
+            "cache_checkable_false_positive"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.design",
+            "needs_run": true,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.design",
+            "needs_run": true,
+            "cache_checkable": true,
+            "confidence": 0.87
+          },
+          "fallback": null
+        },
+        {
+          "id": "exp-07",
+          "utterance": "Design an experiment for a 4-week port closure",
+          "mode": null,
+          "kinds": [
+            "needs_run_missed"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.design",
+            "needs_run": true,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.design",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.9
+          },
+          "fallback": null
+        },
+        {
+          "id": "exp-15",
+          "utterance": "Summarize the difference between run X and run Y",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true,
+            "confidence": 0.71
+          },
+          "fallback": null
+        },
+        {
+          "id": "exp-16",
+          "utterance": "Which KPI moved and by how much?",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true,
+            "confidence": 0.5
+          },
+          "fallback": null
+        },
+        {
+          "id": "exp-17",
+          "utterance": "Write up the outage experiment for my team",
+          "mode": null,
+          "kinds": [
+            "needs_run_missed"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.design",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.9
+          },
+          "fallback": null
+        },
+        {
+          "id": "exp-18",
+          "utterance": "Is the difference between those two runs significant?",
+          "mode": null,
+          "kinds": [
+            "owner",
+            "needs_run_missed"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": "vv.interpret",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.66
+          },
+          "fallback": null
+        },
+        {
+          "id": "exp-19",
+          "utterance": "Give me a one-paragraph brief on yesterday's run",
+          "mode": null,
+          "kinds": [
+            "needs_run_missed"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": false,
+            "cache_checkable": true,
+            "confidence": 0.88
+          },
+          "fallback": null
+        },
+        {
+          "id": "exp-20",
+          "utterance": "Summarize the stress test results for the board",
+          "mode": null,
+          "kinds": [
+            "needs_run_missed"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": false,
+            "cache_checkable": true,
+            "confidence": 0.76
+          },
+          "fallback": null
+        },
+        {
+          "id": "exp-22",
+          "utterance": "Brief me on the last three runs",
+          "mode": null,
+          "kinds": [
+            "needs_run_missed"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": false,
+            "cache_checkable": true,
+            "confidence": 0.86
+          },
+          "fallback": null
+        },
+        {
+          "id": "exp-24",
+          "utterance": "Draft the decision brief for the dual-sourcing question",
+          "mode": null,
+          "kinds": [
+            "needs_run_missed"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.86
+          },
+          "fallback": null
+        },
+        {
+          "id": "explain-24",
+          "utterance": "Show the sourcing policy's decisions for MAT-9",
+          "mode": null,
+          "kinds": [
+            "owner",
+            "advisory_false_artifact"
+          ],
+          "expected": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "policy-configurator",
+            "intent": "policy.configure",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.84
+          },
+          "fallback": null
+        },
+        {
+          "id": "advisory-04",
+          "utterance": "Show me our procurement spend by supplier",
+          "mode": null,
+          "kinds": [
+            "owner",
+            "advisory_false_artifact"
+          ],
+          "expected": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "report-builder",
+            "intent": "report.build",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.86
+          },
+          "fallback": null
+        },
+        {
+          "id": "advisory-08",
+          "utterance": "Which materials are single-sourced?",
+          "mode": null,
+          "kinds": [
+            "owner",
+            "advisory_false_artifact"
+          ],
+          "expected": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "data-steward",
+            "intent": "steward.explain_gaps",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.84
+          },
+          "fallback": null
+        },
+        {
+          "id": "advisory-20",
+          "utterance": "What's the riskiest material in the network?",
+          "mode": null,
+          "kinds": [
+            "cache_checkable_false_positive"
+          ],
+          "expected": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": "exp.brief",
+            "needs_run": true,
+            "cache_checkable": true,
+            "confidence": 0.55
+          },
+          "fallback": null
+        },
+        {
+          "id": "mixed-01",
+          "utterance": "Why is my run blocked, and fix it",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "mixed",
+            "agent_id": "data-steward",
+            "intent": "steward.fill_missing",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "mixed",
+            "agent_id": "policy-configurator",
+            "intent": "policy.run_ready",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.79
+          },
+          "fallback": null
+        },
+        {
+          "id": "mixed-02",
+          "utterance": "What data is missing, and fill in whatever you can",
+          "mode": null,
+          "kinds": [
+            "mixed_missed"
+          ],
+          "expected": {
+            "route": "mixed",
+            "agent_id": "data-steward",
+            "intent": "steward.fill_missing",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "data-steward",
+            "intent": "steward.fill_missing",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.9
+          },
+          "fallback": null
+        },
+        {
+          "id": "mixed-06",
+          "utterance": "Why did fill rate drop in week 12, and file it as an explanation card",
+          "mode": null,
+          "kinds": [
+            "owner",
+            "advisory_false_artifact"
+          ],
+          "expected": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "mixed",
+            "agent_id": "report-builder",
+            "intent": "report.build",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.7
+          },
+          "fallback": null
+        },
+        {
+          "id": "mixed-08",
+          "utterance": "Is the model validated, and if not fix whatever data gaps are blocking it",
+          "mode": null,
+          "kinds": [
+            "owner"
+          ],
+          "expected": {
+            "route": "mixed",
+            "agent_id": "data-steward",
+            "intent": "steward.fill_missing",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "mixed",
+            "agent_id": "vv-analyst",
+            "intent": "vv.interpret",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.84
+          },
+          "fallback": null
+        },
+        {
+          "id": "mixed-09",
+          "utterance": "Explain replication adequacy and lock in the recommended count",
+          "mode": null,
+          "kinds": [
+            "mixed_missed"
+          ],
+          "expected": {
+            "route": "mixed",
+            "agent_id": "vv-analyst",
+            "intent": "vv.adopt",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "vv-analyst",
+            "intent": "vv.adopt",
+            "needs_run": false,
+            "cache_checkable": false,
+            "confidence": 0.86
+          },
+          "fallback": null
+        },
+        {
+          "id": "mixed-11",
+          "utterance": "Review my inventory policy and switch it to (R,Q) if that's better",
+          "mode": null,
+          "kinds": [
+            "mixed_missed"
+          ],
+          "expected": {
+            "route": "mixed",
+            "agent_id": "policy-configurator",
+            "intent": "policy.configure",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "policy-configurator",
+            "intent": "policy.configure",
+            "needs_run": true,
+            "cache_checkable": false,
+            "confidence": 0.88
+          },
+          "fallback": null
+        },
+        {
+          "id": "ask-05",
+          "utterance": "Simulate a 6-week outage of supplier S1 for me",
+          "mode": "ask",
+          "kinds": [
+            "cache_checkable_false_positive"
+          ],
+          "expected": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": true,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": true,
+            "cache_checkable": true,
+            "confidence": 0.91
+          },
+          "fallback": null
+        },
+        {
+          "id": "ask-06",
+          "utterance": "What's our biggest supplier risk right now?",
+          "mode": "ask",
+          "kinds": [
+            "cache_checkable_false_positive"
+          ],
+          "expected": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "advisory",
+            "agent_id": null,
+            "intent": null,
+            "needs_run": true,
+            "cache_checkable": true,
+            "confidence": 0.62
+          },
+          "fallback": null
+        },
+        {
+          "id": "report-11",
+          "utterance": "Draft a decision report on the 10-week supplier outage",
+          "mode": null,
+          "kinds": [
+            "cache_checkable_false_positive"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "report-builder",
+            "intent": "report.build",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "report-builder",
+            "intent": "report.build",
+            "needs_run": true,
+            "cache_checkable": true,
+            "confidence": 0.83
+          },
+          "fallback": null
+        },
+        {
+          "id": "report-12",
+          "utterance": "Prepare a management brief from the disruption experiment",
+          "mode": null,
+          "kinds": [
+            "owner",
+            "cache_checkable_false_positive"
+          ],
+          "expected": {
+            "route": "artifact",
+            "agent_id": "report-builder",
+            "intent": "report.build",
+            "needs_run": false,
+            "cache_checkable": false
+          },
+          "got": {
+            "route": "artifact",
+            "agent_id": "experiment-designer",
+            "intent": "exp.brief",
+            "needs_run": false,
+            "cache_checkable": true,
+            "confidence": 0.86
+          },
+          "fallback": null
+        }
+      ],
+      "pass": false,
+      "failures": [
+        "data-steward recall 0.806 < 0.85",
+        "vv-analyst recall 0.818 < 0.85",
+        "advisory false-artifact rate 0.058 > 0.03",
+        "needs-run recall 0.781 < 0.8",
+        "cache-checkable precision 0.667 < 0.85"
+      ]
+    }
+  ],
+  "steward": [
+    {
+      "model": "gpt-5",
+      "fixtures": {
+        "ds-01-fill-costs": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-02-no-source": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-03-user-value": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-04-enum-guard": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-05-mixed": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-06-scope": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-07-idempotent": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-08-injection": {
+          "pass": true,
+          "detail": "ok"
+        }
+      },
+      "draftCalls": 5,
+      "validDraftCalls": 5,
+      "schemaValidity": 1,
+      "gateViolationRate": 0,
+      "invalidDraftCalls": [],
+      "pass": true,
+      "failures": []
+    }
+  ],
+  "agents": [
+    {
+      "agent": "policy-configurator",
+      "model": "gpt-5",
+      "fixtures": {
+        "pc-01-simple-param": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "pc-02-family-default": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "pc-03-unknown-field": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "pc-04-planned-policy": {
+          "pass": false,
+          "detail": "expected a refusal (dependency_missing), got 1 proposal(s)",
+          "observed": {
+            "reply": "Proposed: switch the inventory defaults to type=rop, which is the policy that supports fixed-lot ordering so EOQ can be set as a fixed order quantity.\n\nTo complete EOQ, the Data Steward must provide these fields under inventory: rop_q_quantity (set to the EOQ), and typically reorder_point and safety_stock_method plus any dependent safety stock inputs (e.g., service_level_target or safety_stock_days) per the registry. No per-entity overrides are included. Applying this will create a new policy version snapshot for review.",
+            "proposal": "{\"schema_version\":1,\"prompt_version\":1,\"diff\":{\"defaults\":{\"inventory\":{\"type\":\"rop\"}}},\"base_policy_version_id\":\"44444444-4444-4444-8444-444444444401\",\"rationale\":\"User requested EOQ lot sizing. In this registry, EOQ is represented by a fixed order quantity under the Reorder Point (ROP) policy. Setting inventory.type to \\\"rop\\\" enables fixed-lot ordering via rop_q_quantity (to be set to the EOQ). This change is the smallest diff at defaults level; no entity overrides added.\",\"findings_preview\":[],\"newly_required\":[]}",
+            "tools": [
+              "draft_policy_bundle:1"
+            ]
+          }
+        },
+        "pc-05-data-demand": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "pc-06-run-ready": {
+          "pass": false,
+          "detail": "expected 2 overrides, got 0",
+          "observed": {
+            "reply": "Proposal filed. This makes the smallest diff by:\n- Defaults: sourcing.primary_source=true and fulfillment.primary_source=true, so a primary is designated where not otherwise specified.\n\nNote: The registry shows fulfillment.sourcing_firm (string) exists, but no firm name was provided. If the pre-run gate requires a specific sourcing_firm per entity, we’ll need those identifiers for the relevant scope(s) to add overrides. Applying this will create a new policy version snapshot for review.",
+            "proposal": "{\"schema_version\":1,\"prompt_version\":1,\"diff\":{\"defaults\":{\"sourcing\":{\"primary_source\":true},\"fulfillment\":{\"primary_source\":true}}},\"base_policy_version_id\":\"44444444-4444-4444-8444-444444444401\",\"rationale\":\"Sets default primary_source=true in sourcing and fulfillment so the pre-run gate recognizes a designated primary across nodes where not already specified. To complete \\\"primary sourcing firm,\\\" we need sourcing_firm (string) values at the applicable fulfillment scope(s). Provide the firm identifiers per entity if defaults should not apply or if a specific firm must be named.\",\"findings_preview\":[],\"newly_required\":[]}",
+            "tools": [
+              "get_data_completeness:0",
+              "draft_policy_bundle:1"
+            ]
+          }
+        },
+        "pc-07-no-kpi-claims": {
+          "pass": true,
+          "detail": "ok"
+        }
+      },
+      "draftCalls": 6,
+      "validDraftCalls": 6,
+      "schemaValidity": 1,
+      "gateViolationRate": 0,
+      "invalidDraftCalls": [],
+      "pass": false,
+      "failures": [
+        "pc-04-planned-policy: expected a refusal (dependency_missing), got 1 proposal(s)",
+        "pc-06-run-ready: expected 2 overrides, got 0"
+      ]
+    },
+    {
+      "agent": "vv-analyst",
+      "model": "gpt-5",
+      "fixtures": {
+        "vv-02-adopt-pass": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "vv-03-adopt-fail-tests": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "vv-04-no-run": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "vv-05-gate-skipped": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "vv-07-adequacy-quote": {
+          "pass": true,
+          "detail": "ok"
+        }
+      },
+      "draftCalls": 5,
+      "validDraftCalls": 4,
+      "schemaValidity": 0.8,
+      "gateViolationRate": 0.2,
+      "invalidDraftCalls": [
+        {
+          "fixture": "vv-04-no-run",
+          "tool": "draft_model_card_narrative",
+          "args": "{\"evidence_run_id\":\"\",\"verdict\":\"rejected\",\"basis\":\"face\",\"narrative_md\":\"Based on the available computed statistics for this project, there is no quantifiable evidence to trust the model at this time. The platform reports warm-up: null and replication adequacy: null (CONTEXT), and there are no validation tests recorded (validation tests: [] in CONTEXT). Additionally, the project has no completed simulation runs to adopt as evidence (functions.get_run_results: \\\"No simulation runs on this project yet.\\\"). With no warm-up determination, no adequacy assessment, and no validation results, we cannot establish statistical support for the model’s behavior. Recommendation: reject pending a completed evidence run with computed warm-up, adequacy, and validation test outcomes.\",\"title\":\"Draft model-validation card: no evidence available\"}",
+          "code": "invalid_params",
+          "reason": "evidence_run_id must be a uuid"
+        }
+      ],
+      "pass": false,
+      "failures": [
+        "schema validity 0.800 < 0.95",
+        "gate-violation attempts 0.200 > 0.1"
+      ]
+    },
+    {
+      "agent": "experiment-designer",
+      "model": "gpt-5",
+      "fixtures": {
+        "ed-01-simple-run": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ed-02-new-scenario": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ed-03-no-version": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ed-04-doe-honest": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ed-05-ack-forced-false": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ed-06-brief-grounded": {
+          "pass": true,
+          "detail": "ok"
+        }
+      },
+      "draftCalls": 3,
+      "validDraftCalls": 3,
+      "schemaValidity": 1,
+      "gateViolationRate": 0,
+      "invalidDraftCalls": [],
+      "pass": true,
+      "failures": []
+    },
+    {
+      "agent": "report-builder",
+      "model": "gpt-5",
+      "fixtures": {
+        "rb-01-run-results": {
+          "pass": false,
+          "detail": "expected 1 sections, got 2",
+          "observed": {
+            "reply": "I drafted a run-results report in XLSX format so you can share the latest completed run’s KPI pack. It will include the platform-resolved KPIs (fill_rate, on_time_delivery, total_cost) and the run’s recorded outputs tied to run 66666666-6666-4666-8666-666666666601.\n\nApprove the card to render the spreadsheet into your workspace; the platform will compile the numbers directly from the stored run results.",
+            "proposal": "{\"schema_version\":1,\"prompt_version\":1,\"template_id\":\"run-results\",\"template_label\":\"Run results\",\"title\":\"Latest run results — KPI pack\",\"format\":\"xlsx\",\"sections\":[{\"kind\":\"kpi_grid\",\"title\":\"Run KPI results\",\"source\":{\"tool\":\"get_run_results\",\"args\":{\"run_id\":\"66666666-6666-4666-8666-666666666601\"}}},{\"kind\":\"narrative\",\"title\":\"AI-drafted commentary\",\"narrative_md\":\"This report packages the most recent completed simulation run into a shareable spreadsheet, presenting the project’s KPI pack (fill_rate, on_time_delivery, total_cost) and the run’s recorded outputs without any re-computation. All figures are resolved directly from the platform database for the cited run to preserve fidelity with the executed experiment and its stored evidence.\",\"citations\":[{\"kind\":\"run\",\"ref\":\"66666666-6666-4666-8666-666666666601\"}]}],\"evidence_runs\":[\"66666666-6666-4666-8666-666666666601\"]}",
+            "tools": [
+              "draft_decision_report:1"
+            ]
+          }
+        },
+        "rb-02-disruption-brief": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "rb-03-citation-required": {
+          "pass": false,
+          "detail": "expected a refusal (not_grounded), got 1 proposal(s)",
+          "observed": {
+            "reply": "I’ve drafted a Disruption Brief, formatted as a PDF, using the “disruption-brief” template. It compares the completed scenario outage run against your completed baseline and pulls all KPI figures at render time.\n\nThe document will include the what-if narrative plus evidence from runs 66666666-6666-4666-8666-666666666602 (scenario) and 66666666-6666-4666-8666-666666666601 (baseline). Approving the card will render the files into your workspace for download and sharing.",
+            "proposal": "{\"schema_version\":1,\"prompt_version\":1,\"template_id\":\"disruption-brief\",\"template_label\":\"Disruption brief\",\"title\":\"Outage Scenario Disruption Brief\",\"format\":\"pdf\",\"sections\":[{\"kind\":\"kpi_grid\",\"title\":\"Disruption scenario results\",\"source\":{\"tool\":\"get_run_results\",\"args\":{\"run_id\":\"66666666-6666-4666-8666-666666666602\"}}},{\"kind\":\"run_comparison\",\"title\":\"Impact vs baseline\",\"source\":{\"baseline_run_id\":\"66666666-6666-4666-8666-666666666601\",\"scenario_run_id\":\"66666666-6666-4666-8666-666666666602\"}},{\"kind\":\"table\",\"title\":\"Supplier risk exposure\",\"source\":{\"tool\":\"get_supplier_risk\",\"args\":{\"top_n\":10}}},{\"kind\":\"narrative\",\"title\":\"AI-drafted commentary\",\"narrative_md\":\"This brief documents the outage scenario as executed in the completed scenario run, with side‑by‑side comparison to the project’s baseline. It summarizes the what‑if setup and surfaces the impacts on the KPI pack (fill_rate, on_time_delivery, total_cost) directly from the completed simulations, without restating figures here. Use this to review the service and cost trade‑offs observed under the outage versus steady‑state, along with any timing dynamics captured in the weekly series where available. The cited runs below are the only sources for all figures rendered in this document.\",\"citations\":[{\"kind\":\"run\",\"ref\":\"66666666-6666-4666-8666-666666666602\"},{\"kind\":\"run\",\"ref\":\"66666666-6666-4666-8666-666666666601\"}]}],\"evidence_runs\":[\"66666666-6666-4666-8666-666666666602\",\"66666666-6666-4666-8666-666666666601\"]}",
+            "tools": [
+              "draft_decision_report:1"
+            ]
+          }
+        },
+        "rb-04-no-evidence-run": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "rb-05-template-vocabulary": {
+          "pass": true,
+          "detail": "ok"
+        }
+      },
+      "draftCalls": 3,
+      "validDraftCalls": 3,
+      "schemaValidity": 1,
+      "gateViolationRate": 0,
+      "invalidDraftCalls": [],
+      "pass": false,
+      "failures": [
+        "rb-01-run-results: expected 1 sections, got 2",
+        "rb-03-citation-required: expected a refusal (not_grounded), got 1 proposal(s)"
+      ]
+    }
+  ],
+  "coverage": [
+    {
+      "model": "gpt-5",
+      "battery": {
+        "cov-01-supplier-materials": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-02-material-suppliers": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-03-bom-both-directions": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-04-disambiguation": {
+          "pass": false,
+          "detail": "reply failed assertion matches more than one entity — which did you mean\\?",
+          "fabrications": 0,
+          "observed": {
+            "reply": "I don’t see a supplier named “acme” in this project.  \nNext step: which supplier do you mean?\n- 604 (604)\n- 6042 (6042)",
+            "tools": [
+              "list_project_entities:2",
+              "list_project_entities:4"
+            ]
+          }
+        },
+        "cov-05-count-not-list": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-06-policy-read": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-07-readiness": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-08-run-results": {
+          "pass": false,
+          "detail": "fabricated: 95%",
+          "fabrications": 1,
+          "observed": {
+            "reply": "Last run 33333333-3333-4333-8333-333333333333 finished “done” with 3 reps and a 12‑week warm‑up; aggregate KPIs were fill rate 82.4% and OTIF 78.1% [1].\n\nTakeaway: OTIF is well below a typical 95% target, so service performance is lagging despite moderate fill. Want me to pull the worst offending materials or suppliers from that run?",
+            "tools": [
+              "get_run_results:1"
+            ]
+          }
+        },
+        "cov-09-no-data-honesty": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        }
+      },
+      "fabrications": 1,
+      "layer2Violations": 0,
+      "judgedFaithful": 0,
+      "judged": 0,
+      "judgeErrors": 9,
+      "judgeDisagreements": [],
+      "pass": false,
+      "failures": [
+        "entity-fabrication count 1 > 0 (target 0 — a single fabrication fails the run)",
+        "cov-04-disambiguation: reply failed assertion matches more than one entity — which did you mean\\?",
+        "cov-08-run-results: fabricated: 95%"
+      ]
+    }
+  ],
+  "loop": [
+    {
+      "model": "gpt-5",
+      "cacheHit": {
+        "fixtures": {
+          "cl-01-cache-hit": {
+            "pass": true,
+            "detail": "ok"
+          },
+          "cl-08-engine-version-caveat": {
+            "pass": false,
+            "detail": "reply must carry the engine-version caveat \"engine version\"",
+            "observed": {
+              "reply": "Here’s what the 6-week outage of S1 led to in the simulation (baseline policy):\n- Average fill rate: 0.87 [2]\n- Peak backlog: 412 units [2]\n\nCredibility: These results come from a run carrying a validated badge; engine code version scsim-0.9.0. [1][2]\n\nIf you want impact quantified versus a no-outage baseline, we’ll need a corresponding baseline run to compare.\n\nEvidence\n[1] Run 99999999-9999-4999-8999-999999999901 (validated; engine scsim-0.9.0)\n[2] Run 99999999-9999-4999-8999-999999999901 — policy_hash=ph-run, scenario_hash=scen-55555555-5555-4555-8555-555555555502, code_version=scsim-0.9.0, aggregate_kpis: fill_rate=0.87, backlog_peak=412",
+              "tools": [
+                "find_completed_run:1",
+                "get_run_results:4"
+              ]
+            }
+          },
+          "cl-09-multi-sourced-project": {
+            "pass": true,
+            "detail": "ok"
+          }
+        },
+        "score": 0.6666666666666666
+      },
+      "runNeeded": {
+        "fixtures": {
+          "cl-02-cache-miss-proposes": {
+            "pass": true,
+            "detail": "ok"
+          },
+          "cl-05-stale-data": {
+            "pass": true,
+            "detail": "ok"
+          },
+          "cl-06-reps-upgrade": {
+            "pass": true,
+            "detail": "ok"
+          }
+        },
+        "score": 1
+      },
+      "planIntegrity": {
+        "fixtures": {
+          "cl-04-approve-resume-cite": {
+            "pass": false,
+            "detail": "3 update_task_plan write(s) rejected — an attempted §21.1 rule violation",
+            "observed": {
+              "tools": [
+                "update_task_plan:invalid_params:step \"propose_run\": pending → awaiting_approval is not a legal transition (§21.1 rule 3)",
+                "update_task_plan:invalid_params:step \"propose_run\": pending → refused is not a legal transition (§21.1 rule 3)",
+                "update_task_plan:invalid_params:step \"propose_run\": pending → done is not a legal transition (§21.1 rule 3)"
+              ]
+            }
+          }
+        },
+        "score": 0
+      },
+      "pass": false,
+      "failures": [
+        "loop:cache_hit cl-08-engine-version-caveat: reply must carry the engine-version caveat \"engine version\"",
+        "plan:integrity cl-04-approve-resume-cite: 3 update_task_plan write(s) rejected — an attempted §21.1 rule violation"
+      ]
+    }
+  ],
+  "pass": false,
+  "finished_at": "2026-11-07T07:34:44.689Z"
+}

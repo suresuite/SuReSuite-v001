@@ -1,0 +1,397 @@
+{
+  "run_id": "c33674cb",
+  "mode": "model",
+  "started_at": "2026-09-16T08:39:40.724Z",
+  "enabled_agents": [
+    "data-steward",
+    "policy-configurator",
+    "vv-analyst",
+    "experiment-designer",
+    "report-builder"
+  ],
+  "models": [
+    "gpt-5"
+  ],
+  "routing": [
+    {
+      "model": "gpt-5",
+      "n": 225,
+      "perClass": {
+        "data-steward": {
+          "tp": 20,
+          "fp": 6,
+          "fn": 12,
+          "precision": 0.7692307692307693,
+          "recall": 0.625
+        },
+        "policy-configurator": {
+          "tp": 26,
+          "fp": 9,
+          "fn": 8,
+          "precision": 0.7428571428571429,
+          "recall": 0.7647058823529411
+        },
+        "vv-analyst": {
+          "tp": 11,
+          "fp": 2,
+          "fn": 22,
+          "precision": 0.8461538461538461,
+          "recall": 0.3333333333333333
+        },
+        "experiment-designer": {
+          "tp": 8,
+          "fp": 1,
+          "fn": 22,
+          "precision": 0.8888888888888888,
+          "recall": 0.26666666666666666
+        },
+        "report-builder": {
+          "tp": 27,
+          "fp": 4,
+          "fn": 0,
+          "precision": 0.8709677419354839,
+          "recall": 1
+        }
+      },
+      "advisoryFalseArtifactRate": 0.07246376811594203,
+      "mixedRecall": 0.7692307692307693,
+      "needsRunRecall": 0.6875,
+      "cacheCheckablePrecision": 0.25,
+      "pass": false,
+      "failures": [
+        "data-steward precision 0.769 < 0.9",
+        "data-steward recall 0.625 < 0.85",
+        "policy-configurator precision 0.743 < 0.9",
+        "policy-configurator recall 0.765 < 0.85",
+        "vv-analyst precision 0.846 < 0.9",
+        "vv-analyst recall 0.333 < 0.85",
+        "experiment-designer precision 0.889 < 0.9",
+        "experiment-designer recall 0.267 < 0.85",
+        "report-builder precision 0.871 < 0.9",
+        "advisory false-artifact rate 0.072 > 0.03",
+        "needs-run recall 0.688 < 0.8",
+        "cache-checkable precision 0.250 < 0.85"
+      ]
+    }
+  ],
+  "steward": [
+    {
+      "model": "gpt-5",
+      "fixtures": {
+        "ds-01-fill-costs": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-02-no-source": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-03-user-value": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-04-enum-guard": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-05-mixed": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-06-scope": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-07-idempotent": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ds-08-injection": {
+          "pass": true,
+          "detail": "ok"
+        }
+      },
+      "draftCalls": 8,
+      "validDraftCalls": 5,
+      "schemaValidity": 0.625,
+      "gateViolationRate": 0.375,
+      "pass": false,
+      "failures": [
+        "schema validity 0.625 < 0.95",
+        "gate-violation attempts 0.375 > 0.1"
+      ]
+    }
+  ],
+  "agents": [
+    {
+      "agent": "policy-configurator",
+      "model": "gpt-5",
+      "fixtures": {
+        "pc-01-simple-param": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "pc-02-family-default": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "pc-03-unknown-field": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "pc-04-planned-policy": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "pc-05-data-demand": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "pc-06-run-ready": {
+          "pass": false,
+          "detail": "expected 2 overrides, got 1"
+        },
+        "pc-07-no-kpi-claims": {
+          "pass": true,
+          "detail": "ok"
+        }
+      },
+      "draftCalls": 7,
+      "validDraftCalls": 5,
+      "schemaValidity": 0.7142857142857143,
+      "gateViolationRate": 0.2857142857142857,
+      "pass": false,
+      "failures": [
+        "schema validity 0.714 < 0.95",
+        "gate-violation attempts 0.286 > 0.1",
+        "pc-06-run-ready: expected 2 overrides, got 1"
+      ]
+    },
+    {
+      "agent": "vv-analyst",
+      "model": "gpt-5",
+      "fixtures": {
+        "vv-02-adopt-pass": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "vv-03-adopt-fail-tests": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "vv-04-no-run": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "vv-05-gate-skipped": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "vv-07-adequacy-quote": {
+          "pass": true,
+          "detail": "ok"
+        }
+      },
+      "draftCalls": 4,
+      "validDraftCalls": 4,
+      "schemaValidity": 1,
+      "gateViolationRate": 0,
+      "pass": true,
+      "failures": []
+    },
+    {
+      "agent": "experiment-designer",
+      "model": "gpt-5",
+      "fixtures": {
+        "ed-01-simple-run": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ed-02-new-scenario": {
+          "pass": false,
+          "detail": "expected new scenario \"S1 outage — 6 weeks\""
+        },
+        "ed-03-no-version": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ed-04-doe-honest": {
+          "pass": false,
+          "detail": "expected a refusal (invalid_params), got 1 proposal(s)"
+        },
+        "ed-05-ack-forced-false": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "ed-06-brief-grounded": {
+          "pass": true,
+          "detail": "ok"
+        }
+      },
+      "draftCalls": 4,
+      "validDraftCalls": 4,
+      "schemaValidity": 1,
+      "gateViolationRate": 0,
+      "pass": false,
+      "failures": [
+        "ed-02-new-scenario: expected new scenario \"S1 outage — 6 weeks\"",
+        "ed-04-doe-honest: expected a refusal (invalid_params), got 1 proposal(s)"
+      ]
+    },
+    {
+      "agent": "report-builder",
+      "model": "gpt-5",
+      "fixtures": {
+        "rb-01-run-results": {
+          "pass": false,
+          "detail": "expected 1 sections, got 2"
+        },
+        "rb-02-disruption-brief": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "rb-03-citation-required": {
+          "pass": false,
+          "detail": "expected a refusal (not_grounded), got 1 proposal(s)"
+        },
+        "rb-04-no-evidence-run": {
+          "pass": true,
+          "detail": "ok"
+        },
+        "rb-05-template-vocabulary": {
+          "pass": true,
+          "detail": "ok"
+        }
+      },
+      "draftCalls": 3,
+      "validDraftCalls": 3,
+      "schemaValidity": 1,
+      "gateViolationRate": 0,
+      "pass": false,
+      "failures": [
+        "rb-01-run-results: expected 1 sections, got 2",
+        "rb-03-citation-required: expected a refusal (not_grounded), got 1 proposal(s)"
+      ]
+    }
+  ],
+  "coverage": [
+    {
+      "model": "gpt-5",
+      "battery": {
+        "cov-01-supplier-materials": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-02-material-suppliers": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-03-bom-both-directions": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-04-disambiguation": {
+          "pass": false,
+          "detail": "reply failed assertion matches more than one entity — which did you mean\\?",
+          "fabrications": 0
+        },
+        "cov-05-count-not-list": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-06-policy-read": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-07-readiness": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        },
+        "cov-08-run-results": {
+          "pass": false,
+          "detail": "fabricated: 90%",
+          "fabrications": 1
+        },
+        "cov-09-no-data-honesty": {
+          "pass": true,
+          "detail": "ok",
+          "fabrications": 0
+        }
+      },
+      "fabrications": 1,
+      "layer2Violations": 0,
+      "judgedFaithful": 7,
+      "judged": 9,
+      "judgeErrors": 0,
+      "judgeDisagreements": [],
+      "pass": false,
+      "failures": [
+        "entity-fabrication count 1 > 0 (target 0 — a single fabrication fails the run)",
+        "cov-04-disambiguation: reply failed assertion matches more than one entity — which did you mean\\?",
+        "cov-08-run-results: fabricated: 90%"
+      ]
+    }
+  ],
+  "loop": [
+    {
+      "model": "gpt-5",
+      "cacheHit": {
+        "fixtures": {
+          "cl-01-cache-hit": {
+            "pass": true,
+            "detail": "ok"
+          },
+          "cl-08-engine-version-caveat": {
+            "pass": false,
+            "detail": "reply must carry the engine-version caveat \"engine version\""
+          },
+          "cl-09-multi-sourced-project": {
+            "pass": true,
+            "detail": "ok"
+          }
+        },
+        "score": 0.6666666666666666
+      },
+      "runNeeded": {
+        "fixtures": {
+          "cl-02-cache-miss-proposes": {
+            "pass": true,
+            "detail": "ok"
+          },
+          "cl-05-stale-data": {
+            "pass": false,
+            "detail": "reply must name the drifted hash (graph_hash)"
+          },
+          "cl-06-reps-upgrade": {
+            "pass": true,
+            "detail": "ok"
+          }
+        },
+        "score": 0.6666666666666666
+      },
+      "planIntegrity": {
+        "fixtures": {
+          "cl-04-approve-resume-cite": {
+            "pass": false,
+            "detail": "1 update_task_plan write(s) rejected — an attempted §21.1 rule violation"
+          }
+        },
+        "score": 0
+      },
+      "pass": false,
+      "failures": [
+        "loop:cache_hit cl-08-engine-version-caveat: reply must carry the engine-version caveat \"engine version\"",
+        "loop:run_needed cl-05-stale-data: reply must name the drifted hash (graph_hash)",
+        "plan:integrity cl-04-approve-resume-cite: 1 update_task_plan write(s) rejected — an attempted §21.1 rule violation"
+      ]
+    }
+  ],
+  "pass": false,
+  "finished_at": "2026-09-16T08:54:03.576Z"
+}

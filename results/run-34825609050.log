@@ -1,0 +1,899 @@
+run_id: 34825609050  attempt: 1
+trigger: schedule  ref: main  sha: 94f8ebdc8c1ded6cddb3a73199aff9e69afd6fd6
+mode: full  agents: data-steward,policy-configurator,vv-analyst,experiment-designer,report-builder
+tier1 (deterministic): success   tier2 (model-scored, live): failure
+──────────────────────────────────────
+[0m[32mCheck[0m budget_test.ts
+[0m[32mCheck[0m chat_import_test.ts
+[0m[32mCheck[0m closed_loop_test.ts
+[0m[32mCheck[0m cost_estimator_test.ts
+[0m[32mCheck[0m coverage_test.ts
+[0m[32mCheck[0m data_steward_test.ts
+[0m[32mCheck[0m db_bulk_actions_test.ts
+[0m[32mCheck[0m db_ga_grants_test.ts
+[0m[32mCheck[0m db_matrix_test.ts
+[0m[32mCheck[0m db_network_cartographer_test.ts
+[0m[32mCheck[0m db_network_cartographer_v2_test.ts
+[0m[32mCheck[0m db_plans_test.ts
+[0m[32mCheck[0m db_reports_test.ts
+[0m[32mCheck[0m db_rpc_test.ts
+[0m[32mCheck[0m db_stage23_test.ts
+[0m[32mCheck[0m db_stage4_test.ts
+[0m[32mCheck[0m disruption_sentinel_test.ts
+[0m[32mCheck[0m experiment_designer_test.ts
+[0m[32mCheck[0m golden_transcript_test.ts
+[0m[32mCheck[0m matrix_test.ts
+[0m[32mCheck[0m memory_m2_test.ts
+[0m[32mCheck[0m memory_test.ts
+[0m[32mCheck[0m modes_test.ts
+[0m[32mCheck[0m network_cartographer_test.ts
+[0m[32mCheck[0m network_cartographer_v2_test.ts
+[0m[32mCheck[0m plan_integrity_test.ts
+[0m[32mCheck[0m policy_configurator_test.ts
+[0m[32mCheck[0m provider_retry_test.ts
+[0m[32mCheck[0m report_builder_test.ts
+[0m[32mCheck[0m router_structured_test.ts
+[0m[32mCheck[0m router_test.ts
+[0m[32mCheck[0m router_v2_test.ts
+[0m[32mCheck[0m routing_golden_test.ts
+[0m[32mCheck[0m suggestions_test.ts
+[0m[32mCheck[0m telemetry_test.ts
+[0m[32mCheck[0m vv_analyst_test.ts
+[0m[38;5;245mrunning 13 tests from ./budget_test.ts[0m
+§21.5 DEFAULTs are the normative table: 6 LLM calls, 15 tool calls, 48,000 chars, 60 s wall ... [0m[32mok[0m [0m[38;5;245m(743µs)[0m
+llm_calls cap: the denied runChat 'runs' with the honest line naming the meter — no provider call is made ... [0m[32mok[0m [0m[38;5;245m(26ms)[0m
+tool_calls cap: the 16th-style call returns the 'budget' envelope telling the model to wrap up; the handler never runs ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+tool_calls cap inside a live turn: the model sees the budget envelope and must wrap up (the §21.5 'model must wrap up' behavior) ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+output budget: after the cap is crossed, no further LLM call is issued and the reply names the output meter ... [0m[32mok[0m [0m[38;5;245m(358µs)[0m
+wall budget (mocked clock): exceeded between hops ⇒ the turn finishes with the honest wall line + the parts it already earned ... [0m[32mok[0m [0m[38;5;245m(729µs)[0m
+the §20.5 provider retry burns real wall time the wall check sees (the H2 retry counts against the budgets) ...
+[0m[38;5;245m------- output -------[0m
+[provider-retry] gemini returned 500 — retrying once in 1170 ms (§20.5; the wait counts against the wall budget)
+[0m[38;5;245m----- output end -----[0m
+the §20.5 provider retry burns real wall time the wall check sees (the H2 retry counts against the budgets) ... [0m[32mok[0m [0m[38;5;245m(1s)[0m
+MAX_HOPS exhaustion spends one closing completion so the final hop's tool results are answered from, not discarded ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+MAX_HOPS exhaustion falls back to the verbatim 'ran out of steps' reply when the closing completion fails ... [0m[32mok[0m [0m[38;5;245m(983µs)[0m
+the chat.reply spend payload: {llm_calls, tool_calls, wall_ms, budget_hit} — null hit on a clean request ... [0m[32mok[0m [0m[38;5;245m(321µs)[0m
+every meter has an honest line and budgetExhaustedLine names it ... [0m[32mok[0m [0m[38;5;245m(92µs)[0m
+a budget-exhausted plan turn closes honestly: the dangling step fails with note 'interrupted: budget: <meter>' and the reply names the meter ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+an unmetered context is byte-identical: no budget on ToolContext ⇒ executeTool never denies ... [0m[32mok[0m [0m[38;5;245m(253µs)[0m
+[0m[38;5;245mrunning 2 tests from ./chat_import_test.ts[0m
+quickThreadServerId is deterministic and uuid-shaped ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+serializeThreadsForImport is content-preserving and defensive ... [0m[32mok[0m [0m[38;5;245m(286µs)[0m
+[0m[38;5;245mrunning 17 tests from ./closed_loop_test.ts[0m
+cl-01-cache-hit: find_completed_run returns the stored run (hit table, Validated badge, note carries the 12-hex triple) ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+cl-01: the single-turn hit branch — find_completed_run → get_run_results → cited reply; no card, no dispatch, no plan ... [0m[32mok[0m [0m[38;5;245m(23ms)[0m
+cl-01: read-hit and apply-hit are the SAME identity — the apply path answers ReuseAvailable with the identical run (§20.1 law 2) ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+cl-02-cache-miss-proposes: miss note, then exactly one experiment_spec proposal and ZERO simulation_runs rows ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+cl-03-no-run-without-approval: after the turn ends with NO approval, the stub still has zero run rows and the card sits 'proposed' ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+cl-05-stale-data: a done run exists but current_graph_hash drifted — cache_stale NAMES the drifted hash; no proposal filed ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+cl-06-reps-upgrade: 10 done reps vs 30 asked ⇒ miss whose reason says why the stored run is insufficient; proposal filed ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+cl-07-forgotten-order: draft_experiment_spec called FIRST on a cache-hit state ⇒ handler answers cache_hit, files NO proposal ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+cl-07 companion: after a find_completed_run for the SAME scenario+version, the guard stands down (the record shows the cache was consulted) ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+cl-08-engine-version-caveat: the hit table carries the run's code_version; the reply surfaces the caveat sentence ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+find_completed_run is READ-ONLY by construction: no parameter reaches a dispatch; unknown scenario / no versions answer honestly ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+scenario ambiguity ⇒ the §22.5 disambiguation candidates (never a guess); a single-scenario project needs no fragment ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+CLOSED_LOOP_ENABLED off ⇒ the v1 tool surface, the v1 prompt, and NO draft-time guard (the §9 kill-switch convention) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+CLOSED_LOOP_ENABLED on ⇒ the §20.4 verbatim prompt supersedes §5.4's and the surface gains find_completed_run ... [0m[32mok[0m [0m[38;5;245m(697µs)[0m
+cl-04-approve-resume-cite: plan → card → approve → apply → advance → run done → resume reads persisted KPIs; citations resolve; every step terminal ...
+[0m[38;5;245m------- post-test output -------[0m
+wakeWorker: FLY_API_TOKEN/FLY_APP_NAME not set — scale-to-zero wake disabled (worker assumed always-on). Set both edge-function secrets to enable waking a stopped worker.
+[0m[38;5;245m----- post-test output end -----[0m
+cl-04-approve-resume-cite: plan → card → approve → apply → advance → run done → resume reads persisted KPIs; citations resolve; every step terminal ... [0m[32mok[0m [0m[38;5;245m(22ms)[0m
+cl-09-multi-sourced-project: the cl-01 battery holds on a ≥2-suppliers-per-material project — the loop is topology-independent (§20.7) ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+cl-10-quota-pause: quota_exceeded at apply ⇒ step failed with the remaining-allowance note, NO apply_attempts increment (Q21c), honest resume ... [0m[32mok[0m [0m[38;5;245m(7ms)[0m
+[0m[38;5;245mrunning 11 tests from ./cost_estimator_test.ts[0m
+ce-01-estimate-costs: candidates surface, draft equals recomputation, re-run converges, apply shrinks findings ... [0m[32mok[0m [0m[38;5;245m(27ms)[0m
+ce-02-holding-rates: benchmark rows carry the seed interval, dataset, vintage and assumptions ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ce-03-benchmark-scaled: a no-arc material gets a benchmark-scaled estimate ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ce-04-interval-required: missing low/high ⇒ invalid_params, no proposal ... [0m[32mok[0m [0m[38;5;245m(704µs)[0m
+ce-05-mismatch: a tampered value ⇒ not_grounded at draft, stale_values at apply ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ce-06-scope: foreign entity id ⇒ project_scope_violation ... [0m[32mok[0m [0m[38;5;245m(723µs)[0m
+ce-07-resilience-report: firm-level rows surface with C^res mapping; drafting them is refused ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ce-08-injection: instruction-like project data cannot steer values ... [0m[32mok[0m [0m[38;5;245m(928µs)[0m
+ce-09-backtest-demoted: an interval that excludes the observed actuals demotes the method ... [0m[32mok[0m [0m[38;5;245m(859µs)[0m
+agent turn (bridge 1): scripted provider drives the real loop to a proposal part ... [0m[32mok[0m [0m[38;5;245m(21ms)[0m
+estimator prompt template carries the verbatim §18.1 + AGENT_COMMON blocks ... [0m[32mok[0m [0m[38;5;245m(104µs)[0m
+[0m[38;5;245mrunning 21 tests from ./coverage_test.ts[0m
+cov-01: get_supplier_materials answers the incident question — grounded list, verbatim truncation note with the TRUE total ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+cov-01: the planted incident reply is caught by verifier layer 1; the grounded reply and the §19.4 bounded refusal both pass ... [0m[32mok[0m [0m[38;5;245m(7ms)[0m
+cov-02: get_material_suppliers names the actual suppliers (id + master name), volume-ranked ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+cov-03: get_bom_relations traverses up, down, and across outbound (I5/I6) ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+cov-04: an ambiguous fragment returns the candidate list, never a guess (§19.5/§22.5) ... [0m[32mok[0m [0m[38;5;245m(677µs)[0m
+cov-05: enumerating ids a count-only envelope never returned is a layer-1 catch; the honest count passes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+cov-06: get_policy_config states the effective value and whether it's a default or an override (I8) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+cov-07: get_data_completeness names the missing field and entity on a mid-data-entry project (I9) ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+cov-08: run numbers come from persisted rows; the cited clean reply passes both layers; a wrong number fails ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+cov-09: an empty project answers 'no data yet' distinctly from 'no such tool', and the honest reply passes ... [0m[32mok[0m [0m[38;5;245m(440µs)[0m
+cov-10: planted fabrication triggers the corrective retry; a corrected retry ships verified; a still-bad retry ships the §22.5 fallback ... [0m[32mok[0m [0m[38;5;245m(10ms)[0m
+cov-11: a marker whose citation does not resolve in this project is a layer-2 catch ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+cov-12: a fully grounded cited reply passes untouched and the evidence part carries verified:true (the chip) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+verifier corpus: EVERY planted violation is caught and EVERY clean reply passes ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+resolveCitation: run/validation_card/table_rows resolve in-project; tool_call needs this turn's record; registry/document/user_message per locator ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+persona surface: flag off ⇒ the UNCHANGED five declarations (golden byte-identity); flag on ⇒ + four new + six exposed reads; draft_* never joins ... [0m[32mok[0m [0m[38;5;245m(279µs)[0m
+cov-03: BOM quantities written as 'x2' are not reported as fabricated entities ... [0m[32mok[0m [0m[38;5;245m(745µs)[0m
+the four coverage tools are read-only: stub tables byte-identical after every call ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+get_entity_detail returns verbatim master fields (never imputed) and disambiguates fragments ... [0m[32mok[0m [0m[38;5;245m(508µs)[0m
+§22.5 fallback template: verbatim shape, nearest_fact from envelopes, nearest_action optional ... [0m[32mok[0m [0m[38;5;245m(207µs)[0m
+the id lexicon is learned from THIS turn's envelopes — a differently-shaped project flags its own shapes ... [0m[32mok[0m [0m[38;5;245m(281µs)[0m
+[0m[38;5;245mrunning 12 tests from ./data_steward_test.ts[0m
+ds-01-fill-costs: reducer candidates surface and the draft equals recomputation ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+ds-02-no-source: no candidate ⇒ not_grounded, no proposal ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ds-03-user-value: user-stated value verbatim with a user_message citation ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ds-04-enum-guard: ATO refused with the RPC's own error text ... [0m[32mok[0m [0m[38;5;245m(390µs)[0m
+ds-05-mixed: mixed sources file one deterministic proposal with a stable key ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ds-06-scope: foreign entity id ⇒ project_scope_violation ... [0m[32mok[0m [0m[38;5;245m(478µs)[0m
+ds-07-idempotent: second run returns the SAME proposal_id via the duplicate path ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ds-08-injection: instruction-like project data cannot steer values ... [0m[32mok[0m [0m[38;5;245m(881µs)[0m
+ds-09-gate-delta: apply walks §4.4 — before snapshot, full-row merge, findings delta ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+apply: graph-hash drift fails stale_values before any write ... [0m[32mok[0m [0m[38;5;245m(788µs)[0m
+agent turn (bridge 1): scripted provider drives the real loop to a proposal part ... [0m[32mok[0m [0m[38;5;245m(20ms)[0m
+steward prompt template carries the verbatim §5.1 + AGENT_COMMON blocks ... [0m[32mok[0m [0m[38;5;245m(87µs)[0m
+[0m[38;5;245mrunning 1 test from ./db_bulk_actions_test.ts[0m
+Phase 2 bulk thread actions against scratch Postgres ...
+  setup + migrations apply cleanly (verbatim files) ... [0m[32mok[0m [0m[38;5;245m(222ms)[0m
+  bulk_set_thread_flags: mixed ids touch only owned rows; count is the owned subset ... [0m[32mok[0m [0m[38;5;245m(32ms)[0m
+  bulk_set_thread_flags: NULL keeps per flag (set_thread_flags semantics) ... [0m[32mok[0m [0m[38;5;245m(20ms)[0m
+  bulk_move_chat_threads: owned rows file under an owned folder; foreign/unknown skipped ... [0m[32mok[0m [0m[38;5;245m(56ms)[0m
+  bulk_move_chat_threads: a foreign target folder fails whole (never right for any row) ... [0m[32mok[0m [0m[38;5;245m(18ms)[0m
+  NULL p_user_id fails closed on all three (§10 Q20 idiom) ... [0m[32mok[0m [0m[38;5;245m(24ms)[0m
+  empty / NULL id arrays are no-ops returning 0 ... [0m[32mok[0m [0m[38;5;245m(17ms)[0m
+  bulk_delete_chat_threads: mixed ids delete only owned rows; messages cascade ... [0m[32mok[0m [0m[38;5;245m(34ms)[0m
+Phase 2 bulk thread actions against scratch Postgres ... [0m[32mok[0m [0m[38;5;245m(2s)[0m
+[0m[38;5;245mrunning 1 test from ./db_ga_grants_test.ts[0m
+GA agent capability grants against scratch Postgres ...
+  setup + migrations apply cleanly (verbatim files) ... [0m[32mok[0m [0m[38;5;245m(89ms)[0m
+  the five GA agents are granted to super_admin/admin/modeler, withheld from 'user' ... [0m[32mok[0m [0m[38;5;245m(47ms)[0m
+  the grant OVERWRITES the denying stage seed (ON CONFLICT DO UPDATE, not DO NOTHING) ... [0m[32mok[0m [0m[38;5;245m(9ms)[0m
+  agents WITHOUT a deployed AGENT_ENABLED_IDS entry stay denied ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+  chat continuity follows ai_chat (the M0-M2 server flags are already on) ... [0m[32mok[0m [0m[38;5;245m(18ms)[0m
+  capabilities_for_user resolves the grants — a modeler can now be routed an agent ... [0m[32mok[0m [0m[38;5;245m(38ms)[0m
+  today_requests counts REQUESTS, not ai_usage_logs rows ... [0m[32mok[0m [0m[38;5;245m(20ms)[0m
+  historical rows with a NULL request_id still count one each ... [0m[32mok[0m [0m[38;5;245m(22ms)[0m
+GA agent capability grants against scratch Postgres ... [0m[32mok[0m [0m[38;5;245m(998ms)[0m
+[0m[38;5;245mrunning 1 test from ./db_matrix_test.ts[0m
+Phase H4 ai_model_capabilities migration against scratch Postgres ...
+  setup + migrations apply cleanly (verbatim files) ... [0m[32mok[0m [0m[38;5;245m(67ms)[0m
+  §23.1 DDL: columns NOT NULL, measured_at defaulted, unique (model_code, capability_id) ... [0m[32mok[0m [0m[38;5;245m(43ms)[0m
+  newest run upserts: ON CONFLICT replaces the row in place — one row per pair, history never accumulates ... [0m[32mok[0m [0m[38;5;245m(32ms)[0m
+  writes are service-path only: anon cannot INSERT (no grant, no policy) ... [0m[32mok[0m [0m[38;5;245m(9ms)[0m
+  get_model_capability_matrix(): anon reads the FULL matrix (quality metadata), ordered (model_code, capability_id) ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+  ai_chat_events CHECK: model.below_target accepted; prior kinds kept; unknown kinds rejected ... [0m[32mok[0m [0m[38;5;245m(25ms)[0m
+Phase H4 ai_model_capabilities migration against scratch Postgres ... [0m[32mok[0m [0m[38;5;245m(927ms)[0m
+[0m[38;5;245mrunning 1 test from ./db_network_cartographer_test.ts[0m
+Phase 4b migration against scratch Postgres ...
+  setup + migrations apply cleanly (verbatim files) ... [0m[32mok[0m [0m[38;5;245m(58ms)[0m
+  record_external_evidence inserts and converges on the dedupe key ... [0m[32mok[0m [0m[38;5;245m(41ms)[0m
+  the CHECK vocabulary rejects out-of-range confidence and malformed LEIs ... [0m[32mok[0m [0m[38;5;245m(29ms)[0m
+  clients read, only the RPC writes (the proposals posture) ... [0m[32mok[0m [0m[38;5;245m(11ms)[0m
+  proposals admits ('network-cartographer','network_map_diff') and rejects foreign pairings ... [0m[32mok[0m [0m[38;5;245m(22ms)[0m
+Phase 4b migration against scratch Postgres ... [0m[32mok[0m [0m[38;5;245m(910ms)[0m
+[0m[38;5;245mrunning 1 test from ./db_network_cartographer_v2_test.ts[0m
+Phase 4c migration against scratch Postgres ...
+  setup + migration apply cleanly (verbatim file) ... [0m[32mok[0m [0m[38;5;245m(31ms)[0m
+  assign_bom_line writes lane + 'bom' edge once (WHERE-NOT-EXISTS idempotent) ... [0m[32mok[0m [0m[38;5;245m(55ms)[0m
+  assign_bom_line rejects rate <= 0 (BomLine.rate hard constraint) and unknown projects ... [0m[32mok[0m [0m[38;5;245m(35ms)[0m
+  assign_outbound_customer writes a STRUCTURAL lane (economics NULL) + 'outbound' edge, idempotent ... [0m[32mok[0m [0m[38;5;245m(35ms)[0m
+  grants: the assign RPCs are executable by the app roles ... [0m[32mok[0m [0m[38;5;245m(21ms)[0m
+Phase 4c migration against scratch Postgres ... [0m[32mok[0m [0m[38;5;245m(916ms)[0m
+[0m[38;5;245mrunning 1 test from ./db_plans_test.ts[0m
+Phase H3 chat_plans migration against scratch Postgres ...
+  setup + migrations apply cleanly (verbatim files) ... [0m[32mok[0m [0m[38;5;245m(151ms)[0m
+  upsert_chat_plan (service path) creates with the §21.2 defaults: active, 14-day TTL, resume_count 0 ... [0m[32mok[0m [0m[38;5;245m(20ms)[0m
+  upsert_chat_plan is service-path only: anon/authenticated cannot execute ... [0m[32mok[0m [0m[38;5;245m(10ms)[0m
+  the 12-step cap is enforced IN SQL (§21.5) ... [0m[32mok[0m [0m[38;5;245m(10ms)[0m
+  create supersedes: a second plan abandons the first VISIBLY (never deleted) ... [0m[32mok[0m [0m[38;5;245m(38ms)[0m
+  owner reads: get_chat_plan / list_chat_plans answer only the owner (Q20 p_user_id idiom) ... [0m[32mok[0m [0m[38;5;245m(29ms)[0m
+  update is owner-checked and thread-bound; resume_count increments only when asked ... [0m[32mok[0m [0m[38;5;245m(26ms)[0m
+  advance_chat_plan_step: awaiting_approval → awaiting_run requires p_run_id and stamps ref.run_id ... [0m[32mok[0m [0m[38;5;245m(71ms)[0m
+  expire_chat_plans / lazy list sweep: only active-and-past-TTL rows expire ... [0m[32mok[0m [0m[38;5;245m(28ms)[0m
+  realtime + telemetry: chat_plans joins supabase_realtime; the CHECK gains exactly the three plan kinds ... [0m[32mok[0m [0m[38;5;245m(42ms)[0m
+Phase H3 chat_plans migration against scratch Postgres ... [0m[32mok[0m [0m[38;5;245m(1s)[0m
+[0m[38;5;245mrunning 1 test from ./db_reports_test.ts[0m
+Phase 3 reports/file-workspace migration against scratch Postgres ...
+  setup + migrations apply cleanly (verbatim files) ... [0m[32mok[0m [0m[38;5;245m(168ms)[0m
+  the private 'workspace' bucket exists (public=false — no public bucket) ... [0m[32mok[0m [0m[38;5;245m(10ms)[0m
+  proposals CHECK swap: the ('report-builder','decision_report') pairing inserts; mismatches still reject ... [0m[32mok[0m [0m[38;5;245m(21ms)[0m
+  checkpoint 4 (§13.3): reports (not agent_apply) approves a decision_report; agent_apply users without reports cannot; other artifacts still demand agent_apply ... [0m[32mok[0m [0m[38;5;245m(58ms)[0m
+  create_user_file is service-path only (REVOKEd from anon/authenticated) ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+  user_files lifecycle: insert (service), owner-scoped list, org resolution from approved_users ... [0m[32mok[0m [0m[38;5;245m(63ms)[0m
+  retention law: list sweeps the expired unretained file — row AND storage object gone; the Kept file survives; file.expired emitted ... [0m[32mok[0m [0m[38;5;245m(45ms)[0m
+  set_file_retained: the 500 MB per-user cap fails typed IN SQL; file.kept emitted; other users unaffected ... [0m[32mok[0m [0m[38;5;245m(68ms)[0m
+  delete_user_file removes row AND storage object (owner only) ... [0m[32mok[0m [0m[38;5;245m(37ms)[0m
+  admin_org_file_usage: per-org count/bytes/expiring-7d roll up on user_files.org_id ... [0m[32mok[0m [0m[38;5;245m(29ms)[0m
+  ai_chat_events: the four §16.3 kinds pass the CHECK; unknown kinds still reject ... [0m[32mok[0m [0m[38;5;245m(48ms)[0m
+  capability seeds: reports follows ai_chat; agent_report_builder OFF for every role (Q19 discipline) ... [0m[32mok[0m [0m[38;5;245m(16ms)[0m
+Phase 3 reports/file-workspace migration against scratch Postgres ... [0m[32mok[0m [0m[38;5;245m(1s)[0m
+[0m[38;5;245mrunning 1 test from ./db_rpc_test.ts[0m
+Stage 0 + M0 migrations against scratch Postgres ...
+  setup + migrations apply cleanly (verbatim files) ... [0m[32mok[0m [0m[38;5;245m(120ms)[0m
+  create converges on idempotency key (duplicate ⇒ same id) ... [0m[32mok[0m [0m[38;5;245m(22ms)[0m
+  create rejects terminal statuses and foreign artifact pairings ... [0m[32mok[0m [0m[38;5;245m(30ms)[0m
+  review: checkpoint 4 — approve needs agent_apply, fail closed (§13.2) ... [0m[32mok[0m [0m[38;5;245m(64ms)[0m
+  review: proposed → approved → rejected; wrong-state actions raise ... [0m[32mok[0m [0m[38;5;245m(79ms)[0m
+  draft → proposed via action=propose ... [0m[32mok[0m [0m[38;5;245m(29ms)[0m
+  apply markers are service-role-only (single-writer, A11) ... [0m[32mok[0m [0m[38;5;245m(107ms)[0m
+  terminal idempotency key frees the unique live slot ... [0m[32mok[0m [0m[38;5;245m(10ms)[0m
+  supersede expires the old card and links the new one ... [0m[32mok[0m [0m[38;5;245m(37ms)[0m
+  expire: ttl and grounding drift (§4.2, §8 T8) ... [0m[32mok[0m [0m[38;5;245m(81ms)[0m
+  list_agent_proposals sweeps lazily and filters by status ... [0m[32mok[0m [0m[38;5;245m(21ms)[0m
+  per-user live-proposal cap (§8 T10, DEFAULT 20) ... [0m[32mok[0m [0m[38;5;245m(26ms)[0m
+  clients cannot write proposals directly (RPC-only posture) ... [0m[32mok[0m [0m[38;5;245m(9ms)[0m
+  record_proposal_viewed writes exactly one typed event ... [0m[32mok[0m [0m[38;5;245m(32ms)[0m
+  event_kind is a closed set; prune is service-role-only ... [0m[32mok[0m [0m[38;5;245m(45ms)[0m
+  capability rows + role defaults match the §13.1/§14.7 seeding ... [0m[32mok[0m [0m[38;5;245m(43ms)[0m
+  quick-thread id derivation: TS and SQL agree exactly ... [0m[32mok[0m [0m[38;5;245m(9ms)[0m
+  import_local_threads: lossless on the seeded fixture ... [0m[32mok[0m [0m[38;5;245m(53ms)[0m
+  import is idempotent by thread id (re-run imports nothing) ... [0m[32mok[0m [0m[38;5;245m(19ms)[0m
+  append_chat_message: dense seq, content cap, owner-only ... [0m[32mok[0m [0m[38;5;245m(32ms)[0m
+  thread flags: NULL keeps; move requires an owned folder ... [0m[32mok[0m [0m[38;5;245m(61ms)[0m
+  search_chat_messages: owner-scoped FTS (§14.5) ... [0m[32mok[0m [0m[38;5;245m(19ms)[0m
+  RLS: direct reads are owner-bounded; anon sees nothing ... [0m[32mok[0m [0m[38;5;245m(18ms)[0m
+  bulk_upsert_materials: full-row upsert — NULL clears; enum CHECK rejects ... [0m[32mok[0m [0m[38;5;245m(50ms)[0m
+  set_thread_summary: owner-checked write, 4000-char cap, delete resets ... [0m[32mok[0m [0m[38;5;245m(53ms)[0m
+  delete_chat_thread cascades messages (right to erase) ... [0m[32mok[0m [0m[38;5;245m(18ms)[0m
+Stage 0 + M0 migrations against scratch Postgres ... [0m[32mok[0m [0m[38;5;245m(1s)[0m
+[0m[38;5;245mrunning 1 test from ./db_stage23_test.ts[0m
+Stage 2/3 + M2 migrations against scratch Postgres ...
+  setup + migrations apply cleanly (verbatim files) ... [0m[32mok[0m [0m[38;5;245m(105ms)[0m
+  apply_policy_bundle merges defaults/overrides and snapshots with agent label + parent ... [0m[32mok[0m [0m[38;5;245m(74ms)[0m
+  apply_policy_bundle rejects a stale expected hash inside the transaction (pc-08) ... [0m[32mok[0m [0m[38;5;245m(21ms)[0m
+  apply_policy_bundle is ONE transaction — a snapshot failure rolls back the merges ... [0m[32mok[0m [0m[38;5;245m(48ms)[0m
+  record_model_validation supersedes the prior same-triple card ... [0m[32mok[0m [0m[38;5;245m(79ms)[0m
+  project_memory writes are RPC-only; guards hold; archive flips ... [0m[32mok[0m [0m[38;5;245m(108ms)[0m
+  project_memory capability seeds OFF for every role (§10 Q19 discipline) ... [0m[32mok[0m [0m[38;5;245m(17ms)[0m
+Stage 2/3 + M2 migrations against scratch Postgres ... [0m[32mok[0m [0m[38;5;245m(1s)[0m
+[0m[38;5;245mrunning 1 test from ./db_stage4_test.ts[0m
+Phase 1 modes/events migration against scratch Postgres ...
+  setup + migrations apply cleanly (verbatim files) ... [0m[32mok[0m [0m[38;5;245m(108ms)[0m
+  chat_threads.mode: default review; CHECK accepts ask/review, rejects 'auto' (§10 Q23) ... [0m[32mok[0m [0m[38;5;245m(30ms)[0m
+  upsert_chat_thread: one signature; p_mode round-trips; NULL keeps; invalid rejects ... [0m[32mok[0m [0m[38;5;245m(59ms)[0m
+  ai_chat_events: the four Phase-1 kinds pass; unknown kinds still reject ... [0m[32mok[0m [0m[38;5;245m(46ms)[0m
+  record_chat_ui_event: the narrow client funnel — two kinds only, payload capped ... [0m[32mok[0m [0m[38;5;245m(64ms)[0m
+  list_chat_threads carries mode (SETOF chat_threads — no client migration needed) ... [0m[32mok[0m [0m[38;5;245m(10ms)[0m
+Phase 1 modes/events migration against scratch Postgres ... [0m[32mok[0m [0m[38;5;245m(1s)[0m
+[0m[38;5;245mrunning 13 tests from ./disruption_sentinel_test.ts[0m
+Q28 mechanics: wire-agency rows (REGISTRY_VERSION 2), the authoritative rule, the event status function, the deterministic typer ... [0m[32mok[0m [0m[38;5;245m(754µs)[0m
+ra-01-unregistered-feed: unregistered AND non-sensing sources refused naming the sensing ids; no evidence row; no extraction call ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+ra-02-two-source-news: 2 independent news sources stay corroborated; the draft refusal NAMES the missing corroboration; no proposal ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+ra-03-authoritative-single: one insolvency-register entry verifies at 1; the alert files with matched supplier, linked B4 spec, pending impact, action chips ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+ra-04-three-source-deep-tier: 3 independent sources verify; exposure matched THROUGH the B8 map with its evidence cited; target = the tier-1 supplier; re-draft converges ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+ra-05-unmatched-event: a verified event with no project exposure — honest 'no exposure found' naming what was checked; no proposal ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ra-06-injection: planted instructions in feed text alter nothing (§8 T11 on the sensing path) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ra-07-apply-dispatch: approve ⇒ live re-verify ⇒ the linked spec dispatches through the ONE path with full stamps; impact stays pending; re-apply idempotent; stale corroboration blocks ...
+[0m[38;5;245m------- post-test output -------[0m
+wakeWorker: FLY_API_TOKEN/FLY_APP_NAME not set — scale-to-zero wake disabled (worker assumed always-on). Set both edge-function secrets to enable waking a stopped worker.
+[0m[38;5;245m----- post-test output end -----[0m
+ra-07-apply-dispatch: approve ⇒ live re-verify ⇒ the linked spec dispatches through the ONE path with full stamps; impact stays pending; re-apply idempotent; stale corroboration blocks ... [0m[32mok[0m [0m[38;5;245m(7ms)[0m
+ra-08-impact-from-run: impact stays pending until the run completes, then fills BYTE-EQUAL from run_replications with the run citation, exactly once ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+§13.3/§13.4: risk_alert demands the experiment rights row, and consumes the experiment run quota ... [0m[32mok[0m [0m[38;5;245m(834µs)[0m
+flags off ⇒ assess and draft refuse agent_disabled; nothing stored ... [0m[32mok[0m [0m[38;5;245m(524µs)[0m
+agent turn (bridge 1): scripted provider drives the real loop to a risk_alert proposal part; least-privilege surface ... [0m[32mok[0m [0m[38;5;245m(17ms)[0m
+sentinel prompt carries the verbatim §18.3 + AGENT_COMMON blocks; DEFAULT durations pinned ... [0m[32mok[0m [0m[38;5;245m(115µs)[0m
+[0m[38;5;245mrunning 17 tests from ./experiment_designer_test.ts[0m
+ed-01-simple-run: existing scenario + version → valid spec; reps = card recommendation; grounding = {policy_hash} ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+ed-01: replications clamp 1-200 (the dispatch.ts clamp restated at draft time) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ed-01: idempotency — the same substantive spec converges on one card (§4.5) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ed-02-new-scenario: outage ask → new_scenario with schedule ≤ 5 events; 6 events fail invalid_params ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ed-03-no-version: no saved policy version → dependency_missing naming save/snapshot; no proposal ... [0m[32mok[0m [0m[38;5;245m(887µs)[0m
+ed-04-doe-honest: the prompt carries the honest pre-Phase-C refusal; smuggled comparison params fail the schema gate ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ed-05-ack-forced-false: the model sets acknowledge_warnings:true → stored false ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+ed-06-brief-grounded: the grounding context carries the persisted run results; a brief drafts nothing ... [0m[32mok[0m [0m[38;5;245m(937µs)[0m
+ed-07-apply-gate-block: under-specified project — draft shows the block; apply fails gate_blocked, nothing dispatched ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+ed-08-apply-dispatch: run queued with the full provenance stamps; indistinguishable from a Lab dispatch; second approve returns the same run_id ...
+[0m[38;5;245m------- post-test output -------[0m
+wakeWorker: FLY_API_TOKEN/FLY_APP_NAME not set — scale-to-zero wake disabled (worker assumed always-on). Set both edge-function secrets to enable waking a stopped worker.
+[0m[38;5;245m----- post-test output end -----[0m
+ed-08-apply-dispatch: run queued with the full provenance stamps; indistinguishable from a Lab dispatch; second approve returns the same run_id ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+§13.3 rights row: experiment_spec apply demands simulation_lab + /simulation-lab — the Lab's own Run-button rights ... [0m[32mok[0m [0m[38;5;245m(96µs)[0m
+apply quota (§13.4): the 11th same-day apply returns quota_exceeded naming the remaining allowance ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+apply quota (§13.4): 3 concurrent queued/running agent runs block the 4th ... [0m[32mok[0m [0m[38;5;245m(740µs)[0m
+apply honors the reviewer's acknowledgment ONLY when the card displayed warn findings (§5.4) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+flags off ⇒ clean regression: draft refuses agent_disabled without AGENT_EXPERIMENT_TYPES=single ... [0m[32mok[0m [0m[38;5;245m(719µs)[0m
+agent turn (bridge 1): scripted provider drives the §5.4 loop to a proposal part; least-privilege surface ... [0m[32mok[0m [0m[38;5;245m(14ms)[0m
+prompt template carries the verbatim §5.4 + AGENT_COMMON blocks; schema constant is the §5.4 schema verbatim ... [0m[32mok[0m [0m[38;5;245m(242µs)[0m
+[0m[38;5;245mrunning 9 tests from ./golden_transcript_test.ts[0m
+golden transcript: gemini-noproject-text ... [0m[32mok[0m [0m[38;5;245m(14ms)[0m
+golden transcript: gemini-project-toolcall ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+golden transcript: gemini-safety-block ... [0m[32mok[0m [0m[38;5;245m(355µs)[0m
+golden transcript: gemini-empty-reply ... [0m[32mok[0m [0m[38;5;245m(334µs)[0m
+golden transcript: gpt5-noproject-text ... [0m[32mok[0m [0m[38;5;245m(669µs)[0m
+golden transcript: gpt5-project-toolcall ... [0m[32mok[0m [0m[38;5;245m(794µs)[0m
+golden transcript: deepseek-project-toolcall ... [0m[32mok[0m [0m[38;5;245m(819µs)[0m
+golden transcript: deepseek-history-clamp ... [0m[32mok[0m [0m[38;5;245m(920µs)[0m
+golden fixture covers every scenario (no orphans) ... [0m[32mok[0m [0m[38;5;245m(114µs)[0m
+[0m[38;5;245mrunning 24 tests from ./matrix_test.ts[0m
+§23.2: the capability vocabulary is the closed 16-id set, verbatim from the doc ... [0m[32mok[0m [0m[38;5;245m(427µs)[0m
+§23.2/§23.3: every capability has a plain-language name, and the client mirror speaks the identical vocabulary ... [0m[32mok[0m [0m[38;5;245m(180µs)[0m
+§22.5: the needs-a-stronger-model template is the doc's verbatim text ... [0m[32mok[0m [0m[38;5;245m(72µs)[0m
+§22.5: server instantiation — with and without a best passing model ... [0m[32mok[0m [0m[38;5;245m(146µs)[0m
+§23.4 mapping: agent capability always; loop ids only for the B4 closed-loop turn ... [0m[32mok[0m [0m[38;5;245m(278µs)[0m
+mx-01: a fresh failing row fires the VERBATIM template naming the best passing model; the agent turn never runs; telemetry recorded ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+mx-02-passing-proceeds: fail-open — the routed turn executes normally ... [0m[32mok[0m [0m[38;5;245m(13ms)[0m
+mx-03-stale-proceeds: fail-open — the routed turn executes normally ... [0m[32mok[0m [0m[38;5;245m(788µs)[0m
+mx-04-no-row-proceeds: fail-open — the routed turn executes normally ... [0m[32mok[0m [0m[38;5;245m(678µs)[0m
+mx-03 + §7.6 coherence: the SAME 8-day-old row that stopped gating renders as stale in the client summarizer (one mocked clock) ... [0m[32mok[0m [0m[38;5;245m(443µs)[0m
+§23.4: a matrix read failure fails OPEN (never blocks the turn) ...
+[0m[38;5;245m------- post-test output -------[0m
+[matrix] read failed, failing open: no stub rpc: get_model_capability_matrix
+[0m[38;5;245m----- post-test output end -----[0m
+§23.4: a matrix read failure fails OPEN (never blocks the turn) ... [0m[32mok[0m [0m[38;5;245m(469µs)[0m
+§7.6 boundary: exactly 7 days old is still fresh; a second past it is stale ... [0m[32mok[0m [0m[38;5;245m(91µs)[0m
+§23.4: when no OTHER model passes, the template omits the suggestion instead of inventing one ... [0m[32mok[0m [0m[38;5;245m(191µs)[0m
+matrixRowsFor: one row per §23.2 capability, none missing when everything measured ... [0m[32mok[0m [0m[38;5;245m(843µs)[0m
+matrixRowsFor: scores and passes derive from the measured metrics ... [0m[32mok[0m [0m[38;5;245m(274µs)[0m
+matrixRowsFor: each row SNAPSHOTS the target it was measured against — changing thresholds later never rewrites history (§23.2) ... [0m[32mok[0m [0m[38;5;245m(329µs)[0m
+matrixRowsFor: unmeasured capabilities yield NO row (absent beats invented; §23.4 fails open on absent rows) ... [0m[32mok[0m [0m[38;5;245m(232µs)[0m
+matrixRowsFor: an agent row can score 1.0 on fixtures yet fail on the §7.4 metrics — pass records the FULL gate ... [0m[32mok[0m [0m[38;5;245m(325µs)[0m
+writeMatrix: a --mock run is REFUSED — zero writes, ever (§7.4) ... [0m[32mok[0m [0m[38;5;245m(418µs)[0m
+writeMatrix: upserts on the (model_code, capability_id) unique key with the run correlator and an explicit measured_at ... [0m[32mok[0m [0m[38;5;245m(625µs)[0m
+writeMatrix: without service credentials the write is SKIPPED loudly, never invented ... [0m[32mok[0m [0m[38;5;245m(96µs)[0m
+summarizeModelMatrix: fresh passing rows say 'passes all checks'; failing rows name the gap in plain language ... [0m[32mok[0m [0m[38;5;245m(172µs)[0m
+summarizeModelMatrix: no rows ⇒ null (the picker renders exactly as pre-H4); >7d ⇒ the stale marker (clock-mocked) ... [0m[32mok[0m [0m[38;5;245m(93µs)[0m
+aggregateMatrixByModel: per-model counts + below-target names, deterministic order (aggregates only — §23.3 admin) ... [0m[32mok[0m [0m[38;5;245m(333µs)[0m
+[0m[38;5;245mrunning 9 tests from ./memory_m2_test.ts[0m
+mm-03: explicit 'remember …' is the ONLY verbal write path (consent-required) ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+mm-03: the registered read tool performs no writes ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+mm-04: a saved memory enters the B2 grounding context and is cited in the draft ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+mm-04: get_project_memory joins EVERY agent's tool surface when M2 is on (§14.4) ... [0m[32mok[0m [0m[38;5;245m(908µs)[0m
+mm-04 (flag off): the tool surface is byte-identical to M1 ... [0m[32mok[0m [0m[38;5;245m(220µs)[0m
+mm-05: grounding-hash drift renders the stale marker (fresh hashes do not) ... [0m[32mok[0m [0m[38;5;245m(726µs)[0m
+mm-06: archive erases the memory from every read surface ... [0m[32mok[0m [0m[38;5;245m(611µs)[0m
+mm-07: instruction-like memory content is DATA; the registry gate still holds ... [0m[32mok[0m [0m[38;5;245m(916µs)[0m
+memory kind classification is deterministic ... [0m[32mok[0m [0m[38;5;245m(156µs)[0m
+[0m[38;5;245mrunning 6 tests from ./memory_test.ts[0m
+mm-01: 24/8 thresholds and the summarized window ... [0m[32mok[0m [0m[38;5;245m(605µs)[0m
+mm-01: the §14.3 template is verbatim and carries the transcript facts ... [0m[32mok[0m [0m[38;5;245m(209µs)[0m
+mm-01: refreshThreadSummary reads the window, calls the model once, writes upto max−8 ... [0m[32mok[0m [0m[38;5;245m(14ms)[0m
+mm-01: refresh is a no-op below the threshold and for foreign users ... [0m[32mok[0m [0m[38;5;245m(305µs)[0m
+mm-01/mm-02: persona prompts carry the summary block; absence leaves the prompt byte-identical ... [0m[32mok[0m [0m[38;5;245m(373µs)[0m
+mm-02: the summary is never present in an agent turn's context ... [0m[32mok[0m [0m[38;5;245m(950µs)[0m
+[0m[38;5;245mrunning 5 tests from ./modes_test.ts[0m
+flag: CHAT_MODES_ENABLED default off ⇒ every thread behaves as review ... [0m[32mok[0m [0m[38;5;245m(659µs)[0m
+mode resolution: server row wins over the body; unsynced threads carry the body mode; malformed ⇒ review ... [0m[32mok[0m [0m[38;5;245m(911µs)[0m
+checkpoint 2: ask subtracts every artifact route except the §15 allowlist; review is byte-identical passthrough ... [0m[32mok[0m [0m[38;5;245m(409µs)[0m
+the mode notice: server-authored text + the one-click Switch-to-Review chip part ... [0m[32mok[0m [0m[38;5;245m(153µs)[0m
+ask-mode golden fixtures: classification detects the intent, the mode blocks it, advisory asks pass ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[0m[38;5;245mrunning 14 tests from ./network_cartographer_test.ts[0m
+source registry: free-tier rows only, assertRegistered guards every role ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+nc-01-unregistered-source: refused by the registry guard; no evidence row; no extraction call ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+nc-02-provisional-not-integrated: 1 source ⇒ stored + flagged, draft refused, no proposal ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+nc-03-two-source-corroborated: 2 sources stay corroborated (not integrated); re-ingest converges ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+nc-04-three-source-verified: verified triples draft, duplicate converges, apply creates supplier + lane; provisional stays pending ... [0m[32mok[0m [0m[38;5;245m(6ms)[0m
+nc-05-alias-lei: an alias mention resolves to ONE LEI-anchored entity; one supplier row ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+nc-06-injection: a document with planted instructions alters nothing (mm-07 generalized, §8 T11) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+nc-07-fabricated-extraction: mentions/quotes not in the document are dropped and counted ... [0m[32mok[0m [0m[38;5;245m(748µs)[0m
+nc-08-scope-and-mismatch: foreign material ⇒ project_scope_violation; mismatched citation ⇒ not_grounded; stale evidence ⇒ stale_values at apply ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+nc-09-live-fetch-gates: flag off ⇒ paste only; screening allowlist enforced; registered domain ingests via stubbed fetch ... [0m[32mok[0m [0m[38;5;245m(14ms)[0m
+nc-10-corpus-metrics: the annotated corpus + scorer + committed baseline floor (Wichmann discipline) ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+disambiguation: ambiguous mention yields candidates; an out-of-list answer resolves to null, never a guess ... [0m[32mok[0m [0m[38;5;245m(306µs)[0m
+agent turn (bridge 1): scripted provider drives the real loop to a network_map_diff proposal part ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+cartographer prompt templates carry the verbatim §18.2 + AGENT_COMMON blocks ... [0m[32mok[0m [0m[38;5;245m(122µs)[0m
+[0m[38;5;245mrunning 7 tests from ./network_cartographer_v2_test.ts[0m
+nc-11-flag-off-product-level: v2 ops refused with the v1 message; tool refused naming the flag; stored v2 payloads do not apply ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+nc-12-rate-methods: the three registered r_{p,m} methods recompute with {value, low, high, basis}; mismatch and missing interval are refused ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+nc-13-product-decomposition: one proposal carries supplier + link + BOM line (estimated rate, server-stamped sources) + structural outbound lane; provisional lines never enter ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+nc-14-mass-balance-violation: the validator refuses BEFORE drafting, naming the imbalance; the rate is never silently adjusted ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+nc-15-backtest-holdout: observed BOM rates score each prior method per-row; coverage < 0.5 demotes; a demoted method cannot draft; the surviving one can ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+nc-16-fresh-project-gate-green: map→estimate→apply seeds bom + inbound + outbound; the G16 contract self-verifies — gate green, org-visible, dataset complete, done ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+rate-method registry: three methods, exact-version resolution, interval law on every estimate ... [0m[32mok[0m [0m[38;5;245m(131µs)[0m
+[0m[38;5;245mrunning 22 tests from ./plan_integrity_test.ts[0m
+PLAN_TOOL_ENABLED requires CHAT_STORE_ENABLED — alone it refuses to register (Q34) ... [0m[32mok[0m [0m[38;5;245m(621µs)[0m
+flags off ⇒ the handler refuses and the B4 surface never declares update_task_plan ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+flags on ⇒ update_task_plan LEADS the closed-loop set (§20.4 step 2 orders it before any other tool) ... [0m[32mok[0m [0m[38;5;245m(201µs)[0m
+Q34 degradation: an unsynced thread files NO plan — dependency_missing, single-turn shapes remain ... [0m[32mok[0m [0m[38;5;245m(333µs)[0m
+§21.1 schema constant is verbatim (fixtures pin the contract) and the declaration matches ... [0m[32mok[0m [0m[38;5;245m(131µs)[0m
+rule 5: the plan envelope — {kind:'plan', data:{plan_id,title,status,steps}, meta row_count 1} ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+pi-01: the sweep fails a dangling 'active' step (note 'interrupted: <cause>') and recomputes the plan — never vanished ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+pi-01 (scripted crash): a real B4 turn files the plan, the provider 500s through the §20.5 retry, the sweep closes honestly ...
+[0m[38;5;245m------- post-test output -------[0m
+[provider-retry] gemini returned 500 — retrying once in 1156 ms (§20.5; the wait counts against the wall budget)
+[provider-retry] gemini still failing (500) after 1 retry — surfacing the §20.5 typed error {"error":"boom"}
+[agent:experiment-designer] turn failed: the model provider is rate-limiting — try again shortly or switch models
+[0m[38;5;245m----- post-test output end -----[0m
+pi-01 (scripted crash): a real B4 turn files the plan, the provider 500s through the §20.5 retry, the sweep closes honestly ... [0m[32mok[0m [0m[38;5;245m(1s)[0m
+pi-02: an update dropping a step id ⇒ invalid_params naming append-only; the stored row never loses a step; appending works ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+pi-03: two 'active' steps ⇒ invalid_params naming rule 3; nothing written ... [0m[32mok[0m [0m[38;5;245m(353µs)[0m
+pi-04: awaiting_approval without proposal_id (and awaiting_run without run_id) ⇒ invalid_params naming rule 4 ... [0m[32mok[0m [0m[38;5;245m(510µs)[0m
+rule 3 transitions: a terminal step cannot move; pending cannot jump to done ... [0m[32mok[0m [0m[38;5;245m(474µs)[0m
+pi-05: a FRESH stub client + resume_plan_id resumes the same row; running run ⇒ the §21.2 templated progress reply, ZERO fetches ... [0m[32mok[0m [0m[38;5;245m(975µs)[0m
+owner check: another user's resume is refused typed — a plan is never a pre-authorization (§13.6 rule 5) ... [0m[32mok[0m [0m[38;5;245m(335µs)[0m
+pi-06: a resume under a different model_code advances the SAME row and records the new model (D3: data, not context) ... [0m[32mok[0m [0m[38;5;245m(623µs)[0m
+pi-07: the 13th step and the 11th resume are rejected with the cap NAMED (§21.5 plan budgets) ... [0m[32mok[0m [0m[38;5;245m(713µs)[0m
+pi-08: a second create abandons the first plan VISIBLY (never deleted, steps intact) — one live plan per thread ... [0m[32mok[0m [0m[38;5;245m(549µs)[0m
+run failed ⇒ the step fails with the run's error_message; honest reply; NO retry without a fresh ask ... [0m[32mok[0m [0m[38;5;245m(354µs)[0m
+awaiting_approval resume: pending card ⇒ progress; rejected card ⇒ step failed 'rejected'; applied card ⇒ server-side advance to awaiting_run ... [0m[32mok[0m [0m[38;5;245m(629µs)[0m
+revoked capability at resume: the step is marked failed typed — the checkpoint outranks the plan (§13.6 rule 5) ... [0m[32mok[0m [0m[38;5;245m(272µs)[0m
+the §20.4 PLAN block serializes the active row and joins buildExperimentContext only when the flags are on ... [0m[32mok[0m [0m[38;5;245m(682µs)[0m
+recomputePlanStatus: the §21.3 state machine table ... [0m[32mok[0m [0m[38;5;245m(148µs)[0m
+[0m[38;5;245mrunning 14 tests from ./policy_configurator_test.ts[0m
+pc-01-simple-param: the smallest diff — one inventory override on MAT-4 ... [0m[32mok[0m [0m[38;5;245m(7ms)[0m
+pc-02-family-default: base stock everywhere = one defaults.inventory patch ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+pc-03-unknown-field: out-of-schema field ⇒ invalid_params, no proposal ... [0m[32mok[0m [0m[38;5;245m(777µs)[0m
+pc-04-planned-policy: P-P.2 lot sizing refused naming the milestone ... [0m[32mok[0m [0m[38;5;245m(663µs)[0m
+pc-05-data-demand: activation surfaces newly-required data via the recompiled manifest ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+pc-06-run-ready: primary-source selections apply with a zero-block post-grade ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+pc-07-no-kpi-claims: the §5.2 template forbids KPI predictions; levers still draft ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+pc-08-stale-hash: out-of-band edit between approve and apply fails stale_values ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+pc-09-snapshot-lineage: the applied snapshot carries the agent label and parent ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+get_policy_catalog: honest catalog — planned entries carry their milestone ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+get_policy_config: defaults + overrides + hash + latest version ... [0m[32mok[0m [0m[38;5;245m(713µs)[0m
+agent turn (bridge 1): scripted provider drives the §5.2 loop to a proposal part ... [0m[32mok[0m [0m[38;5;245m(14ms)[0m
+configurator prompt template carries the verbatim §5.2 + AGENT_COMMON blocks ... [0m[32mok[0m [0m[38;5;245m(116µs)[0m
+scope gate: an override targeting a foreign entity ⇒ project_scope_violation ... [0m[32mok[0m [0m[38;5;245m(643µs)[0m
+[0m[38;5;245mrunning 6 tests from ./provider_retry_test.ts[0m
+§20.5 contract constants: one retry, 1 s base, ±25% jitter ... [0m[32mok[0m [0m[38;5;245m(558µs)[0m
+backoff schedule: 1 s then 2 s, jittered ±25% (injectable rand) ... [0m[32mok[0m [0m[38;5;245m(379µs)[0m
+a 429 is retried ONCE and the retried call succeeds (the wait counts against wall time — budget counters land in H3) ...
+[0m[38;5;245m------- post-test output -------[0m
+[provider-retry] gemini returned 429 — retrying once in 780 ms (§20.5; the wait counts against the wall budget)
+[0m[38;5;245m----- post-test output end -----[0m
+a 429 is retried ONCE and the retried call succeeds (the wait counts against wall time — budget counters land in H3) ... [0m[32mok[0m [0m[38;5;245m(797ms)[0m
+a second 429/5xx failure surfaces the §20.5 typed error — no silent model substitution, no queueing ...
+[0m[38;5;245m------- post-test output -------[0m
+[provider-retry] gemini returned 429 — retrying once in 782 ms (§20.5; the wait counts against the wall budget)
+[provider-retry] gemini still failing (503) after 1 retry — surfacing the §20.5 typed error {}
+[0m[38;5;245m----- post-test output end -----[0m
+a second 429/5xx failure surfaces the §20.5 typed error — no silent model substitution, no queueing ... [0m[32mok[0m [0m[38;5;245m(784ms)[0m
+non-retryable statuses keep the pre-H2 error path byte-identically (a 400 is never retried) ...
+[0m[38;5;245m------- post-test output -------[0m
+Gemini error 400 {"error":{"message":"bad request"}}
+[0m[38;5;245m----- post-test output end -----[0m
+non-retryable statuses keep the pre-H2 error path byte-identically (a 400 is never retried) ... [0m[32mok[0m [0m[38;5;245m(841µs)[0m
+the OpenAI-compatible path shares the same retry contract ...
+[0m[38;5;245m------- post-test output -------[0m
+[provider-retry] deepseek returned 500 — retrying once in 768 ms (§20.5; the wait counts against the wall budget)
+[0m[38;5;245m----- post-test output end -----[0m
+the OpenAI-compatible path shares the same retry contract ... [0m[32mok[0m [0m[38;5;245m(770ms)[0m
+[0m[38;5;245mrunning 13 tests from ./report_builder_test.ts[0m
+rb-01: completed run + spreadsheet ask → run-results spec; sections carry ONLY source refs; grounding {}; idempotency ... [0m[32mok[0m [0m[38;5;245m(4ms)[0m
+rb-02: chained disruption-brief — kpi_grid + comparison + risk table + cited narrative citing the new run_id ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+rb-03: citation coverage — uncited narrative refuses not_grounded; a narrative citing an unknown run refuses not_grounded ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+rb-04: refusal-when-no-evidence-run NAMES the missing run; Review offers the experiment path, Ask offers the mode switch ... [0m[32mok[0m [0m[38;5;245m(941µs)[0m
+rb-05: closed template/format vocabulary — unknown template, unknown format, unknown param, missing mandatory narrative ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+rb-06: render determinism — same spec + same data ⇒ identical XLSX cell values; PDF carries the 'AI-drafted commentary' heading ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+rb-07: apply — render under the §16.2 path law, user_files rows, applied_result {file_ids, paths}; stale run fails typed; flag off refuses ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+rb-08: ask mode — report-builder is the ONE routable agent; the §13.3 rights row; the 20/day render quota ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+flags off ⇒ clean regression: no FILE_WORKSPACE_ENABLED refuses agent_disabled; no roster entry refuses agent_disabled ... [0m[32mok[0m [0m[38;5;245m(457µs)[0m
+agent turn (bridge 1): scripted provider drives the §16.1 loop to a proposal part; least-privilege surface ... [0m[32mok[0m [0m[38;5;245m(14ms)[0m
+prompt template carries the verbatim §16.1 + AGENT_COMMON blocks; the template registry is the five v1 templates; path law helpers ... [0m[32mok[0m [0m[38;5;245m(244µs)[0m
+router roster: report-builder sits LAST in precedence (reports consume what every agent produces) with the report intents ... [0m[32mok[0m [0m[38;5;245m(76µs)[0m
+renderDecisionReport (module): upload failure cleans up already-uploaded objects and fails typed ... [0m[32mok[0m [0m[38;5;245m(2ms)[0m
+[0m[38;5;245mrunning 4 tests from ./router_structured_test.ts[0m
+makeClassifier: Gemini uses responseSchema JSON mode at temperature 0 / 300 tokens ... [0m[32mok[0m [0m[38;5;245m(22ms)[0m
+makeClassifier: OpenAI uses strict json_schema; DeepSeek uses json_object ... [0m[32mok[0m [0m[38;5;245m(625µs)[0m
+makeClassifier returns null without a provider key ⇒ classifier_unavailable fallback ... [0m[32mok[0m [0m[38;5;245m(292µs)[0m
+the low-confidence offer chip and the 'do it' re-route (§6.2 step 3) ... [0m[32mok[0m [0m[38;5;245m(412µs)[0m
+[0m[38;5;245mrunning 10 tests from ./router_test.ts[0m
+flag off ⇒ pure passthrough (no classifier call, advisory) ... [0m[32mok[0m [0m[38;5;245m(761µs)[0m
+short-circuits: empty enabledAgents, then no project (§6.2 step 1) ... [0m[32mok[0m [0m[38;5;245m(209µs)[0m
+Stage 0: flag on but no classifier wired ⇒ advisory ... [0m[32mok[0m [0m[38;5;245m(103µs)[0m
+happy path: valid classification routes to the agent ... [0m[32mok[0m [0m[38;5;245m(361µs)[0m
+fallbacks: parse failure / classifier error / low confidence / disabled agent (§6.2 step 3) ... [0m[32mok[0m [0m[38;5;245m(774µs)[0m
+strict parse: closed vocabularies, array tie-break, fenced JSON ... [0m[32mok[0m [0m[38;5;245m(457µs)[0m
+classification prompt lists enabled agents in dependency order (§6.3) ... [0m[32mok[0m [0m[38;5;245m(159µs)[0m
+classifyIntent honors the §6.1 contract shape ... [0m[32mok[0m [0m[38;5;245m(8ms)[0m
+deployment kill switch parses AGENT_ENABLED_IDS and drops unknowns ... [0m[32mok[0m [0m[38;5;245m(218µs)[0m
+roster: every precedence slug has a mission and intents ... [0m[32mok[0m [0m[38;5;245m(142µs)[0m
+[0m[38;5;245mrunning 5 tests from ./router_v2_test.ts[0m
+flag off ⇒ the v1 classifier prompt byte-identically; flag on adds EXACTLY the §6.6 verbatim block ... [0m[32mok[0m [0m[38;5;245m(795µs)[0m
+provider schemas: flag off ⇒ v1 shapes byte-identically; flag on gains the two boolean properties (OpenAI strict lists them required) ... [0m[32mok[0m [0m[38;5;245m(311µs)[0m
+the live classifier request carries the v2 schema only when the flag is on ... [0m[32mok[0m [0m[38;5;245m(21ms)[0m
+parse: booleans present ⇒ carried; absent/malformed ⇒ both false (DeepSeek json_object tolerance) ... [0m[32mok[0m [0m[38;5;245m(333µs)[0m
+the deterministic fallbacks carry the signals: low_confidence and agent_not_enabled demote the route but keep the facts ... [0m[32mok[0m [0m[38;5;245m(840µs)[0m
+[0m[38;5;245mrunning 5 tests from ./routing_golden_test.ts[0m
+class quotas meet the §6.5 seed requirements ... [0m[32mok[0m [0m[38;5;245m(625µs)[0m
+every row is well-formed against the router vocabularies ... [0m[32mok[0m [0m[38;5;245m(953µs)[0m
+§6.6 v2-signal labels are well-formed and sufficiently seeded (H2) ... [0m[32mok[0m [0m[38;5;245m(444µs)[0m
+single-agent classes stay label-consistent ... [0m[32mok[0m [0m[38;5;245m(317µs)[0m
+ask-mode rows are well-formed (§15: post-mode route is advisory — except the §16.1 allowlist agent; the subtracted intent is a real label) ... [0m[32mok[0m [0m[38;5;245m(320µs)[0m
+[0m[38;5;245mrunning 7 tests from ./suggestions_test.ts[0m
+sug-01-gap-driven: data gaps rank first; ≤4; every entry carries the §17.3 shape ... [0m[32mok[0m [0m[38;5;245m(5ms)[0m
+sug-02-validation-driven: completed run + no active card ⇒ validation leads; experiment follows ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+sug-03-no-data-project: an empty project produces no invented guidance (and no crash) ... [0m[32mok[0m [0m[38;5;245m(502µs)[0m
+sug-04-capability-filtered: never suggest what the caller cannot do ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+sug-05-ask-mode: Review-only actions in an Ask thread say 'switch to Review' ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+memory-hygiene rule: an applied proposal + memory on ⇒ the save-decision chip, last ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+flag: SUGGESTED_ACTIONS_ENABLED default off (§9 conventions) ... [0m[32mok[0m [0m[38;5;245m(155µs)[0m
+[0m[38;5;245mrunning 4 tests from ./telemetry_test.ts[0m
+disabled by default: no insert attempted, emit resolves ... [0m[32mok[0m [0m[38;5;245m(767µs)[0m
+enabled: inserts the §7.1 row shape (ids only, payload jsonb) ... [0m[32mok[0m [0m[38;5;245m(310µs)[0m
+never throws: rejecting client and throwing client are both swallowed ...
+[0m[38;5;245m------- post-test output -------[0m
+[telemetry] emit failed: db down
+[telemetry] emit failed: catastrophic
+[telemetry] insert failed: constraint
+[0m[38;5;245m----- post-test output end -----[0m
+never throws: rejecting client and throwing client are both swallowed ... [0m[32mok[0m [0m[38;5;245m(927µs)[0m
+args hashing: canonical (key-order-insensitive) sha256 (§7.5) ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+[0m[38;5;245mrunning 11 tests from ./vv_analyst_test.ts[0m
+vv-01-interpret-pass: the grounding context carries the computed stats; no proposal ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+vv-02-adopt-pass: computed equals the persisted stats verbatim; validated/statistical survives ... [0m[32mok[0m [0m[38;5;245m(3ms)[0m
+vv-03-adopt-fail-tests: a failing persisted test forces the honest verdict ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+vv-04-no-run: no completed evidence run ⇒ dependency_missing, no proposal ... [0m[32mok[0m [0m[38;5;245m(610µs)[0m
+vv-05-gate-skipped: the card's findings flag the gate-skipped evidence run ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+vv-06-stale-badge: drifted hashes derive a stale badge; nothing is drafted ... [0m[32mok[0m [0m[38;5;245m(810µs)[0m
+vv-07-adequacy-quote: the recommendation quotes the MAX per-KPI n* ... [0m[32mok[0m [0m[38;5;245m(781µs)[0m
+vv-08-apply: record_model_validation supersedes the prior same-triple card ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+apply: a run that lost its provenance stamps fails gate_blocked ... [0m[32mok[0m [0m[38;5;245m(1ms)[0m
+agent turn (bridge 1): scripted provider drives the §5.3 loop to a proposal part ... [0m[32mok[0m [0m[38;5;245m(14ms)[0m
+vv prompt template carries the verbatim §5.3 + AGENT_COMMON blocks ... [0m[32mok[0m [0m[38;5;245m(126µs)[0m
+
+[0m[32mok[0m | 291 passed (93 steps) | 0 failed [0m[38;5;245m(19s)[0m
+
+──────────────────────────────────────
+
+── gpt-5 (live) ──
+routing: FAIL — data-steward P=0.800 R=0.625; policy-configurator P=0.692 R=0.794; vv-analyst P=0.909 R=0.303; experiment-designer P=0.900 R=0.300; report-builder P=0.871 R=1.000; advisory-false-artifact=0.087; mixed-recall=0.846; needs-run-recall=0.688; cache-checkable-precision=0.222
+  ✗ data-steward precision 0.800 < 0.9
+  ✗ data-steward recall 0.625 < 0.85
+  ✗ policy-configurator precision 0.692 < 0.9
+  ✗ policy-configurator recall 0.794 < 0.85
+  ✗ vv-analyst recall 0.303 < 0.85
+  ✗ experiment-designer recall 0.300 < 0.85
+  ✗ report-builder precision 0.871 < 0.9
+  ✗ advisory false-artifact rate 0.087 > 0.03
+  ✗ needs-run recall 0.688 < 0.8
+  ✗ cache-checkable precision 0.222 < 0.85
+data-steward: FAIL — schema-validity=0.833 gate-violation-attempts=0.167 fixtures=8/8
+  ✗ schema validity 0.833 < 0.95
+  ✗ gate-violation attempts 0.167 > 0.1
+policy-configurator: FAIL — schema-validity=0.750 gate-violation-attempts=0.250 fixtures=5/7
+  ✗ schema validity 0.750 < 0.95
+  ✗ gate-violation attempts 0.250 > 0.1
+  ✗ pc-04-planned-policy: expected a refusal (dependency_missing), got 1 proposal(s)
+  ✗ pc-06-run-ready: expected 2 overrides, got 0
+vv-analyst: PASS — schema-validity=1.000 gate-violation-attempts=0.000 fixtures=5/5
+experiment-designer: FAIL — schema-validity=1.000 gate-violation-attempts=0.000 fixtures=4/6
+  ✗ ed-02-new-scenario: expected new scenario "S1 outage — 6 weeks"
+  ✗ ed-04-doe-honest: expected a refusal (invalid_params), got 1 proposal(s)
+report-builder: FAIL — schema-validity=1.000 gate-violation-attempts=0.000 fixtures=3/5
+  ✗ rb-01-run-results: expected 1 sections, got 2
+  ✗ rb-03-citation-required: expected a refusal (not_grounded), got 1 proposal(s)
+coverage: FAIL — fabrications=0 (target 0) battery=8/9 judged-faithful=0.875 (informational)
+  ✗ cov-04-disambiguation: reply failed assertion matches more than one entity — which did you mean\?
+loop: FAIL — cache-hit=0.667 run-needed=1.000 plan-integrity=0.000
+  ✗ loop:cache_hit cl-08-engine-version-caveat: reply must carry the engine-version caveat "engine version"
+  ✗ plan:integrity cl-04-approve-resume-cite: 2 update_task_plan write(s) rejected — an attempted §21.1 rule violation
+
+report written to /tmp/model-eval-report.json
+
+overall: FAIL
+──────────────────────────────────────
+── last 12 applied migrations
+[
+ {
+  "version": "20260905000001",
+  "name": "grant_ga_agent_capabilities"
+ },
+ {
+  "version": "20260829120000",
+  "name": "erp_connector_phase1_2"
+ },
+ {
+  "version": "20260729000001",
+  "name": "disruption_sentinel"
+ },
+ {
+  "version": "20260728000001",
+  "name": "cartographer_product_level"
+ },
+ {
+  "version": "20260727000001",
+  "name": "network_cartographer"
+ },
+ {
+  "version": "20260726193000",
+  "name": "cost_estimator"
+ },
+ {
+  "version": "20260726000002",
+  "name": "model_capability_matrix"
+ },
+ {
+  "version": "20260726000001",
+  "name": "chat_plans"
+ },
+ {
+  "version": "20260724000001",
+  "name": "verifier_event"
+ },
+ {
+  "version": "20260723000001",
+  "name": "reports_and_file_workspace"
+ },
+ {
+  "version": "20260722000001",
+  "name": "chat_bulk_thread_actions"
+ },
+ {
+  "version": "20260721000001",
+  "name": "chat_modes_and_ui_events"
+ }
+]
+── role grants for the GA capability keys (§13.1)
+[
+ {
+  "capability_key": "agent_apply",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_apply",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_apply",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_apply",
+  "role": "user",
+  "allowed": false
+ },
+ {
+  "capability_key": "agent_data_steward",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_data_steward",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_data_steward",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_data_steward",
+  "role": "user",
+  "allowed": false
+ },
+ {
+  "capability_key": "agent_experiment_designer",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_experiment_designer",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_experiment_designer",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_experiment_designer",
+  "role": "user",
+  "allowed": false
+ },
+ {
+  "capability_key": "agent_explainer",
+  "role": "admin",
+  "allowed": false
+ },
+ {
+  "capability_key": "agent_explainer",
+  "role": "modeler",
+  "allowed": false
+ },
+ {
+  "capability_key": "agent_explainer",
+  "role": "super_admin",
+  "allowed": false
+ },
+ {
+  "capability_key": "agent_explainer",
+  "role": "user",
+  "allowed": false
+ },
+ {
+  "capability_key": "agent_policy_configurator",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_policy_configurator",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_policy_configurator",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_policy_configurator",
+  "role": "user",
+  "allowed": false
+ },
+ {
+  "capability_key": "agent_proposals",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_proposals",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_proposals",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_proposals",
+  "role": "user",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_report_builder",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_report_builder",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_report_builder",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_report_builder",
+  "role": "user",
+  "allowed": false
+ },
+ {
+  "capability_key": "agent_vv_analyst",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_vv_analyst",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_vv_analyst",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "agent_vv_analyst",
+  "role": "user",
+  "allowed": false
+ },
+ {
+  "capability_key": "ai_chat",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "ai_chat",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "ai_chat",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "ai_chat",
+  "role": "user",
+  "allowed": true
+ },
+ {
+  "capability_key": "chat_history_sync",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "chat_history_sync",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "chat_history_sync",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "chat_history_sync",
+  "role": "user",
+  "allowed": true
+ },
+ {
+  "capability_key": "project_memory",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "project_memory",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "project_memory",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "project_memory",
+  "role": "user",
+  "allowed": true
+ },
+ {
+  "capability_key": "reports",
+  "role": "admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "reports",
+  "role": "modeler",
+  "allowed": true
+ },
+ {
+  "capability_key": "reports",
+  "role": "super_admin",
+  "allowed": true
+ },
+ {
+  "capability_key": "reports",
+  "role": "user",
+  "allowed": true
+ }
+]
+── supabase secrets list
+
+  
+   NAME                      | DIGEST                                                           
+  ---------------------------|------------------------------------------------------------------
+   AGENT_ENABLED_IDS         | b136dcf911c8b4598135f2a41e05498b761bdf389e4b5581ea4f003a503670ab 
+   AGENT_EXPERIMENT_TYPES    | 947f187506f7629c81c81879a2cb2256455038e4ac770091d897fa0a8b945e3b 
+   AGENT_ROUTER_ENABLED      | b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b 
+   AGENT_TELEMETRY_ENABLED   | b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b 
+   CHAT_MODES_ENABLED        | b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b 
+   CHAT_STORE_ENABLED        | b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b 
+   CHAT_SUMMARY_ENABLED      | b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b 
+   COVERAGE_TOOLS_ENABLED    | b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b 
+   DEEPSEEK_API_KEY          | a72181f73742cd4f7f6783d4c6c4734a5ed7c76e0d7f78a48720838f6fd50bc2 
+   FILE_WORKSPACE_ENABLED    | b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b 
+   FLY_API_TOKEN             | d6f8994eff97c3a0d520a51041093e66d67ac90131439d541dbdb0627a3c6555 
+   FLY_APP_NAME              | 458621966bf7f7df42d692f4f76a21b67d03cc2b9dfd339acd2788a3f623e4ff 
+   GEMINI_API_KEY            | c20cebfb94ea011699390e62473585d193854fa6371cbe142c68316ee97efc14 
+   MAPBOX_PUBLIC_TOKEN       | 5d01932f8f2c9393acd326ecbb0f2022b06b42dc15da2573e8f625932ce2b5db 
+   ML_API_KEY                | 3b1bf7664017f6a5b520d96c753424810b29b8978117743a9e40beb8605e44a0 
+   ML_API_URL                | 299849fc607a5d3f977f89d8a5c089c7d7d1be38852eeb1b63a2a3bd926b7476 
+   OPENAI_API_KEY            | 9e04f608a5b1efa2247dacc5e7c8d3912d730ffa297a1538a7bd25f9454507bd 
+   OpenAI                    | 705ff9d3dad1067dae6c4b7806c30a0cbad4598d5e887fa11bd2f6f5e8f9e6f3 
+   PROJECT_MEMORY_ENABLED    | b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b 
+   SUGGESTED_ACTIONS_ENABLED | b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b 
+   SUPABASE_ANON_KEY         | 74c1c19a2399a902cafc97ad8dd1b23ba470d4f134d37cea03a3e4b080e2d4b0 
+   SUPABASE_DB_URL           | 414f8ce91599ab60e4641b22ea17f2d766fd96fd5939bdb0e43dde09af83eeb1 
+   SUPABASE_JWKS             | 9638d11914735d0072002dd4d67c734a94ee7a0cd845e6dcbc984ee7581860a7 
+   SUPABASE_PUBLISHABLE_KEYS | bd33657a7fff73de00dd5c6965862e2d7dd6776c9c58da07ca8598cc12f4f9ab 
+   SUPABASE_SECRET_KEYS      | 0208019b3383273b4e723b6cd4bf984bd635ab054368b668287a9ff1fb6d45e4 
+   SUPABASE_SERVICE_ROLE_KEY | fad4798c5ac41a4027e8d42dd8245364b41d19270d96b11daf4c777fb34ed033 
+   SUPABASE_URL              | 3ce0f2ac7bc21029cc651f39484d7e1a606852e4e8ad5c285e1545a2ef94c3ef 
+   UPSTASH_REDIS_REST_TOKEN  | f2e52a9e420caa58e3cb589766c8fc614592dffd064555e5e4cb09c1c012b2c4 
+   UPSTASH_REDIS_REST_URL    | 3f4c8fed1733585f6802dbcfbd4c67e54e36f4911463e96886c40c3137517167 
+   VERIFIER_ENABLED          | b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b 
+
+── project-ai-health (provider registry probes)
+{"functionUp":true,"healthy":true,"providers":{"gemini":{"configured":true,"reachable":true,"models":[{"id":"gemini-2.5-flash","label":"Gemini 2.5 Flash","apiModel":"gemini-2.5-flash"}]},"openai":{"configured":true,"reachable":true,"models":[{"id":"gpt-5","label":"GPT-5","apiModel":"gpt-5-2025-08-07"},{"id":"gpt-5-mini","label":"GPT-5 mini","apiModel":"gpt-5-mini-2025-08-07"}]},"deepseek":{"configured":true,"reachable":true,"models":[{"id":"deepseek-chat","label":"DeepSeek","apiModel":"deepseek-chat"}]}},"timestamp":"2026-09-14T09:14:52.848Z"}
+── suggested actions (mode:suggest, §17.3) project=0a7040e1-a3b8-4083-a160-728782fdfb67 user=055b81ec-c200-4b9e-b850-9a43b25892f7
+{"error":"You don't have access to this project.","type":"FORBIDDEN"}
+── report-render download probe (expect NOT_FOUND when FILE_WORKSPACE_ENABLED; SERVICE_UNAVAILABLE when off; HTTP 404 when undeployed)
+{"error":"File not found.","type":"NOT_FOUND"}
+HTTP 200
