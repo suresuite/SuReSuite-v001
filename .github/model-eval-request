@@ -7,7 +7,7 @@
 #   agents=<comma list>       which agents to score (§7.4: every enabled agent)
 #   models=<comma list>       which models to score (empty = gpt-5)
 #   mode=full|state-only      state-only skips the two eval tiers
-run=15 §25 Q3 second sample; pc-06 scored by target rows, gpt-5 only (2026-11-07)
+run=16 §25 Q3 pc-06 narrow fix (gate 3b + run-readiness rows) + ed-04 rule; gpt-5 only (2026-11-07)
 agents=data-steward,policy-configurator,vv-analyst,experiment-designer,report-builder
 models=gpt-5
 mode=full
