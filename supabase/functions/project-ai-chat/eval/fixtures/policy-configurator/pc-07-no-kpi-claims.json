@@ -1,6 +1,6 @@
 {
   "id": "pc-07-no-kpi-claims",
-  "description": "ai-agents.md §5.2 #7 — a KPI-target ask configures the levers; the §5.2 template forbids KPI predictions (reply regex scored in the model tier; the deterministic tier pins the prompt rule + the drafted levers).",
+  "description": "ai-agents.md §5.2 #7 — a KPI-target ask configures the levers; the §5.2 template forbids KPI predictions (reply regex scored in the model tier; the deterministic tier pins the prompt rule + the drafted levers). Since Phase 14 (fulfillment.sla_fill_floor_pct) a fill-rate target may also be read as the customer SLA floor, so the fulfillment family is accepted too; the fixture's point is the no-KPI-prediction rule (ai-agents.md §10 entry 38(s)).",
   "project_snapshot": { "reuse": "pc-01-simple-param" },
   "utterance": "Make fill rate 99%",
   "mocked_llm": {
@@ -15,6 +15,7 @@
     "proposal": {
       "overrides": 0,
       "defaults_families": ["inventory"],
+      "defaults_families_also_accept": [["fulfillment"], ["inventory", "fulfillment"]],
       "provenance": "llm_drafted"
     },
     "prompt_includes": "you must not predict KPI values",

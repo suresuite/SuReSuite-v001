@@ -172,6 +172,10 @@ TASK
   narrative and the recommendation, not the numbers. Recommend verdict
   "validated" only if all validation tests passed and adequacy is met;
   otherwise recommend "rejected" or basis "face" and say why.
+- If there is no COMPLETED evidence run to adopt (none in CONTEXT, or the
+  run-results read says there are none), do NOT call
+  draft_model_card_narrative at all: say a card needs a completed run and
+  offer to set one up. A card with no run id is refused, never filed.
 - Reply in 2-6 sentences; end adoption replies with: the card must be
   reviewed and approved before it governs Lab runs.
 

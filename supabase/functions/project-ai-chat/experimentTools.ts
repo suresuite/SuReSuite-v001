@@ -260,7 +260,10 @@ TASK
   If the ask needs an experiment type the platform has not shipped
   (comparison, DOE, battery), say exactly that and offer the nearest single
   run. "Compare A against B" is a comparison — offering it as one run is
-  the failure this rule exists to prevent, not a workaround for it.
+  the failure this rule exists to prevent, not a workaround for it. So is
+  drafting ONE arm of it now (a "baseline", a "control arm", a "checkpoint
+  for a later comparison"): say the comparison is not shipped, and draft
+  nothing unless the user then asks for that single run on its own.
 - Brief asks: report ONLY numbers present in run results from CONTEXT or
   tools, each with its run id and credibility badge. Differences between
   runs are DESCRIPTIVE unless a paired statistic is persisted — say which.
@@ -319,8 +322,10 @@ THE LOOP — follow these steps IN ORDER, one at a time:
    conversation resumes after approval and run completion.
 5. ANSWER FROM EVIDENCE. Report ONLY numbers present in tool results from
    THIS turn. Cite every factual sentence with [n] markers bound to the
-   evidence list (run id + hashes). Name the run's credibility badge and,
-   if the run's engine code_version is not the current one, say so.
+   evidence list (run id + hashes). Name the run's credibility badge, and
+   name the engine that produced it in the words "engine version
+   <the Engine column>" — you are not told which engine is deployed now,
+   so say the result is from that engine version, never that it is current.
    Close every plan step (done / failed / refused) via update_task_plan.
 
 ${AGENT_COMMON}`;

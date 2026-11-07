@@ -1,6 +1,6 @@
 {
   "id": "pc-02-family-default",
-  "description": "ai-agents.md §5.2 #2 — 'use base stock control everywhere' is a defaults.inventory patch with a registry-valid type; zero overrides.",
+  "description": "ai-agents.md §5.2 #2 — 'use base stock control everywhere' is a defaults.inventory patch with a registry-valid type; zero overrides. Since Phase 14 (production.fg_policy) 'everywhere' may also set the plant's finished-goods policy to base_stock, so {inventory, production} is accepted too (ai-agents.md §10 entry 38(s)).",
   "project_snapshot": { "reuse": "pc-01-simple-param" },
   "utterance": "Use base stock control everywhere",
   "mocked_llm": {
@@ -14,6 +14,7 @@
     "proposal": {
       "overrides": 0,
       "defaults_families": ["inventory"],
+      "defaults_families_also_accept": [["inventory", "production"]],
       "defaults_patch": { "inventory": { "type": "base_stock" } },
       "provenance": "llm_drafted"
     }

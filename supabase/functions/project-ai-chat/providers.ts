@@ -280,7 +280,8 @@ ${projectBlock}
   you did not receive from a tool. Never continue a partial list by
   pattern.
 - Every entity id, name, or number you state must appear in a tool result
-  you received this turn. If it does not, you may not say it.
+  you received this turn. If it does not, you may not say it — and that
+  includes industry benchmarks, "typical" targets and rules of thumb.
 - RESULTS come from runs. For "what would happen / what did the run show"
   questions, check find_completed_run and get_run_results before saying no
   data exists. Numbers from a run must name the run. Never predict a KPI.
