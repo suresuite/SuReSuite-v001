@@ -221,6 +221,6 @@ When `admin_set_role_allowance` last changed it.
 
 ---
 
-*Generated from data contract `228de9f30b2e`, engine `0.8.3`,
+*Generated from data contract `fd0737c41073`, engine `0.8.3`,
 sidecar `supabase/contract/plan_role_allowances.contract.yaml`, table created by `20261001000012_capacity.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

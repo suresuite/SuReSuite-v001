@@ -1,0 +1,147 @@
+# AUTHORED — the data contract's sidecar for `kg_assertion_evidence`.
+# Phase 19 / WP 19.2 (docs/PLAN.md §29). Edit this file; docs/data/tables/*.md is generated from it.
+table: kg_assertion_evidence
+tier: "3"
+schema_name: public
+grain: >-
+  One link between a fact of an organization's knowledge graph and an external_evidence row that
+  supports or contradicts it, with the publisher group that makes sources independent and the date
+  the source says the fact held. external_evidence stays the one evidence store; this table links,
+  never copies.
+owner: platform
+
+natural_key_unique:
+  - source: PRIMARY KEY constraint
+    columns: [id]
+    name: kg_assertion_evidence_pkey
+  - source: UNIQUE index
+    columns: [assertion_id, evidence_id]
+    name: kg_assertion_evidence_natural_key
+
+natural_key_intended: [assertion_id, evidence_id]
+
+governance:
+  read: null
+  write: null
+  min_project_role: viewer
+  audited: true
+  rls_enabled: true
+  note: >-
+    Per organization: RLS on with no policy and no grant to an API role. Facts are written by
+    kg_record_assertion (which refuses entities or evidence from another organization) and read by
+    kg_list_assertions, both refusing an actor outside the organization through
+    kg_assert_org_member. Status (verified / corroborated / provisional / stale / contradicted) is
+    computed by kg_assertion_status from distinct publisher groups, never stored. Audited at tier
+    3; rehearsal/970 proves independence, staleness, contradiction, the natural key and isolation.
+    Outside the simulation (PLAN.md §29 rule 4).
+
+surfaces: []
+
+fields:
+  id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      Surrogate key.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  organization_id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The organization whose graph this is.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  assertion_id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The fact this evidence is about.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  evidence_id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The external_evidence row; it must belong to a project of the same organization.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  stance:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      supports · contradicts.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  publisher_group:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The independence unit: two documents from one publisher, or from a parent and its
+      subsidiary, count once toward kg_verify_min_sources().
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  observed_on:
+    type: "date"
+    unit: null
+    unit_source: none
+    meaning: >-
+      When the source says the fact held; the staleness clock (kg_evidence_max_age_days) runs from
+      here.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  created_at:
+    type: "timestamp with time zone"
+    unit: null
+    unit_source: none
+    meaning: >-
+      When the link was recorded.
+    grain: metadata
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null

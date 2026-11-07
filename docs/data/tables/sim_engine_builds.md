@@ -282,6 +282,6 @@ The super admin who withdrew the build (`approved_users`). Set to NULL if that u
 
 ---
 
-*Generated from data contract `228de9f30b2e`, engine `0.8.3`,
+*Generated from data contract `fd0737c41073`, engine `0.8.3`,
 sidecar `supabase/contract/sim_engine_builds.contract.yaml`, table created by `20261004000001_engine_build_ledger.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

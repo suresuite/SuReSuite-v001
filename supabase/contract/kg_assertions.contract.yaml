@@ -1,0 +1,201 @@
+# AUTHORED — the data contract's sidecar for `kg_assertions`.
+# Phase 19 / WP 19.2 (docs/PLAN.md §29). Edit this file; docs/data/tables/*.md is generated from it.
+table: kg_assertions
+tier: "3"
+schema_name: public
+grain: >-
+  One fact between two entities of an organization's knowledge graph — subject, relation, object
+  and what distinguishes it (a tier, a role, a product) — with the dates it holds and when it was
+  first and last seen. Its status is computed from its evidence, never stored (docs/PLAN.md §29,
+  WP 19.2).
+owner: platform
+
+natural_key_unique:
+  - source: PRIMARY KEY constraint
+    columns: [id]
+    name: kg_assertions_pkey
+  - source: UNIQUE index
+    columns: [organization_id, subject_id, relation, object_id, qualifier_key]
+    name: kg_assertions_natural_key
+
+natural_key_intended: [organization_id, subject_id, relation, object_id, qualifier_key]
+
+governance:
+  read: null
+  write: null
+  min_project_role: viewer
+  audited: true
+  rls_enabled: true
+  note: >-
+    Per organization: RLS on with no policy and no grant to an API role. Facts are written by
+    kg_record_assertion (which refuses entities or evidence from another organization) and read by
+    kg_list_assertions, both refusing an actor outside the organization through
+    kg_assert_org_member. Status (verified / corroborated / provisional / stale / contradicted) is
+    computed by kg_assertion_status from distinct publisher groups, never stored. Audited at tier
+    3; rehearsal/970 proves independence, staleness, contradiction, the natural key and isolation.
+    Outside the simulation (PLAN.md §29 rule 4).
+
+surfaces: []
+
+fields:
+  id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      Surrogate key; the natural key is the five-column unique index.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  organization_id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The organization whose graph this is.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  subject_id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The entity the fact is about.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  relation:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      SuppliesTo · Produces · LocatedIn · OwnedBy · Ships · Operates · CustomerOf (CHECK-
+      constrained).
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  object_id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The other entity.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  qualifier_key:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      What distinguishes two facts between the same pair ('' when nothing does); part of the
+      natural key.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  qualifier:
+    type: "jsonb"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The fact's attributes as the source states them (tier, role, category, strengths, metal).
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  valid_from:
+    type: "date"
+    unit: null
+    unit_source: none
+    meaning: >-
+      When the fact began to hold, if a source says.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  valid_to:
+    type: "date"
+    unit: null
+    unit_source: none
+    meaning: >-
+      When it stopped, if a source says.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  first_seen:
+    type: "timestamp with time zone"
+    unit: null
+    unit_source: none
+    meaning: >-
+      When the fact was first recorded.
+    grain: metadata
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  last_seen:
+    type: "timestamp with time zone"
+    unit: null
+    unit_source: none
+    meaning: >-
+      When evidence for it was last recorded.
+    grain: metadata
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  created_by:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The actor who first recorded it.
+    grain: metadata
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null

@@ -25303,6 +25303,39 @@ four sites and permits the paths used. The companies' full terms of use are **no
 `contract:check` holds (three sidecars at tier 3, audited); `dataPlaneAudit.test.ts` and `orgIdentity.test.ts` ✓. Deploys on merge,
 so no §15 reading exists yet — WP 19.8's.
 
+### WP 19.2 — Evidence that remembers · 2026-11-07 · migration `20261107000002` · no engine change
+
+**§29 WP 19.2; gates `single-source`, `audit-actor`, `table-covered`.**
+
+**What the plan promised versus what this package found.**
+1. **Independence is the whole rule, and it is strict on purpose.** `kg_assertion_status` counts DISTINCT publisher groups,
+   so a company's own supplier list is one source however many pages it has. Loaded, all 1 134 facts of the three reference
+   companies read **provisional** — not a defect but the honest reading: nothing has corroborated them yet, which is WP 19.3's
+   job. `rehearsal/970` proves it, mutation-tested: counting documents instead of publishers turns three Fairphone pages into
+   "verified".
+2. **The threshold had to be restated, so it is gated.** SQL cannot import `VERIFY_MIN_SOURCES`; `kg_verify_min_sources()`
+   restates it and `kgParity_test.ts` fails when the two differ (the `ingestSpecParity` pattern).
+3. **Time and contradiction are computed, not stored**: evidence older than `kg_evidence_max_age_days()` (1 095) stops
+   counting; the newest contradiction beats older support and newer support wins back — all in `rehearsal/970` §2.
+4. **external_evidence stays the one store.** `kg_assertion_evidence` links to it, and refuses evidence from a project of
+   another organization.
+
+**Gate results.** `rehearsal/960`, `970` ✓; `kgParity_test.ts` ✓; `contract:check` holds (two more tier-3 audited sidecars).
+
+### WP 19.4 — The reference datasets and their loader · 2026-11-07 · no migration · no engine change
+
+**§29 WP 19.4 (partial: the production load waits for the merge, because the tables deploy on merge).**
+
+**What was built and measured.** `scripts/kg_reference/load_sql.ts` turns a dataset into one transaction of
+`kg_upsert_entity` / `record_external_evidence` / `kg_record_assertion` calls — the same authorization, audit and natural keys as
+any writer; identity from `planLoad`, and the alias normalizer is `networkEvidence.ts`'s (a second one was written and removed in
+the same package). Loaded into a local copy of the schema, the three companies give **568 entities** (437 companies, 25
+facilities, 47 products, 7 materials, 52 locations), **1 134 facts** (630 SuppliesTo, 352 Produces, 152 LocatedIn) and **1 158
+evidence rows** in three projects of one organization, with 2 890 audit rows naming the actor. A second load changes no count.
+
+**Open, and named.** The production load needs the reference organization and its three projects to exist after the merge;
+the owner has not read the three companies' full terms of use (WP 19.0).
+
 ## 17. Sequencing
 
 | Phase | WPs | Focus | Blocks | Status |
@@ -25326,7 +25359,7 @@ so no §15 reading exists yet — WP 19.8's.
 | **16** | **16.0 – 16.6** | **stochastic lead times configured like demand (per supplier × material lane), a production lead time per product (P-P.13), and the FG inventory band laid out like the Supplier inventory band** | — | **16.0 ✅** the plan (§26), §4 D299–D302 registered from a verified reading (the brief's "`inbound_logistics` carries the spread" and "lead time is read-only" were both wrong by the time it ran — D290 had made the lead time an override), blueprint P-S.6 widened, P-P.13 added, §2.4's W^FG boundary made opt-in. **16.1 ✅** engine shapes (0.7.0): normal / triangular / uniform drawn per lane from a new world stream, CRN-safe under a changed primary, lognormal/gamma bit-identical · **16.2 ✅** per-lane data + mapper (`20261004000003`, rehearsal 840; D302 closed) · **16.3 ✅** Supplier cells: a shape per row and only its parameters, a bounded row's lead time is the bounds' mean (D299 closed) · **16.4 ✅** engine production lead time (0.8.0): starts complete at t + L through a per-product pipeline, the plan offset by E[L] net of WIP, WIP traced and uncharged, the honesty test extended · **16.5 ✅** product data + Plant cells (`20261004000004`, rehearsal 850; D300 closed) · **16.6 ✅** FG inventory laid out like the Supplier band (D301 closed). **PHASE COMPLETE** — §15 reading owed in the push after the merge |
 | **17** | **17.0 – 17.7** | **nexus by stress test: every material and supplier of a project disrupted alone under one shared scenario (full outage starting in week `max(26, t_w + 1)`, 2–9 weeks), the project's policies applied, shown as a table of lost sales in € per duration with an Average column it opens sorted by, stored with its baseline and read by the Nexus card with no Run click — first on `Project AA - ver3`** | — | **17.0 ✅** the plan (§27), §4 D310–D311 registered from a verified reading (a material cannot be disrupted; "week 26" needs a reference; backorder hides lost sales), four owner decisions settled 2026-10-21 (start week, the sortable table, €, GitHub Actions within its limits); targets are suppliers and the materials they supply, nothing else; the run-from-the-card flow written as WP 17.7 (Validated Model required; pick engine, baseline, data version). **17.1 ✅** engine 0.8.1: a material can be disrupted (D311 closed for the engine API; golden digests unmoved). **17.2 ✅** the battery (`scsim.stress.nexus`, 0.8.1 amendment; 12 tests). **17.3 ✅** the store (`20261021000001`, rehearsal 900): opens only on an active Validated Model, the server writes the binding, keyed on the simulation scope. **17.4** the job is built (`nexus-stress.yml`, `nexus_job.py`); its first run, for `Project AA - ver3`, is owed after the merge. **17.5 ✅** the card reads the stored battery: baseline, top three, the sortable table, no Run button |
 | **18** | **18.1 – 18.2** | **calendar time: a disruption start entered as a run week, an ISO 8601 week or a date through the project start (run week 0), what was entered kept beside the run week, every run stamped with the calendar it was read against, and the project window as the one authored run length** | — | **18.1 ✅** `calendarWeeks.ts` and `projectWindow.ts` are the only date↔week and run-length rules; `StartTimeControl` on the Lab and the network dialog; `simulation_runs.calendar_start` stamped at insert, past runs backfilled and labelled (`20261101000001`, rehearsal 940); the dialog's week-early date and the UTC+ day-early project start fixed (§4 D318). **18.2 ✅** the after-merge reading (§15 run `41220357251`): 164 backfilled, gates 0, every project start on 31 December — the UTC+ save bug, measured. **18.3 ✅** those windows moved to the days picked (`20261101000002`, rehearsal 950); runs keep their recorded calendar. **18.4 ✅** the after-merge reading (§15 run `41283139980`): every dated project starts on 1 January, gates 0. **18.5 ✅** one numbering: /policies counts run weeks from 0 like the engine and the Lab, dates beside each (D319). **Phase 18 complete** |
-| **19** | **19.0 – 19.8** | **the supply-chain knowledge graph: one identity per firm and site, per organization; evidence with time, independence and contradictions; four free structured sources; three reference projects (Fairphone, Novo Nordisk, Zentiva); a gap finder and link hypotheses; the Cartographer reads the graph; a Network knowledge view** | — | **19.0 ✅** baseline + three companies · **19.1 ✅** identity registry (in the repository; deploys on merge) · 19.4 datasets built, loading next · the rest planned — §29 |
+| **19** | **19.0 – 19.8** | **the supply-chain knowledge graph: one identity per firm and site, per organization; evidence with time, independence and contradictions; four free structured sources; three reference projects (Fairphone, Novo Nordisk, Zentiva); a gap finder and link hypotheses; the Cartographer reads the graph; a Network knowledge view** | — | **19.0 ✅** baseline + three companies · **19.1 ✅** identity registry · **19.2 ✅** dated, independence-weighted facts (both in the repository; deploy on merge) · 19.4 datasets + loader built, production load after merge · the rest planned — §29 |
 
 **27 work packages** (26 + the five 5.2 sub-packages counted as one). WP 3.0 was added at the Phase 2→3 boundary review, for the reason boundary reviews exist: nine defects had an owner that had already finished, which reads exactly like having an owner.
 Commit convention: `Phase N / WP N.M / <blueprint ref>: <title>`.
@@ -28648,7 +28681,7 @@ mapped from European Medicines Agency public records because no pharma company p
 - **Exit:** resolution accuracy above the WP 19.0 baseline on the hard fixture; `rehearsal/` proves org isolation (another
   organization reads zero rows) and the audit row names the actor.
 
-### WP 19.2 — Evidence that remembers *(planned · migration · gates `single-source`, `input-hash`)*
+### WP 19.2 — Evidence that remembers ✅ *(done 2026-11-07 in the repository · migration `20261107000002`, deploys on merge · gates `single-source`, `audit-actor` · §16 · WP 19.2)*
 
 - `kg_assertions`: subject → relation → object between `kg_entities`, with `first_seen`, `last_seen`, `valid_from`, `valid_to`
   and a status computed, not stored by hand. Relations: B8's four (SuppliesTo, Produces, LocatedIn, OwnedBy) plus Ships (with an
@@ -28670,7 +28703,7 @@ mapped from European Medicines Agency public records because no pharma company p
 - Each source is a `sourceRegistry.ts` row (role, licence, screening rule), lands through tier 0 → tier 1 → promotion like
   every other dataset, and refreshes from a scheduled workflow. The egress hosts need an environment change the owner approves.
 
-### WP 19.4 — The three reference projects *(datasets built 2026-11-07 — `scripts/kg_reference/data/`; loading into a project waits for WP 19.2 · no engine change)*
+### WP 19.4 — The three reference projects *(datasets built and the loader proved 2026-11-07 — `scripts/kg_reference/`; loading them into production waits for the merge · no engine change · §16 · WP 19.4)*
 
 - **19.4a Fairphone** — Supply Chain Engagement report 2024, Annex 1 (128 supplier rows: 2 tier-1, 109 tier-2, 17 tier-3) and
   Annex 2 (305 smelters and refiners with their RMI ids), parsed by column position (`build_fairphone.py`).
@@ -28715,7 +28748,7 @@ The original 19.4 text, kept for the Fairphone half:
 Every organization's graph rows are readable only inside it; no assertion is `verified` with fewer than three independent
 sources; no hypothesis is linked to a project row; taken in the push after the merge (D153).
 
-**Order.** 19.0 ✅ → 19.1 ✅ → 19.2 → 19.4 (datasets ✅, load next) → 19.5 → 19.3 → 19.6 → 19.7 → 19.8 (19.4 and 19.5 need only the two tables, so the
+**Order.** 19.0 ✅ → 19.1 ✅ → 19.2 ✅ → 19.4 (datasets + loader ✅; production load after merge) → 19.5 → 19.3 → 19.6 → 19.7 → 19.8 (19.4 and 19.5 need only the two tables, so the
 reference project and the gap finder do not wait for the external sources). **Out of scope:** licensed sources (FactSet,
 Bloomberg SPLC, Orbis, Panjiva — `ai-agents.md` §18.5, not wired); a graph shared across organizations; background
 extraction without a request (§18.4); anything that changes an engine input.

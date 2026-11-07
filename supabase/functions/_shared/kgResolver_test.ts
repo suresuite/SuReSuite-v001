@@ -94,3 +94,18 @@ Deno.test("Zentiva's Bucharest spellings: one site per name, the name pairs only
   assert(p.nearDuplicates.some(([a, b]) =>
     a === "name:s c zentiva s a|romania|032266" && b === "name:zentiva s a|romania|032266"));
 });
+
+Deno.test("the loader emits one transaction: an upsert per entity, a fact call per piece of evidence", async () => {
+  const { loadSql } = await import("../../../scripts/kg_reference/load_sql.ts");
+  const root = new URL("../../../scripts/kg_reference/", import.meta.url);
+  const z = "00000000-0000-0000-0000-000000000000";
+  for (const n of ["fairphone", "novo_nordisk", "zentiva"]) {
+    const sql = loadSql(n, z, z, z, root);
+    const p = planLoad(load(n));
+    const evidence = p.assertions.reduce((k, a) => k + a.evidence.length, 0);
+    assert(sql.includes("\nBEGIN;\n") && sql.trimEnd().endsWith("COMMIT;"), `${n}: not one transaction`);
+    assertEquals((sql.match(/public\.kg_upsert_entity\(/g) ?? []).length, p.entities.length, n);
+    assertEquals((sql.match(/public\.kg_record_assertion\(/g) ?? []).length, evidence, n);
+    assertEquals((sql.match(/public\.record_external_evidence\(/g) ?? []).length, evidence, n);
+  }
+});

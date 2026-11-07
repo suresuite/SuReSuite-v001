@@ -211,7 +211,7 @@ export const DOCS_INDEX: Record<string, DocsIndexEntry> = {
     ]
   },
   "data-model": {
-    "minutes": 13,
+    "minutes": 14,
     "sections": [
       {
         "id": "how-to-read-this",
@@ -2020,7 +2020,7 @@ export const DOCS_INDEX: Record<string, DocsIndexEntry> = {
     ]
   },
   "all-tables": {
-    "minutes": 225,
+    "minutes": 227,
     "sections": [
       {
         "id": "how-to-read-this",
@@ -2141,6 +2141,14 @@ export const DOCS_INDEX: Record<string, DocsIndexEntry> = {
       {
         "id": "ingest_staged_rows",
         "title": "ingest_staged_rows"
+      },
+      {
+        "id": "kg_assertion_evidence",
+        "title": "kg_assertion_evidence"
+      },
+      {
+        "id": "kg_assertions",
+        "title": "kg_assertions"
       },
       {
         "id": "kg_entities",

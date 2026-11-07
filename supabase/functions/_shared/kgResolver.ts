@@ -211,3 +211,15 @@ export function planLoad(ds: ReferenceDataset): LoadPlan {
   return { entities, refs, assertions, merged, dangling: [...new Set(dangling)].sort(),
            nearDuplicates: nearDuplicatePairs(entities) };
 }
+
+/** The qualifier fields that make two facts between one pair different facts
+ * (kg_assertions.qualifier_key). Descriptive fields — an address, a site
+ * count, a path note — are kept in `qualifier` but do not split a fact. */
+const QUALIFIER_KEY_FIELDS = ["tier", "role", "category", "strengths", "material"] as const;
+
+export function qualifierKey(q: Record<string, unknown> | null | undefined): string {
+  return QUALIFIER_KEY_FIELDS
+    .filter((k) => q?.[k] !== undefined && q?.[k] !== null && q?.[k] !== "")
+    .map((k) => `${k}=${String(q![k])}`)
+    .join("|");
+}

@@ -7,7 +7,7 @@ on:
       - "sim-worker/**"
       - "src/lib/policies/registry.generated.json"
       - "supabase/functions/_shared/**"
-      - "scripts/kg_reference/data/**"
+      - "scripts/kg_reference/**"
       - "scripts/check_registry_bridge.mjs"
       - "scripts/build_engine_wheels.sh"
       - "public/engine/**"
@@ -150,7 +150,7 @@ jobs:
       # reference datasets in scripts/kg_reference/data/.
       - name: Grader contract tests (golden fixture + gate semantics)
         if: ${{ !cancelled() }}
-        run: deno test --allow-read grading_test.ts env_test.ts kgResolver_test.ts
+        run: deno test --allow-read grading_test.ts env_test.ts kgResolver_test.ts kgParity_test.ts
         working-directory: supabase/functions/_shared
 
   sim-worker:

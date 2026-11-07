@@ -5,8 +5,8 @@
 > **GENERATED** — one page per table the data contract covers. Edit the sidecars in
 > `supabase/contract/`, not these pages.
 
-80 of 97 tables are covered,
-1054 columns in all. A table that is not here is listed
+82 of 99 tables are covered,
+1074 columns in all. A table that is not here is listed
 with its reason in [`scripts/data-contract/coverage.yaml`](../../../scripts/data-contract/coverage.yaml);
 `npm run contract:check` fails on a table that is in neither.
 
@@ -41,6 +41,8 @@ with its reason in [`scripts/data-contract/coverage.yaml`](../../../scripts/data
 | [`ingest_staged_bom_versions`](ingest_staged_bom_versions.md) | 1 | `data-ingestion` | 12 | One BOM header as one source sent it, inside one run — a named version of a product's bill of materials, whose lines are staged in `ingest_staged_bom_lines`. |
 | [`ingest_staged_products`](ingest_staged_products.md) | 1 | `data-ingestion` | 19 | One item-master row as one source sent it, inside one run. The source's own shape plus provenance — not the project's shape, which it takes on at promotion. |
 | [`ingest_staged_rows`](ingest_staged_rows.md) | 1 | `data-ingestion` | 11 | One row of one uploaded file, in one run: the cells as received beside what validation made of them, and the findings that explain the difference. The unit a reviewer reads when a number looks wrong — and the only place in the system where the left-hand side of a parse survives. |
+| [`kg_assertion_evidence`](kg_assertion_evidence.md) | 3 | `platform` | 8 | One link between a fact of an organization's knowledge graph and an external_evidence row that supports or contradicts it, with the publisher group that makes sources independent and the date the source says the fact held. external_evidence stays the one evidence store; this table links, never copies. |
+| [`kg_assertions`](kg_assertions.md) | 3 | `platform` | 12 | One fact between two entities of an organization's knowledge graph — subject, relation, object and what distinguishes it (a tier, a role, a product) — with the dates it holds and when it was first and last seen. Its status is computed from its evidence, never stored (docs/PLAN.md §29, WP 19.2). |
 | [`kg_entities`](kg_entities.md) | 3 | `platform` | 10 | One real firm, facility, product, material or location an organization's knowledge graph has evidence about — one identity, however many names the evidence uses for it (Phase 19, docs/PLAN.md §29). |
 | [`kg_entity_aliases`](kg_entity_aliases.md) | 3 | `platform` | 7 | One other name an entity of an organization's knowledge graph goes by, with the source that used it. |
 | [`kg_identity_review`](kg_identity_review.md) | 3 | `platform` | 11 | One name in an organization's evidence that matched more than one entity, waiting for a person to decide — the resolver never picks (docs/PLAN.md §29 rule 3). |
@@ -95,4 +97,4 @@ with its reason in [`scripts/data-contract/coverage.yaml`](../../../scripts/data
 
 ---
 
-*Generated from data contract `228de9f30b2e`, engine `0.8.3`.*
+*Generated from data contract `fd0737c41073`, engine `0.8.3`.*

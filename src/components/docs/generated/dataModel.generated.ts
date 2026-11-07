@@ -25,14 +25,14 @@ export type UndescribedGroup = {
 };
 
 /** The contract version these figures came from. §6.4: a version, never a date. */
-export const CONTRACT_VERSION = "228de9f30b2e";
+export const CONTRACT_VERSION = "fd0737c41073";
 export const ENGINE_VERSION = "0.8.3";
-export const LAST_MIGRATION = "20261107000001_kg_entities.sql";
+export const LAST_MIGRATION = "20261107000002_kg_assertions.sql";
 
 export const COUNTS = {
-  "tablesInSchema": 97,
-  "tablesDescribed": 80,
-  "columnsDescribed": 1054,
+  "tablesInSchema": 99,
+  "tablesDescribed": 82,
+  "columnsDescribed": 1074,
   "tablesUndescribed": 17
 } as const;
 
@@ -190,6 +190,18 @@ export const TIERS: GlanceTier[] = [
         "table": "graph_level_versions",
         "grain": "One row per (project, level, content): the FIRST time a project's product, process, firm or simulation level had that hash. Numbered per project PER LEVEL, so \"Product graph v3\" and \"Firm graph v5\" are both sentences the system can say, and a change to one level moves that level's number and no other. A snapshot (`dataset_versions`) names its level versions — its tuple.",
         "columns": 10,
+        "owner": "platform"
+      },
+      {
+        "table": "kg_assertion_evidence",
+        "grain": "One link between a fact of an organization's knowledge graph and an external_evidence row that supports or contradicts it, with the publisher group that makes sources independent and the date the source says the fact held. external_evidence stays the one evidence store; this table links, never copies.",
+        "columns": 8,
+        "owner": "platform"
+      },
+      {
+        "table": "kg_assertions",
+        "grain": "One fact between two entities of an organization's knowledge graph — subject, relation, object and what distinguishes it (a tier, a role, a product) — with the dates it holds and when it was first and last seen. Its status is computed from its evidence, never stored (docs/PLAN.md §29, WP 19.2).",
+        "columns": 12,
         "owner": "platform"
       },
       {
