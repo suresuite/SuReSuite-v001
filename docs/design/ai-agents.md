@@ -1837,6 +1837,7 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
 
     **First Q3 change: evidence before fixes.** A failed live fixture now records `observed`: the model's reply, the proposal payload it filed and the tools it called (clipped, report-only, failures only). For a rejected plan write, it records the rejection reason. Without this, a persistent failure cannot be told from a too-strict fixture without guessing.
     - One case did not need it. `ed-02`'s live scorer compared the new scenario's free-text NAME to the mocked args' `"S1 outage — 6 weeks"`, which no fixture description asks for. It now checks what the ask means: a new scenario whose schedule carries an S1 outage of 42 days (`new_scenario_outage`), with replications checked as before. The deterministic tier still pins the mocked name.
+    - **`rb-03` cannot pass live, by construction.** Its utterance and snapshot are exactly `rb-02`'s, and `rb-02`'s correct answer is a cited disruption brief. `rb-03` exists to prove the GATE refuses an uncited narrative, which only its mocked arguments produce. A correct model therefore writes `rb-02`'s proposal and "fails" `rb-03`, as it did 8 of 8 times. The fixture now carries `live_tier: false` with that reason: the live tier reports it as skipped (`liveSkipped`), never as a pass, and the deterministic tier still pins the refusal.
 
 ---
 

@@ -21,5 +21,7 @@
     "unknown_run_citation": "66666666-6666-4666-8666-666666666699",
     "proposal_count": 0
   },
+  "live_tier": false,
+  "live_tier_reason": "same utterance and snapshot as rb-02, whose correct answer is a cited disruption brief; only the mocked uncited narrative can exercise the not_grounded gate (ai-agents.md §10 entry 38(s))",
   "retired_reason": null
 }

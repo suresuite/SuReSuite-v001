@@ -127,6 +127,10 @@ interface Fixture {
   mocked_llm?: { args?: Record<string, unknown>; reuse?: string };
   // deno-lint-ignore no-explicit-any
   expect: Record<string, any>;
+  /** false ⇒ deterministic tier only (a gate-refusal fixture only its mocked
+   * args can drive); the live tier skips it and says why. */
+  live_tier?: boolean;
+  live_tier_reason?: string;
 }
 
 /** The five suite-bearing agents the §23.2 agent:<slug> rows cover — a
@@ -497,6 +501,9 @@ interface StewardMetrics {
    * proposal, with the arguments the model sent — the schema-validity rate
    * says how often, these say which fields Q2 has to tighten. */
   invalidDraftCalls?: InvalidDraftCall[];
+  /** Fixtures marked `live_tier: false` (gate-refusal fixtures only mocked
+   * args can drive), with the reason — reported, never counted as passes. */
+  liveSkipped?: string[];
   pass: boolean;
   failures: string[];
 }
@@ -870,10 +877,19 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
   if (cfg.agentId === "report-builder") Deno.env.set("FILE_WORKSPACE_ENABLED", "true");
   const fixtures: StewardMetrics["fixtures"] = {};
   let draftCalls = 0, validDraftCalls = 0;
+  const liveSkipped: string[] = [];
   const invalidDraftCalls: InvalidDraftCall[] = [];
 
   for (const id of cfg.fixtures) {
     const fixture = await loadFixtureFrom(cfg.fixtureDir, id);
+    // §10 entry 38(s): a fixture that proves a GATE refuses bad arguments can
+    // only be driven by its mocked args — a correct model never produces them.
+    // `live_tier: false` (with its reason) keeps it in the deterministic tier
+    // and reports it as skipped here, never as a pass.
+    if (!mock && fixture.live_tier === false) {
+      liveSkipped.push(`${id}: ${String(fixture.live_tier_reason ?? "deterministic-tier only")}`);
+      continue;
+    }
     const tables = structuredClone(fixture.project_snapshot) as Record<string, Row[]>;
     const db = makeStubDb(tables, makeAgentRpcs(tables));
     const ctx: ToolContext = {
@@ -962,6 +978,7 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
     schemaValidity,
     gateViolationRate,
     invalidDraftCalls,
+    ...(liveSkipped.length > 0 ? { liveSkipped } : {}),
     pass: failures.length === 0,
     failures,
   };
@@ -1855,6 +1872,7 @@ export async function runModelEval(opts: {
         `gate-violation-attempts=${metrics.gateViolationRate.toFixed(3)} ` +
         `fixtures=${Object.values(metrics.fixtures).filter((f) => f.pass).length}/${Object.keys(metrics.fixtures).length}`);
       for (const f of metrics.failures) console.log(`  ✗ ${f}`);
+      for (const sk of metrics.liveSkipped ?? []) console.log(`    – skipped in the live tier: ${sk}`);
       for (const c of metrics.invalidDraftCalls ?? []) console.log(`    · invalid draft ${c.fixture} ${c.tool} [${c.code ?? "?"}: ${c.reason ?? "-"}] ${c.args.slice(0, 300)}`);
     }
 
