@@ -1,0 +1,185 @@
+# AUTHORED — the data contract's sidecar for `kg_identity_review`.
+# Phase 19 / WP 19.1 (docs/PLAN.md §29). Edit this file; docs/data/tables/*.md is generated from it.
+table: kg_identity_review
+tier: "3"
+schema_name: public
+grain: >-
+  One name in an organization's evidence that matched more than one entity, waiting for a person
+  to decide — the resolver never picks (docs/PLAN.md §29 rule 3).
+owner: platform
+
+natural_key_unique:
+  - source: PRIMARY KEY constraint
+    columns: [id]
+    name: kg_identity_review_pkey
+  - source: UNIQUE index
+    columns: [organization_id, normalized, country]
+    name: kg_identity_review_natural_key
+
+natural_key_intended: [organization_id, normalized, country]
+
+governance:
+  read: null
+  write: null
+  min_project_role: viewer
+  audited: true
+  rls_enabled: true
+  note: >-
+    Per organization, and unlike external_evidence (readable by everyone) no API role may SELECT
+    it: RLS is on with no policy and no grant. Reads go through kg_list_entities, writes through
+    kg_upsert_entity and kg_queue_identity_review, each SECURITY DEFINER and each refusing an
+    actor outside the organization (insufficient_privilege) or no actor at all — the organization
+    check is kg_assert_org_member, and a super admin may read any graph. Audited at tier 3 by the
+    three statement-grain triggers (rehearsal/960 proves the row names the actor). Outside the
+    simulation: no engine input and no graph-hash scope reads it (PLAN.md §29 rule 4).
+
+surfaces: []
+
+fields:
+  id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      Surrogate key.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  organization_id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The organization whose graph this is.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  mention:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The name as the evidence printed it.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  normalized:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The normalized name the resolver looked up.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  country:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The country the evidence gave, if any (part of the key; NULLS NOT DISTINCT).
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  candidates:
+    type: "jsonb"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The entities it could be, as the resolver found them.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  status:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      pending · resolved · dismissed.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  resolved_entity_id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The entity a person chose.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  created_at:
+    type: "timestamp with time zone"
+    unit: null
+    unit_source: none
+    meaning: >-
+      When the name was queued.
+    grain: metadata
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  resolved_at:
+    type: "timestamp with time zone"
+    unit: null
+    unit_source: none
+    meaning: >-
+      When a person decided.
+    grain: metadata
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  resolved_by:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      Who decided.
+    grain: metadata
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null

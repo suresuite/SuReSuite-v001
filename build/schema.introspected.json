@@ -1,15 +1,15 @@
 {
   "$generator": "scripts/data-contract/introspect.mjs",
   "$doc": "EFFECTIVE schema replayed from supabase/migrations/*.sql in filename order. Generated — do not edit; `npm run contract:introspect -- --check` fails on drift.",
-  "migrations_found": 414,
-  "migrations_applied": 406,
+  "migrations_found": 415,
+  "migrations_applied": 407,
   "first_migration": "20250815000000_approved_users_base.sql",
-  "last_migration": "20261101000002_project_dates_day_early.sql",
+  "last_migration": "20261107000001_kg_entities.sql",
   "counts": {
-    "tables": 94,
+    "tables": 97,
     "views": 8,
     "enums": 4,
-    "functions": 434,
+    "functions": 438,
     "shadowed_definitions": 4,
     "phantom_tables": 0,
     "unparsed_statements": 0,
@@ -10395,6 +10395,669 @@
             "id"
           ],
           "name": "ingest_staged_rows_pkey"
+        }
+      ]
+    },
+    {
+      "name": "kg_entities",
+      "schema": "public",
+      "created_by": "20261107000001_kg_entities.sql",
+      "columns": [
+        {
+          "name": "id",
+          "quoted": false,
+          "type": "uuid",
+          "type_raw": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "organization_id",
+          "quoted": false,
+          "type": "uuid",
+          "type_raw": "uuid",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": {
+            "schema": "public",
+            "table": "organizations",
+            "columns": [
+              "id"
+            ],
+            "on_delete": "CASCADE"
+          },
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "entity_type",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_key",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "name",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "country",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "identifiers",
+          "quoted": false,
+          "type": "jsonb",
+          "type_raw": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "created_at",
+          "quoted": false,
+          "type": "timestamp with time zone",
+          "type_raw": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "updated_at",
+          "quoted": false,
+          "type": "timestamp with time zone",
+          "type_raw": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "created_by",
+          "quoted": false,
+          "type": "uuid",
+          "type_raw": "uuid",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "kg_entities_pkey",
+          "kind": "PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "definition": "PRIMARY KEY (id)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entities_entity_type_check",
+          "kind": "CHECK",
+          "columns": [
+            "entity_type"
+          ],
+          "definition": "CHECK (entity_type IN ('Company','Facility','Product','Material','Location'))",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entities_kg_key_check",
+          "kind": "CHECK",
+          "columns": [
+            "kg_key"
+          ],
+          "definition": "CHECK (kg_key ~ '^(lei|rmi|wd|osh|ema|name|product|material|country):.+')",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entities_name_check",
+          "kind": "CHECK",
+          "columns": [
+            "name"
+          ],
+          "definition": "CHECK (char_length(name) BETWEEN 1 AND 300)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entities_identifiers_check",
+          "kind": "CHECK",
+          "columns": [
+            "identifiers"
+          ],
+          "definition": "CHECK (jsonb_typeof(identifiers) = 'object')",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "kg_entities_natural_key",
+          "unique": true,
+          "columns": [
+            "organization_id",
+            "kg_key"
+          ],
+          "nulls_not_distinct": false,
+          "predicate": null,
+          "partial": false,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entities_type_idx",
+          "unique": false,
+          "columns": [
+            "organization_id",
+            "entity_type"
+          ],
+          "nulls_not_distinct": false,
+          "predicate": null,
+          "partial": false,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "rls": {
+        "enabled": true,
+        "forced": false,
+        "policies": [],
+        "determinate": true
+      },
+      "replica_identity": null,
+      "comment": null,
+      "natural_key_unique": [
+        {
+          "source": "column PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "name": "kg_entities_pkey"
+        },
+        {
+          "source": "UNIQUE index",
+          "columns": [
+            "organization_id",
+            "kg_key"
+          ],
+          "name": "kg_entities_natural_key"
+        }
+      ]
+    },
+    {
+      "name": "kg_entity_aliases",
+      "schema": "public",
+      "created_by": "20261107000001_kg_entities.sql",
+      "columns": [
+        {
+          "name": "id",
+          "quoted": false,
+          "type": "uuid",
+          "type_raw": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "organization_id",
+          "quoted": false,
+          "type": "uuid",
+          "type_raw": "uuid",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": {
+            "schema": "public",
+            "table": "organizations",
+            "columns": [
+              "id"
+            ],
+            "on_delete": "CASCADE"
+          },
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "entity_id",
+          "quoted": false,
+          "type": "uuid",
+          "type_raw": "uuid",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": {
+            "schema": "public",
+            "table": "kg_entities",
+            "columns": [
+              "id"
+            ],
+            "on_delete": "CASCADE"
+          },
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "alias",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "normalized",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "source",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "created_at",
+          "quoted": false,
+          "type": "timestamp with time zone",
+          "type_raw": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "kg_entity_aliases_pkey",
+          "kind": "PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "definition": "PRIMARY KEY (id)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entity_aliases_alias_check",
+          "kind": "CHECK",
+          "columns": [
+            "alias"
+          ],
+          "definition": "CHECK (char_length(alias) BETWEEN 1 AND 300)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entity_aliases_normalized_check",
+          "kind": "CHECK",
+          "columns": [
+            "normalized"
+          ],
+          "definition": "CHECK (char_length(normalized) BETWEEN 1 AND 300)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "kg_entity_aliases_natural_key",
+          "unique": true,
+          "columns": [
+            "organization_id",
+            "entity_id",
+            "normalized"
+          ],
+          "nulls_not_distinct": false,
+          "predicate": null,
+          "partial": false,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entity_aliases_lookup",
+          "unique": false,
+          "columns": [
+            "organization_id",
+            "normalized"
+          ],
+          "nulls_not_distinct": false,
+          "predicate": null,
+          "partial": false,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "rls": {
+        "enabled": true,
+        "forced": false,
+        "policies": [],
+        "determinate": true
+      },
+      "replica_identity": null,
+      "comment": null,
+      "natural_key_unique": [
+        {
+          "source": "column PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "name": "kg_entity_aliases_pkey"
+        },
+        {
+          "source": "UNIQUE index",
+          "columns": [
+            "organization_id",
+            "entity_id",
+            "normalized"
+          ],
+          "name": "kg_entity_aliases_natural_key"
+        }
+      ]
+    },
+    {
+      "name": "kg_identity_review",
+      "schema": "public",
+      "created_by": "20261107000001_kg_entities.sql",
+      "columns": [
+        {
+          "name": "id",
+          "quoted": false,
+          "type": "uuid",
+          "type_raw": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "organization_id",
+          "quoted": false,
+          "type": "uuid",
+          "type_raw": "uuid",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": {
+            "schema": "public",
+            "table": "organizations",
+            "columns": [
+              "id"
+            ],
+            "on_delete": "CASCADE"
+          },
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "mention",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "normalized",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "country",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "candidates",
+          "quoted": false,
+          "type": "jsonb",
+          "type_raw": "jsonb",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "status",
+          "quoted": false,
+          "type": "text",
+          "type_raw": "text",
+          "nullable": false,
+          "default": "'pending'",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "resolved_entity_id",
+          "quoted": false,
+          "type": "uuid",
+          "type_raw": "uuid",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": {
+            "schema": "public",
+            "table": "kg_entities",
+            "columns": [
+              "id"
+            ],
+            "on_delete": "SET NULL"
+          },
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "created_at",
+          "quoted": false,
+          "type": "timestamp with time zone",
+          "type_raw": "timestamptz",
+          "nullable": false,
+          "default": "now()",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "resolved_at",
+          "quoted": false,
+          "type": "timestamp with time zone",
+          "type_raw": "timestamptz",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "resolved_by",
+          "quoted": false,
+          "type": "uuid",
+          "type_raw": "uuid",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "kg_identity_review_pkey",
+          "kind": "PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "definition": "PRIMARY KEY (id)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_identity_review_mention_check",
+          "kind": "CHECK",
+          "columns": [
+            "mention"
+          ],
+          "definition": "CHECK (char_length(mention) BETWEEN 1 AND 300)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_identity_review_candidates_check",
+          "kind": "CHECK",
+          "columns": [
+            "candidates"
+          ],
+          "definition": "CHECK (jsonb_typeof(candidates) = 'array')",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_identity_review_status_check",
+          "kind": "CHECK",
+          "columns": [
+            "status"
+          ],
+          "definition": "CHECK (status IN ('pending','resolved','dismissed'))",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "kg_identity_review_natural_key",
+          "unique": true,
+          "columns": [
+            "organization_id",
+            "normalized",
+            "country"
+          ],
+          "nulls_not_distinct": true,
+          "predicate": null,
+          "partial": false,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "rls": {
+        "enabled": true,
+        "forced": false,
+        "policies": [],
+        "determinate": true
+      },
+      "replica_identity": null,
+      "comment": null,
+      "natural_key_unique": [
+        {
+          "source": "column PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "name": "kg_identity_review_pkey"
+        },
+        {
+          "source": "UNIQUE index",
+          "columns": [
+            "organization_id",
+            "normalized",
+            "country"
+          ],
+          "name": "kg_identity_review_natural_key"
         }
       ]
     },
@@ -29025,6 +29688,71 @@
       "volatility": "STABLE",
       "comment": null,
       "defined_by": "20260709000002_super_admin_phase1.sql"
+    },
+    {
+      "name": "kg_assert_org_member",
+      "signature": "kg_assert_org_member(text, uuid, uuid)",
+      "args": [
+        "_fn text",
+        "_org_id uuid",
+        "_actor_user_id uuid"
+      ],
+      "returns": "void LANGUAGE plpgsql SECURITY DEFINER SET search_path",
+      "security_definer": true,
+      "volatility": null,
+      "comment": null,
+      "defined_by": "20261107000001_kg_entities.sql"
+    },
+    {
+      "name": "kg_list_entities",
+      "signature": "kg_list_entities(uuid, uuid)",
+      "args": [
+        "_org_id uuid",
+        "_actor_user_id uuid"
+      ],
+      "returns": "TABLE (id uuid, entity_type text, kg_key text, name text, country text, identifiers jsonb, aliases text[])",
+      "security_definer": true,
+      "volatility": null,
+      "comment": null,
+      "defined_by": "20261107000001_kg_entities.sql"
+    },
+    {
+      "name": "kg_queue_identity_review",
+      "signature": "kg_queue_identity_review(uuid, text, text, text, jsonb, uuid)",
+      "args": [
+        "_org_id uuid",
+        "_mention text",
+        "_normalized text",
+        "_country text",
+        "_candidates jsonb",
+        "_actor_user_id uuid"
+      ],
+      "returns": "uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path",
+      "security_definer": true,
+      "volatility": null,
+      "comment": null,
+      "defined_by": "20261107000001_kg_entities.sql"
+    },
+    {
+      "name": "kg_upsert_entity",
+      "signature": "kg_upsert_entity(uuid, text, text, text, text, jsonb, text[], text[], text, uuid)",
+      "args": [
+        "_org_id uuid",
+        "_entity_type text",
+        "_kg_key text",
+        "_name text",
+        "_country text",
+        "_identifiers jsonb",
+        "_aliases text[]",
+        "_alias_normalized text[]",
+        "_source text",
+        "_actor_user_id uuid"
+      ],
+      "returns": "uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path",
+      "security_definer": true,
+      "volatility": null,
+      "comment": null,
+      "defined_by": "20261107000001_kg_entities.sql"
     },
     {
       "name": "list_agent_proposals",

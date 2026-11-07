@@ -25247,6 +25247,62 @@ and §15 run `41283139980` taken in a push carrying no migration.
 
 **Gate results.** vitest (new `scheduleCellLabel` test in `deliverySchedule.test.ts`), typecheck at baseline, eslint at `main`'s count.
 
+### WP 19.0 — The baseline and the three reference companies · 2026-11-07 · no migration · no engine change
+
+**§29 WP 19.0.** Owner decisions 2026-11-07: per organization, all four free sources, a real EU electronics company with low
+legal risk, a new phase — then "make three companies and do it".
+
+**What the plan promised versus what this package found.**
+1. **Pharma companies do not publish supplier lists, regulators publish sites.** Fairphone's report has a tiered supplier annex;
+   no EU drug maker has one. EMA's EPAR product information, Annex II.A, names manufacturing and batch-release sites for every
+   centrally authorised medicine, which makes Novo Nordisk (29 medicines) and Zentiva (14) mappable from public records alone.
+   What it cannot give — and the datasets refuse to claim — is who makes a small-molecule active ingredient.
+2. **The public documents already show the external links the graph is for**: Hovione FarmaCiencia (Portugal) is a manufacturer
+   of semaglutide, the active substance of Rybelsus; Patheon Biologics (USA) and BioReliance (UK) appear for other Novo products; GH
+   Genhelix (Spain) makes the biological active substance of Zentiva's Enwylma; Sanofi, Opella, Delpharm, Synthon and Labormed
+   release Zentiva batches.
+3. **The sources disagree with themselves**, which is the identity problem in miniature: Fairphone writes "Korea" and "Korean",
+   "America"; EMA writes "DK-2880 Bagsværd" and "DK-2800 Bagsværd" for what is probably one site, and four spellings of Zentiva's
+   Bucharest company. The datasets keep the raw text; identity is the resolver's (WP 19.1).
+4. **The network was closed.** The session's environment allowed no external host; a personal environment for this repository
+   was created with exactly fifteen source hosts, approved by the owner. EMA rate-limits at about one request per 6 s; the
+   fetcher honours it.
+
+**Baseline** (the numbers every later package reports against). B8's committed corpus, scored with the deterministic baseline
+extractor: entities P 0.972 / R 0.875 / F1 0.921; relations P 0.958 / R 0.719 / F1 0.821 (32 sentences). Reference datasets as
+the WP 19.1 resolver plans them: **Fairphone** 492 entities — 2 tier-1, 108 tier-2, 17 tier-3 suppliers, 305 smelters, 4 products,
+1 near-duplicate pair; **Novo Nordisk** 47 entities — 9 active-substance and 3 batch-release facilities over 29 medicines, 2 with
+one known site; **Zentiva** 37 entities — 14 batch-release facilities and 1 active-substance facility over 14 medicines, 4 with one
+known site, 1 near-duplicate pair.
+
+**Legal checklist, as applied.** Only company- or regulator-published documents; each recorded in `scripts/kg_reference/
+sources.json` (URL, date, sha256) and cached outside the repository, never committed; verbatim fragments capped at 200
+characters; no `Person` entities; each dataset labelled "not endorsed by or affiliated with" the company; robots.txt read for all
+four sites and permits the paths used. The companies' full terms of use are **not yet read by the owner** — a named open item.
+
+### WP 19.1 — One identity per firm and site · 2026-11-07 · migration `20261107000001` · no engine change
+
+**§29 WP 19.1; gates `natural-key`, `uuid-identity`, `audit-actor`, `table-covered`, `single-source`.**
+
+**What the plan promised versus what this package found.**
+1. **The model to copy was the wrong one.** `external_evidence` is readable by every API role (`USING (true)`), so "per
+   organization" could not be a policy copied from it. The three tables have RLS on, NO policy and NO grant to an API role; the
+   only paths in are `kg_list_entities`, `kg_upsert_entity` and `kg_queue_identity_review`, each refusing an actor outside the
+   organization with `insufficient_privilege` (a super admin may read any graph). `rehearsal/960` proves it, mutation-tested:
+   removing the organization check turns it red with "a member of B read A's graph".
+2. **A facility needs its site in its identity.** Name + country would have collapsed Novo Nordisk A/S's Bagsværd,
+   Kalundborg, Gentofte and Hillerød sites into one entity. The resolver keys a facility on its postcode — the last group of four
+   or more digits in the address — so "DK-4400 Kalundborg" and "4400, Kalundborg" are one site and a street number never wins.
+3. **No identity by guess, measured.** "S.C. Zentiva S.A." and "Zentiva S.A." at the same Bucharest postcode are NOT merged —
+   nothing proves they are one legal entity — but `planLoad` lists them as a near-duplicate for the review queue.
+4. **Identity is authored once.** `kgResolver.ts` imports `normalizeEntityName` from `networkEvidence.ts` rather than writing a
+   second normalizer, and the Python extractors record raw names only. The SQL stores the resolver's `kg_key`; a different value
+   for an identifier an entity already holds is refused (`identity_conflict`), never overwritten.
+
+**Gate results.** `rehearsal/960` ✓ (and every existing rehearsal); `kgResolver_test.ts` 8 ✓, now in `scsim-tests.yml`;
+`contract:check` holds (three sidecars at tier 3, audited); `dataPlaneAudit.test.ts` and `orgIdentity.test.ts` ✓. Deploys on merge,
+so no §15 reading exists yet — WP 19.8's.
+
 ## 17. Sequencing
 
 | Phase | WPs | Focus | Blocks | Status |
@@ -25270,7 +25326,7 @@ and §15 run `41283139980` taken in a push carrying no migration.
 | **16** | **16.0 – 16.6** | **stochastic lead times configured like demand (per supplier × material lane), a production lead time per product (P-P.13), and the FG inventory band laid out like the Supplier inventory band** | — | **16.0 ✅** the plan (§26), §4 D299–D302 registered from a verified reading (the brief's "`inbound_logistics` carries the spread" and "lead time is read-only" were both wrong by the time it ran — D290 had made the lead time an override), blueprint P-S.6 widened, P-P.13 added, §2.4's W^FG boundary made opt-in. **16.1 ✅** engine shapes (0.7.0): normal / triangular / uniform drawn per lane from a new world stream, CRN-safe under a changed primary, lognormal/gamma bit-identical · **16.2 ✅** per-lane data + mapper (`20261004000003`, rehearsal 840; D302 closed) · **16.3 ✅** Supplier cells: a shape per row and only its parameters, a bounded row's lead time is the bounds' mean (D299 closed) · **16.4 ✅** engine production lead time (0.8.0): starts complete at t + L through a per-product pipeline, the plan offset by E[L] net of WIP, WIP traced and uncharged, the honesty test extended · **16.5 ✅** product data + Plant cells (`20261004000004`, rehearsal 850; D300 closed) · **16.6 ✅** FG inventory laid out like the Supplier band (D301 closed). **PHASE COMPLETE** — §15 reading owed in the push after the merge |
 | **17** | **17.0 – 17.7** | **nexus by stress test: every material and supplier of a project disrupted alone under one shared scenario (full outage starting in week `max(26, t_w + 1)`, 2–9 weeks), the project's policies applied, shown as a table of lost sales in € per duration with an Average column it opens sorted by, stored with its baseline and read by the Nexus card with no Run click — first on `Project AA - ver3`** | — | **17.0 ✅** the plan (§27), §4 D310–D311 registered from a verified reading (a material cannot be disrupted; "week 26" needs a reference; backorder hides lost sales), four owner decisions settled 2026-10-21 (start week, the sortable table, €, GitHub Actions within its limits); targets are suppliers and the materials they supply, nothing else; the run-from-the-card flow written as WP 17.7 (Validated Model required; pick engine, baseline, data version). **17.1 ✅** engine 0.8.1: a material can be disrupted (D311 closed for the engine API; golden digests unmoved). **17.2 ✅** the battery (`scsim.stress.nexus`, 0.8.1 amendment; 12 tests). **17.3 ✅** the store (`20261021000001`, rehearsal 900): opens only on an active Validated Model, the server writes the binding, keyed on the simulation scope. **17.4** the job is built (`nexus-stress.yml`, `nexus_job.py`); its first run, for `Project AA - ver3`, is owed after the merge. **17.5 ✅** the card reads the stored battery: baseline, top three, the sortable table, no Run button |
 | **18** | **18.1 – 18.2** | **calendar time: a disruption start entered as a run week, an ISO 8601 week or a date through the project start (run week 0), what was entered kept beside the run week, every run stamped with the calendar it was read against, and the project window as the one authored run length** | — | **18.1 ✅** `calendarWeeks.ts` and `projectWindow.ts` are the only date↔week and run-length rules; `StartTimeControl` on the Lab and the network dialog; `simulation_runs.calendar_start` stamped at insert, past runs backfilled and labelled (`20261101000001`, rehearsal 940); the dialog's week-early date and the UTC+ day-early project start fixed (§4 D318). **18.2 ✅** the after-merge reading (§15 run `41220357251`): 164 backfilled, gates 0, every project start on 31 December — the UTC+ save bug, measured. **18.3 ✅** those windows moved to the days picked (`20261101000002`, rehearsal 950); runs keep their recorded calendar. **18.4 ✅** the after-merge reading (§15 run `41283139980`): every dated project starts on 1 January, gates 0. **18.5 ✅** one numbering: /policies counts run weeks from 0 like the engine and the Lab, dates beside each (D319). **Phase 18 complete** |
-| **19** | **19.0 – 19.8** | **the supply-chain knowledge graph: one identity per firm and site, per organization; evidence with time, independence and contradictions; four free structured sources; the Fairphone reference project; a gap finder and link hypotheses; the Cartographer reads the graph; a Network knowledge view** | — | planned — §29; owner decisions 2026-11-07 (per organization, all four sources, Fairphone, a new phase) |
+| **19** | **19.0 – 19.8** | **the supply-chain knowledge graph: one identity per firm and site, per organization; evidence with time, independence and contradictions; four free structured sources; three reference projects (Fairphone, Novo Nordisk, Zentiva); a gap finder and link hypotheses; the Cartographer reads the graph; a Network knowledge view** | — | **19.0 ✅** baseline + three companies · **19.1 ✅** identity registry (in the repository; deploys on merge) · 19.4 datasets built, loading next · the rest planned — §29 |
 
 **27 work packages** (26 + the five 5.2 sub-packages counted as one). WP 3.0 was added at the Phase 2→3 boundary review, for the reason boundary reviews exist: nine defects had an owner that had already finished, which reads exactly like having an owner.
 Commit convention: `Phase N / WP N.M / <blueprint ref>: <title>`.
@@ -28542,7 +28598,10 @@ per-project list of triples in `external_evidence` (tier 4) with no time, no mem
 independence beyond counting `source_id`s; and the agent extracts only from documents it is handed, with nothing telling it
 which gaps in the focal firm's network matter. **Owner decisions (2026-11-07):** the graph is **per organization**; **all four**
 free structured sources are in scope (GLEIF, Wikidata, Open Supply Hub, UN Comtrade); the first focal company is a **real EU
-electronics firm with public data and low legal risk** — Fairphone B.V. (Amsterdam), chosen in WP 19.0; this is a **new phase**.
+electronics firm with public data and low legal risk** — Fairphone B.V. (Amsterdam); this is a **new phase**. **Widened the same
+day to three reference companies** (owner: "make three companies and do it"): Fairphone (electronics, the company's own
+disclosures), **Novo Nordisk A/S** (Bagsværd, Denmark — originator pharma) and **Zentiva, k.s.** (Prague — generics), both
+mapped from European Medicines Agency public records because no pharma company publishes a supplier list.
 
 **The rules this phase is held to.**
 1. **A fact is never invented, and a prediction is never a fact.** A link enters the network only through `network_map_diff`
@@ -28559,7 +28618,7 @@ electronics firm with public data and low legal risk** — Fairphone B.V. (Amste
 6. **Every new table is in the contract the day it lands** — sidecar, natural key, audit triggers, rehearsal — gates
    `table-covered`, `natural-key`, `audit-actor`, `declared-capability`, `no-tier-skip`.
 
-### WP 19.0 — The plan, the baseline, and the focal company *(planned · no migration)*
+### WP 19.0 — The plan, the baseline, and the three reference companies ✅ *(done 2026-11-07 · no migration · §16 · WP 19.0)*
 
 - **Baseline, measured before anything changes:** B8's corpus precision / recall / F1 (`nc-10`'s scorer), entity-resolution
   accuracy on a new labelled fixture (same name / different country; a rename; parent vs subsidiary), and for the focal project
@@ -28577,7 +28636,7 @@ electronics firm with public data and low legal risk** — Fairphone B.V. (Amste
   before any automated fetch (documents are downloaded by hand until then); a correction from the company is applied as a
   `ceased` / `contradicted` assertion (WP 19.2), never argued.
 
-### WP 19.1 — One identity per firm and site *(planned · migration · gates `natural-key`, `uuid-identity`, `audit-actor`)*
+### WP 19.1 — One identity per firm and site ✅ *(done 2026-11-07 in the repository · migration `20261107000001`, deploys on merge · gates `natural-key`, `uuid-identity`, `audit-actor` · §16 · WP 19.1)*
 
 - `kg_entities` (tier 3): `organization_id`, `entity_type` (Company · Facility · Material · Product · Location), canonical name,
   country, identifiers (`lei`, `wikidata_qid`, `osh_id`), and `kg_key` — the strongest identifier as a string (`lei:…`, then
@@ -28611,7 +28670,16 @@ electronics firm with public data and low legal risk** — Fairphone B.V. (Amste
 - Each source is a `sourceRegistry.ts` row (role, licence, screening rule), lands through tier 0 → tier 1 → promotion like
   every other dataset, and refreshes from a scheduled workflow. The egress hosts need an environment change the owner approves.
 
-### WP 19.4 — The Fairphone reference project *(planned · data, no engine change)*
+### WP 19.4 — The three reference projects *(datasets built 2026-11-07 — `scripts/kg_reference/data/`; loading into a project waits for WP 19.2 · no engine change)*
+
+- **19.4a Fairphone** — Supply Chain Engagement report 2024, Annex 1 (128 supplier rows: 2 tier-1, 109 tier-2, 17 tier-3) and
+  Annex 2 (305 smelters and refiners with their RMI ids), parsed by column position (`build_fairphone.py`).
+- **19.4b Novo Nordisk** and **19.4c Zentiva** — the EMA medicines table lists their 29 and 14 authorised medicines; each one's
+  EPAR product information, Annex II.A, names the manufacturer(s) of the biological active substance and the manufacturer(s)
+  responsible for batch release (`build_ema.py`). Annex II.A never names who makes a small-molecule active ingredient, so the
+  pharma graphs are site graphs, and the datasets say so.
+
+The original 19.4 text, kept for the Fairphone half:
 
 - A project in the owner's organization built from Fairphone's own publications: the current model's supplier list annex
   (final assembly, component suppliers, sub-suppliers, facility locations), the smelter and refiner annex, and the LCA's
@@ -28647,7 +28715,7 @@ electronics firm with public data and low legal risk** — Fairphone B.V. (Amste
 Every organization's graph rows are readable only inside it; no assertion is `verified` with fewer than three independent
 sources; no hypothesis is linked to a project row; taken in the push after the merge (D153).
 
-**Order.** 19.0 → 19.1 → 19.2 → 19.4 → 19.5 → 19.3 → 19.6 → 19.7 → 19.8 (19.4 and 19.5 need only the two tables, so the
+**Order.** 19.0 ✅ → 19.1 ✅ → 19.2 → 19.4 (datasets ✅, load next) → 19.5 → 19.3 → 19.6 → 19.7 → 19.8 (19.4 and 19.5 need only the two tables, so the
 reference project and the gap finder do not wait for the external sources). **Out of scope:** licensed sources (FactSet,
 Bloomberg SPLC, Orbis, Panjiva — `ai-agents.md` §18.5, not wired); a graph shared across organizations; background
 extraction without a request (§18.4); anything that changes an engine input.

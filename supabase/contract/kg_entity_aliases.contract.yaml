@@ -1,0 +1,132 @@
+# AUTHORED — the data contract's sidecar for `kg_entity_aliases`.
+# Phase 19 / WP 19.1 (docs/PLAN.md §29). Edit this file; docs/data/tables/*.md is generated from it.
+table: kg_entity_aliases
+tier: "3"
+schema_name: public
+grain: >-
+  One other name an entity of an organization's knowledge graph goes by, with the source that used
+  it.
+owner: platform
+
+natural_key_unique:
+  - source: PRIMARY KEY constraint
+    columns: [id]
+    name: kg_entity_aliases_pkey
+  - source: UNIQUE index
+    columns: [organization_id, entity_id, normalized]
+    name: kg_entity_aliases_natural_key
+
+natural_key_intended: [organization_id, entity_id, normalized]
+
+governance:
+  read: null
+  write: null
+  min_project_role: viewer
+  audited: true
+  rls_enabled: true
+  note: >-
+    Per organization, and unlike external_evidence (readable by everyone) no API role may SELECT
+    it: RLS is on with no policy and no grant. Reads go through kg_list_entities, writes through
+    kg_upsert_entity and kg_queue_identity_review, each SECURITY DEFINER and each refusing an
+    actor outside the organization (insufficient_privilege) or no actor at all — the organization
+    check is kg_assert_org_member, and a super admin may read any graph. Audited at tier 3 by the
+    three statement-grain triggers (rehearsal/960 proves the row names the actor). Outside the
+    simulation: no engine input and no graph-hash scope reads it (PLAN.md §29 rule 4).
+
+surfaces: []
+
+fields:
+  id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      Surrogate key.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  organization_id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The organization whose graph this is.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  entity_id:
+    type: "uuid"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The entity this name belongs to.
+    grain: identifier
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+  alias:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The name as a source printed it.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  normalized:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The same name normalized by the shared normalizer (networkEvidence.ts normalizeEntityName),
+      the lookup key.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  source:
+    type: "text"
+    unit: null
+    unit_source: none
+    meaning: >-
+      The source that used this name, when known.
+    grain: level
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null
+    note: >-
+      Not an engine input: the knowledge graph stays outside the simulation until a fact is
+      applied into the project's own tables (docs/PLAN.md §29 rule 4).
+  created_at:
+    type: "timestamp with time zone"
+    unit: null
+    unit_source: none
+    meaning: >-
+      When the alias was recorded.
+    grain: metadata
+    engine: {consumed_by: null, transform: null, missing_default: null}
+    substitutions: []
+    ingest: {csv_header: null, required: false, validate: null}
+    surfaces: []
+    resolution: null

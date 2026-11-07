@@ -5,21 +5,21 @@
   "sources": {
     "introspected": {
       "generator": "scripts/data-contract/introspect.mjs",
-      "migrations_found": 414,
-      "migrations_applied": 406,
-      "last_migration": "20261101000002_project_dates_day_early.sql"
+      "migrations_found": 415,
+      "migrations_applied": 407,
+      "last_migration": "20261107000001_kg_entities.sql"
     },
-    "sidecars": 77,
+    "sidecars": 80,
     "registry": {
       "engine_version": "0.8.3",
       "policies": 23
     }
   },
   "counts": {
-    "tables_in_schema": 94,
-    "tables_covered": 77,
-    "columns_covered": 1026,
-    "check_constraints": 108,
+    "tables_in_schema": 97,
+    "tables_covered": 80,
+    "columns_covered": 1054,
+    "check_constraints": 117,
     "engine_requirements": 7,
     "orphans": 0,
     "phantom_tables": 0
@@ -15914,6 +15914,1288 @@
         }
       ],
       "note": "TIER 1, CREATED IN PHASE 3 / WP 3.2 — the fourth staging table and the last one of its kind. The three `ingest_staged_*` tables WP 3.1 renamed are TYPED against one source's entities (`external_id`, `sku`, `cycle_time_seconds`) because the connector knows what an orbit-mrp product is. A CSV of `inbound_logistics` is none of those things, and widening those three to hold it would have made each of them a table about two unrelated grains. So this one is generic where they are specific, and the generality is `ingestion-contract` (I7) working as intended: a new source lands here and never touches a tier-2 schema. WHAT IT CLOSES: the CSV path is the first in this repository for which `no-tier-skip` (I2) is true rather than aspirational. Before WP 3.2 a browser parsed the file and inserted straight into `inbound_logistics`.",
+      "analysis_kinds": null
+    },
+    "kg_entities": {
+      "table": "kg_entities",
+      "schema_name": "public",
+      "tier": "3",
+      "tier_name": "derived — a pure function of tier 2",
+      "grain": "One real firm, facility, product, material or location an organization's knowledge graph has evidence about — one identity, however many names the evidence uses for it (Phase 19, docs/PLAN.md §29).",
+      "owner": "platform",
+      "created_by": "20261107000001_kg_entities.sql",
+      "sidecar": "supabase/contract/kg_entities.contract.yaml",
+      "natural_key_unique": [
+        {
+          "source": "column PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "name": "kg_entities_pkey"
+        },
+        {
+          "source": "UNIQUE index",
+          "columns": [
+            "organization_id",
+            "kg_key"
+          ],
+          "name": "kg_entities_natural_key"
+        }
+      ],
+      "natural_key_intended": [
+        "organization_id",
+        "kg_key"
+      ],
+      "ingest_dataset": null,
+      "surfaces": [],
+      "governance": {
+        "read": null,
+        "write": null,
+        "min_project_role": "viewer",
+        "audited": true,
+        "rls_enabled": true,
+        "note": "Per organization, and unlike external_evidence (readable by everyone) no API role may SELECT it: RLS is on with no policy and no grant. Reads go through kg_list_entities, writes through kg_upsert_entity and kg_queue_identity_review, each SECURITY DEFINER and each refusing an actor outside the organization (insufficient_privilege) or no actor at all — the organization check is kg_assert_org_member, and a super admin may read any graph. Audited at tier 3 by the three statement-grain triggers (rehearsal/960 proves the row names the actor). Outside the simulation: no engine input and no graph-hash scope reads it (PLAN.md §29 rule 4)."
+      },
+      "rls": {
+        "enabled": true,
+        "forced": false,
+        "policies": [],
+        "determinate": true
+      },
+      "constraints": [
+        {
+          "name": "kg_entities_pkey",
+          "kind": "PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "definition": "PRIMARY KEY (id)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entities_entity_type_check",
+          "kind": "CHECK",
+          "columns": [
+            "entity_type"
+          ],
+          "definition": "CHECK (entity_type IN ('Company','Facility','Product','Material','Location'))",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entities_kg_key_check",
+          "kind": "CHECK",
+          "columns": [
+            "kg_key"
+          ],
+          "definition": "CHECK (kg_key ~ '^(lei|rmi|wd|osh|ema|name|product|material|country):.+')",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entities_name_check",
+          "kind": "CHECK",
+          "columns": [
+            "name"
+          ],
+          "definition": "CHECK (char_length(name) BETWEEN 1 AND 300)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entities_identifiers_check",
+          "kind": "CHECK",
+          "columns": [
+            "identifiers"
+          ],
+          "definition": "CHECK (jsonb_typeof(identifiers) = 'object')",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "kg_entities_natural_key",
+          "unique": true,
+          "columns": [
+            "organization_id",
+            "kg_key"
+          ],
+          "nulls_not_distinct": false,
+          "predicate": null,
+          "partial": false,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entities_type_idx",
+          "unique": false,
+          "columns": [
+            "organization_id",
+            "entity_type"
+          ],
+          "nulls_not_distinct": false,
+          "predicate": null,
+          "partial": false,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "Surrogate key; the natural key is (organization_id, kg_key).",
+          "grain": "identifier",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": {
+            "schema": "public",
+            "table": "organizations",
+            "columns": [
+              "id"
+            ],
+            "on_delete": "CASCADE"
+          },
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The organization whose graph this is. Every read and write checks the caller belongs to it (owner decision 2026-11-07: per organization).",
+          "grain": "identifier",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "entity_type",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "Company · Facility · Product · Material · Location (CHECK-constrained).",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "kg_key",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The strongest identifier as one string (lei:, rmi:, wd:, osh:, ema:, or name:<normalized>|<country>), computed once by the resolver in supabase/functions/_shared/kgResolver.ts and never re-derived here.",
+          "grain": "identifier",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The canonical display name. Never a join key (gate uuid-identity).",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "country",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "Country as the evidence states it; country matching is the resolver's.",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "identifiers",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "Registry identifiers the evidence gives (lei, rmi_cid, wikidata_qid, osh_id, website). A new key is added; a different value for a held key is refused as identity_conflict.",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "When the entity was first recorded.",
+          "grain": "metadata",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "When an identifier or country was last added.",
+          "grain": "metadata",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "created_by",
+          "type": "uuid",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The actor who first recorded it.",
+          "grain": "metadata",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        }
+      ],
+      "note": null,
+      "analysis_kinds": null
+    },
+    "kg_entity_aliases": {
+      "table": "kg_entity_aliases",
+      "schema_name": "public",
+      "tier": "3",
+      "tier_name": "derived — a pure function of tier 2",
+      "grain": "One other name an entity of an organization's knowledge graph goes by, with the source that used it.",
+      "owner": "platform",
+      "created_by": "20261107000001_kg_entities.sql",
+      "sidecar": "supabase/contract/kg_entity_aliases.contract.yaml",
+      "natural_key_unique": [
+        {
+          "source": "column PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "name": "kg_entity_aliases_pkey"
+        },
+        {
+          "source": "UNIQUE index",
+          "columns": [
+            "organization_id",
+            "entity_id",
+            "normalized"
+          ],
+          "name": "kg_entity_aliases_natural_key"
+        }
+      ],
+      "natural_key_intended": [
+        "organization_id",
+        "entity_id",
+        "normalized"
+      ],
+      "ingest_dataset": null,
+      "surfaces": [],
+      "governance": {
+        "read": null,
+        "write": null,
+        "min_project_role": "viewer",
+        "audited": true,
+        "rls_enabled": true,
+        "note": "Per organization, and unlike external_evidence (readable by everyone) no API role may SELECT it: RLS is on with no policy and no grant. Reads go through kg_list_entities, writes through kg_upsert_entity and kg_queue_identity_review, each SECURITY DEFINER and each refusing an actor outside the organization (insufficient_privilege) or no actor at all — the organization check is kg_assert_org_member, and a super admin may read any graph. Audited at tier 3 by the three statement-grain triggers (rehearsal/960 proves the row names the actor). Outside the simulation: no engine input and no graph-hash scope reads it (PLAN.md §29 rule 4)."
+      },
+      "rls": {
+        "enabled": true,
+        "forced": false,
+        "policies": [],
+        "determinate": true
+      },
+      "constraints": [
+        {
+          "name": "kg_entity_aliases_pkey",
+          "kind": "PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "definition": "PRIMARY KEY (id)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entity_aliases_alias_check",
+          "kind": "CHECK",
+          "columns": [
+            "alias"
+          ],
+          "definition": "CHECK (char_length(alias) BETWEEN 1 AND 300)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entity_aliases_normalized_check",
+          "kind": "CHECK",
+          "columns": [
+            "normalized"
+          ],
+          "definition": "CHECK (char_length(normalized) BETWEEN 1 AND 300)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "kg_entity_aliases_natural_key",
+          "unique": true,
+          "columns": [
+            "organization_id",
+            "entity_id",
+            "normalized"
+          ],
+          "nulls_not_distinct": false,
+          "predicate": null,
+          "partial": false,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_entity_aliases_lookup",
+          "unique": false,
+          "columns": [
+            "organization_id",
+            "normalized"
+          ],
+          "nulls_not_distinct": false,
+          "predicate": null,
+          "partial": false,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "Surrogate key.",
+          "grain": "identifier",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": {
+            "schema": "public",
+            "table": "organizations",
+            "columns": [
+              "id"
+            ],
+            "on_delete": "CASCADE"
+          },
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The organization whose graph this is.",
+          "grain": "identifier",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "entity_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": {
+            "schema": "public",
+            "table": "kg_entities",
+            "columns": [
+              "id"
+            ],
+            "on_delete": "CASCADE"
+          },
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The entity this name belongs to.",
+          "grain": "identifier",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "alias",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The name as a source printed it.",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "normalized",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The same name normalized by the shared normalizer (networkEvidence.ts normalizeEntityName), the lookup key.",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "source",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The source that used this name, when known.",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "When the alias was recorded.",
+          "grain": "metadata",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        }
+      ],
+      "note": null,
+      "analysis_kinds": null
+    },
+    "kg_identity_review": {
+      "table": "kg_identity_review",
+      "schema_name": "public",
+      "tier": "3",
+      "tier_name": "derived — a pure function of tier 2",
+      "grain": "One name in an organization's evidence that matched more than one entity, waiting for a person to decide — the resolver never picks (docs/PLAN.md §29 rule 3).",
+      "owner": "platform",
+      "created_by": "20261107000001_kg_entities.sql",
+      "sidecar": "supabase/contract/kg_identity_review.contract.yaml",
+      "natural_key_unique": [
+        {
+          "source": "column PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "name": "kg_identity_review_pkey"
+        },
+        {
+          "source": "UNIQUE index",
+          "columns": [
+            "organization_id",
+            "normalized",
+            "country"
+          ],
+          "name": "kg_identity_review_natural_key"
+        }
+      ],
+      "natural_key_intended": [
+        "organization_id",
+        "normalized",
+        "country"
+      ],
+      "ingest_dataset": null,
+      "surfaces": [],
+      "governance": {
+        "read": null,
+        "write": null,
+        "min_project_role": "viewer",
+        "audited": true,
+        "rls_enabled": true,
+        "note": "Per organization, and unlike external_evidence (readable by everyone) no API role may SELECT it: RLS is on with no policy and no grant. Reads go through kg_list_entities, writes through kg_upsert_entity and kg_queue_identity_review, each SECURITY DEFINER and each refusing an actor outside the organization (insufficient_privilege) or no actor at all — the organization check is kg_assert_org_member, and a super admin may read any graph. Audited at tier 3 by the three statement-grain triggers (rehearsal/960 proves the row names the actor). Outside the simulation: no engine input and no graph-hash scope reads it (PLAN.md §29 rule 4)."
+      },
+      "rls": {
+        "enabled": true,
+        "forced": false,
+        "policies": [],
+        "determinate": true
+      },
+      "constraints": [
+        {
+          "name": "kg_identity_review_pkey",
+          "kind": "PRIMARY KEY",
+          "columns": [
+            "id"
+          ],
+          "definition": "PRIMARY KEY (id)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_identity_review_mention_check",
+          "kind": "CHECK",
+          "columns": [
+            "mention"
+          ],
+          "definition": "CHECK (char_length(mention) BETWEEN 1 AND 300)",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_identity_review_candidates_check",
+          "kind": "CHECK",
+          "columns": [
+            "candidates"
+          ],
+          "definition": "CHECK (jsonb_typeof(candidates) = 'array')",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        },
+        {
+          "name": "kg_identity_review_status_check",
+          "kind": "CHECK",
+          "columns": [
+            "status"
+          ],
+          "definition": "CHECK (status IN ('pending','resolved','dismissed'))",
+          "implicit": true,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "kg_identity_review_natural_key",
+          "unique": true,
+          "columns": [
+            "organization_id",
+            "normalized",
+            "country"
+          ],
+          "nulls_not_distinct": true,
+          "predicate": null,
+          "partial": false,
+          "added_by": "20261107000001_kg_entities.sql"
+        }
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "Surrogate key.",
+          "grain": "identifier",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "organization_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": {
+            "schema": "public",
+            "table": "organizations",
+            "columns": [
+              "id"
+            ],
+            "on_delete": "CASCADE"
+          },
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The organization whose graph this is.",
+          "grain": "identifier",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "mention",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The name as the evidence printed it.",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "normalized",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The normalized name the resolver looked up.",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "country",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The country the evidence gave, if any (part of the key; NULLS NOT DISTINCT).",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "candidates",
+          "type": "jsonb",
+          "nullable": false,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The entities it could be, as the resolver found them.",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": "'pending'",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "pending · resolved · dismissed.",
+          "grain": "level",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": "Not an engine input: the knowledge graph stays outside the simulation until a fact is applied into the project's own tables (docs/PLAN.md §29 rule 4).",
+          "engine_requirement": null
+        },
+        {
+          "name": "resolved_entity_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": {
+            "schema": "public",
+            "table": "kg_entities",
+            "columns": [
+              "id"
+            ],
+            "on_delete": "SET NULL"
+          },
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "The entity a person chose.",
+          "grain": "identifier",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "When the name was queued.",
+          "grain": "metadata",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "When a person decided.",
+          "grain": "metadata",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        },
+        {
+          "name": "resolved_by",
+          "type": "uuid",
+          "nullable": true,
+          "default": null,
+          "primary_key": false,
+          "unique": false,
+          "references": null,
+          "added_by": "20261107000001_kg_entities.sql",
+          "unit": null,
+          "unit_source": "none",
+          "unit_column": null,
+          "normalize_at_promotion": null,
+          "meaning": "Who decided.",
+          "grain": "metadata",
+          "computed_by": null,
+          "engine": {
+            "consumed_by": null,
+            "transform": null,
+            "missing_default": null
+          },
+          "substitutions": [],
+          "ingest": {
+            "csv_header": null,
+            "required": false,
+            "validate": null
+          },
+          "surfaces": [],
+          "resolution": null,
+          "note": null,
+          "engine_requirement": null
+        }
+      ],
+      "note": null,
       "analysis_kinds": null
     },
     "materials": {
@@ -45273,5 +46555,5 @@
   },
   "orphans": [],
   "phantom_tables": [],
-  "contract_version": "62a6e8587a37"
+  "contract_version": "228de9f30b2e"
 }

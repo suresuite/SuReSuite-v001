@@ -5,8 +5,8 @@
 > **GENERATED** — one page per table the data contract covers. Edit the sidecars in
 > `supabase/contract/`, not these pages.
 
-77 of 94 tables are covered,
-1026 columns in all. A table that is not here is listed
+80 of 97 tables are covered,
+1054 columns in all. A table that is not here is listed
 with its reason in [`scripts/data-contract/coverage.yaml`](../../../scripts/data-contract/coverage.yaml);
 `npm run contract:check` fails on a table that is in neither.
 
@@ -41,6 +41,9 @@ with its reason in [`scripts/data-contract/coverage.yaml`](../../../scripts/data
 | [`ingest_staged_bom_versions`](ingest_staged_bom_versions.md) | 1 | `data-ingestion` | 12 | One BOM header as one source sent it, inside one run — a named version of a product's bill of materials, whose lines are staged in `ingest_staged_bom_lines`. |
 | [`ingest_staged_products`](ingest_staged_products.md) | 1 | `data-ingestion` | 19 | One item-master row as one source sent it, inside one run. The source's own shape plus provenance — not the project's shape, which it takes on at promotion. |
 | [`ingest_staged_rows`](ingest_staged_rows.md) | 1 | `data-ingestion` | 11 | One row of one uploaded file, in one run: the cells as received beside what validation made of them, and the findings that explain the difference. The unit a reviewer reads when a number looks wrong — and the only place in the system where the left-hand side of a parse survives. |
+| [`kg_entities`](kg_entities.md) | 3 | `platform` | 10 | One real firm, facility, product, material or location an organization's knowledge graph has evidence about — one identity, however many names the evidence uses for it (Phase 19, docs/PLAN.md §29). |
+| [`kg_entity_aliases`](kg_entity_aliases.md) | 3 | `platform` | 7 | One other name an entity of an organization's knowledge graph goes by, with the source that used it. |
+| [`kg_identity_review`](kg_identity_review.md) | 3 | `platform` | 11 | One name in an organization's evidence that matched more than one entity, waiting for a person to decide — the resolver never picks (docs/PLAN.md §29 rule 3). |
 | [`materials`](materials.md) | 2 | `data-ingestion` | 16 | One material in one project: the economics the simulation reads for it. The precision path — the CSV lanes carry prices too, and where this row is silent the engine derives the value from them rather than treating it as missing. |
 | [`model_validation_evidence`](model_validation_evidence.md) | 4 | `policy-ui` | 10 | The evidence one Validated Model rests on, kept beside it rather than summarised into it: per-KPI warm-up series and detector outputs, the replication analysis, the per-KPI tests, the face-validation statement and the evidence runs. One row per model, written with it, never edited (WP 10.3, §4 D243). |
 | [`model_validations`](model_validations.md) | 4 | `policy-ui` | 38 | One VALIDATED MODEL: a decision about how a project's model may be used, bound to the exact policy content, graph version and scenario world it was established on and stating the run protocol every decision-grade run must follow — how many seeds, the week steady state begins, horizon, analysis window, CI level and stopping rule — with who validated it and when. Immutable: only its lifecycle (status, supersession, revocation) changes. Matched by CONTENT, never by id (WP 10.2). |
@@ -92,4 +95,4 @@ with its reason in [`scripts/data-contract/coverage.yaml`](../../../scripts/data
 
 ---
 
-*Generated from data contract `62a6e8587a37`, engine `0.8.3`.*
+*Generated from data contract `228de9f30b2e`, engine `0.8.3`.*

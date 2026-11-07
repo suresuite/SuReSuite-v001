@@ -2020,7 +2020,7 @@ export const DOCS_INDEX: Record<string, DocsIndexEntry> = {
     ]
   },
   "all-tables": {
-    "minutes": 222,
+    "minutes": 225,
     "sections": [
       {
         "id": "how-to-read-this",
@@ -2141,6 +2141,18 @@ export const DOCS_INDEX: Record<string, DocsIndexEntry> = {
       {
         "id": "ingest_staged_rows",
         "title": "ingest_staged_rows"
+      },
+      {
+        "id": "kg_entities",
+        "title": "kg_entities"
+      },
+      {
+        "id": "kg_entity_aliases",
+        "title": "kg_entity_aliases"
+      },
+      {
+        "id": "kg_identity_review",
+        "title": "kg_identity_review"
       },
       {
         "id": "materials",
@@ -2403,7 +2415,7 @@ export const DOCS_INDEX: Record<string, DocsIndexEntry> = {
     ]
   },
   "field-index": {
-    "minutes": 25,
+    "minutes": 26,
     "sections": [
       {
         "id": "how-to-use-this",

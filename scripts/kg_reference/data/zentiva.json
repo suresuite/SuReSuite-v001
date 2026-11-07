@@ -1,0 +1,1458 @@
+{
+ "dataset": "zentiva",
+ "label": "Mapped from public European Medicines Agency records (EPAR product information, Annex II.A). Not endorsed by or affiliated with Zentiva, k.s.. Names manufacturing and batch-release sites only; says nothing about who makes a small-molecule active ingredient, volumes or availability.",
+ "focal": "focal",
+ "sources": [
+  "ema-medicines-output",
+  "ema-epar-pi-aripiprazole-zentiva",
+  "ema-epar-pi-clopidogrel-zentiva",
+  "ema-epar-pi-duloxetine-zentiva",
+  "ema-epar-pi-efavirenz-emtricitabine-tenofovir-disoproxil-zentiva",
+  "ema-epar-pi-emtricitabine-tenofovir-disoproxil-zentiva",
+  "ema-epar-pi-enwylma",
+  "ema-epar-pi-irbesartan-zentiva",
+  "ema-epar-pi-ivabradine-zentiva",
+  "ema-epar-pi-leflunomide-zentiva",
+  "ema-epar-pi-pomalidomide-zentiva",
+  "ema-epar-pi-pregabalin-zentiva",
+  "ema-epar-pi-riluzole-zentiva",
+  "ema-epar-pi-tenofovir-disoproxil-zentiva",
+  "ema-epar-pi-zadenvi"
+ ],
+ "counts": {
+  "products": 14,
+  "sites": 23,
+  "site_assertions": 28,
+  "products_without_annex_iia": 0
+ },
+ "skipped": [],
+ "entities": [
+  {
+   "ref": "focal",
+   "type": "Company",
+   "name": "Zentiva, k.s.",
+   "country": "Czechia",
+   "identifiers": {}
+  },
+  {
+   "ref": "holder:1",
+   "type": "Company",
+   "name": "Zentiva k.s.",
+   "country": null,
+   "identifiers": {}
+  },
+  {
+   "ref": "product:aripiprazole-zentiva",
+   "type": "Product",
+   "name": "Aripiprazole Zentiva",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/003899",
+    "active_substance": "aripiprazole",
+    "generic": "Yes",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:001",
+   "type": "Facility",
+   "name": "S.C. Zentiva S.A.",
+   "country": "Romania",
+   "identifiers": {},
+   "address": "B-dul Theodor Pallady nr.50, sector 3,, Bucureşti, cod 032266, Romania"
+  },
+  {
+   "ref": "site:002",
+   "type": "Facility",
+   "name": "LAMP SAN PROSPERO SPA",
+   "country": "Italy",
+   "identifiers": {},
+   "address": "VIA DELLA PACE 25/A, SAN PROSPERO (MO), 41030, Italy"
+  },
+  {
+   "ref": "product:clopidogrel-zentiva",
+   "type": "Product",
+   "name": "Clopidogrel Zentiva (previously Clopidogrel Winthrop)",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000975",
+    "active_substance": "clopidogrel",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:003",
+   "type": "Facility",
+   "name": "Sanofi Winthrop Industrie",
+   "country": "France",
+   "identifiers": {},
+   "address": "1, rue de la Vierge, Ambarès & Lagrave, F-33565 Carbon Blanc cedex, France"
+  },
+  {
+   "ref": "site:004",
+   "type": "Facility",
+   "name": "Delpharm Dijon",
+   "country": "France",
+   "identifiers": {},
+   "address": "6, Boulevard de l’Europe, F-21800 Quétigny, France"
+  },
+  {
+   "ref": "site:005",
+   "type": "Facility",
+   "name": "S.C. Zentiva S.A.",
+   "country": "Romania",
+   "identifiers": {},
+   "address": "B-dul Theodor Pallady nr. 50, sector 3,, 032266 Bukarest, Romania"
+  },
+  {
+   "ref": "product:duloxetine-zentiva",
+   "type": "Product",
+   "name": "Duloxetine Zentiva",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/003935",
+    "active_substance": "duloxetine",
+    "generic": "Yes",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:006",
+   "type": "Facility",
+   "name": "Zentiva S.A.",
+   "country": "Romania",
+   "identifiers": {},
+   "address": "Bulevardul Pallady Theodor Nr. 50, 032266 Bucharest, Romania"
+  },
+  {
+   "ref": "product:efavirenz-emtricitabine-tenofovir-disoproxil-zentiva",
+   "type": "Product",
+   "name": "Efavirenz/Emtricitabine/Tenofovir disoproxil Zentiva",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/004250",
+    "active_substance": "efavirenz;emtricitabine;tenofovir disoproxil phosphate",
+    "generic": "Yes",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:007",
+   "type": "Facility",
+   "name": "S.C. Zentiva S.A.",
+   "country": "Romania",
+   "identifiers": {},
+   "address": "Bvd. Theodor Pallady, nr. 50, Sector 3, 032266 Bucharest, Romania"
+  },
+  {
+   "ref": "product:emtricitabine-tenofovir-disoproxil-zentiva",
+   "type": "Product",
+   "name": "Emtricitabine/Tenofovir disoproxil Zentiva",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/004137",
+    "active_substance": "emtricitabine;tenofovir disoproxil phosphate",
+    "generic": "Yes",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:008",
+   "type": "Facility",
+   "name": "S.C. Zentiva S.A.",
+   "country": "Romania",
+   "identifiers": {},
+   "address": "50 Theodor Pallady Blvd., Bucharest 032266, Romania"
+  },
+  {
+   "ref": "product:enwylma",
+   "type": "Product",
+   "name": "Enwylma",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/006376",
+    "active_substance": null,
+    "generic": "No",
+    "biosimilar": "Yes"
+   }
+  },
+  {
+   "ref": "site:009",
+   "type": "Facility",
+   "name": "GH GENHELIX S.A.",
+   "country": "Spain",
+   "identifiers": {},
+   "address": "Parque Tecnológico de León, Edifício GENHELIX, C/Julia Morros, s/n, Armunia, 24009 León, Spain"
+  },
+  {
+   "ref": "product:irbesartan-zentiva",
+   "type": "Product",
+   "name": "Irbesartan Zentiva (previously Irbesartan Winthrop)",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000785",
+    "active_substance": "irbesartan",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:010",
+   "type": "Facility",
+   "name": "Sanofi Winthrop Industrie",
+   "country": "France",
+   "identifiers": {},
+   "address": "1 Rue de la vierge, Ambarès et Lagrave, 33 565 Carbon Blanc cedex, France"
+  },
+  {
+   "ref": "site:011",
+   "type": "Facility",
+   "name": "Sanofi Winthrop Industrie",
+   "country": "France",
+   "identifiers": {},
+   "address": "30-36 Avenue Gustave Eiffel, 37 100 Tours, France"
+  },
+  {
+   "ref": "site:012",
+   "type": "Facility",
+   "name": "Zentiva, k.s.",
+   "country": "Czech Republic",
+   "identifiers": {},
+   "address": "U kabelovny 130, 102 37 Prague 10, Czech Republic"
+  },
+  {
+   "ref": "site:013",
+   "type": "Facility",
+   "name": "Sanofi-Aventis, S.A.",
+   "country": "Spain",
+   "identifiers": {},
+   "address": "Ctra. C-35 (La Batlloria-Hostalric), km. 63.09, 17404 Riells i Viabrea (Girona), Spain"
+  },
+  {
+   "ref": "product:ivabradine-zentiva",
+   "type": "Product",
+   "name": "Ivabradine Zentiva",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/004117",
+    "active_substance": "ivabradine hydrochloride",
+    "generic": "Yes",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:014",
+   "type": "Facility",
+   "name": "Zentiva, k.s.",
+   "country": "Czech Republic",
+   "identifiers": {},
+   "address": "U Kabelovny 130, Dolni Měcholupy, 102 37 Prague 10, Czech Republic"
+  },
+  {
+   "ref": "site:015",
+   "type": "Facility",
+   "name": "S.C. Zentiva S.A",
+   "country": "Romania",
+   "identifiers": {},
+   "address": "50 Theodor Pallady Blvd,, District 3,, 032266 Bucharest, Romania"
+  },
+  {
+   "ref": "product:leflunomide-zentiva",
+   "type": "Product",
+   "name": "Leflunomide Zentiva (previously Leflunomide Winthrop)",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/001129",
+    "active_substance": "leflunomide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:016",
+   "type": "Facility",
+   "name": "Opella Healthcare International SAS",
+   "country": "France",
+   "identifiers": {},
+   "address": "56, Route de Choisy, 60200 Compiègne, France"
+  },
+  {
+   "ref": "site:017",
+   "type": "Facility",
+   "name": "LABORMED- PHARMA S.A.",
+   "country": "Romania",
+   "identifiers": {},
+   "address": "B-dul. Theodor Pallady no. 44B, sector 3, code 032266, Bucharest,, Romania"
+  },
+  {
+   "ref": "site:018",
+   "type": "Facility",
+   "name": "ZENTIVA S.A.",
+   "country": "Romania",
+   "identifiers": {},
+   "address": "B-dul. Theodor Pallady no. 50, sector 3, code 032266, Bucharest,, Romania"
+  },
+  {
+   "ref": "product:pomalidomide-zentiva",
+   "type": "Product",
+   "name": "Pomalidomide Zentiva",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/006294",
+    "active_substance": "Pomalidomide",
+    "generic": "Yes",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:019",
+   "type": "Facility",
+   "name": "Synthon Hispania S.L.",
+   "country": "Spain",
+   "identifiers": {},
+   "address": "Calle De Castello 1, 08830 Sant Boi de Llobregat, Spain"
+  },
+  {
+   "ref": "site:020",
+   "type": "Facility",
+   "name": "Synthon B.V.",
+   "country": "The Netherlands",
+   "identifiers": {},
+   "address": "Microweg 22, 6545 CM Nijmegen, The Netherlands"
+  },
+  {
+   "ref": "product:pregabalin-zentiva",
+   "type": "Product",
+   "name": "Pregabalin Zentiva",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/003900",
+    "active_substance": "pregabalin",
+    "generic": "Yes",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:021",
+   "type": "Facility",
+   "name": "Zentiva, k.s.",
+   "country": "Czech Republic",
+   "identifiers": {},
+   "address": "U Kabelovny 130, 102 37 Prague 10, Czech Republic"
+  },
+  {
+   "ref": "site:022",
+   "type": "Facility",
+   "name": "S.C. Zentiva, S.A.",
+   "country": "Romania",
+   "identifiers": {},
+   "address": "B-dul Theodor Pallady nr.50, sector 3, Bucharest, cod 032266, Romania"
+  },
+  {
+   "ref": "product:riluzole-zentiva",
+   "type": "Product",
+   "name": "Riluzole Zentiva",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/002622",
+    "active_substance": "riluzole",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:tenofovir-disoproxil-zentiva",
+   "type": "Product",
+   "name": "Tenofovir disoproxil Zentiva",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/004120",
+    "active_substance": "tenofovir disoproxil phosphate",
+    "generic": "Yes",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:023",
+   "type": "Facility",
+   "name": "Winthrop Arzneimittel GmbH",
+   "country": "Germany",
+   "identifiers": {},
+   "address": "Brüningstraße 50, 65926 Frankfurt am Main, Germany"
+  },
+  {
+   "ref": "product:zadenvi",
+   "type": "Product",
+   "name": "Zadenvi",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/006377",
+    "active_substance": "denosumab",
+    "generic": "No",
+    "biosimilar": "Yes"
+   }
+  },
+  {
+   "ref": "country:Czech Republic",
+   "type": "Location",
+   "name": "Czech Republic",
+   "country": "Czech Republic",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:Czechia",
+   "type": "Location",
+   "name": "Czechia",
+   "country": "Czechia",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:France",
+   "type": "Location",
+   "name": "France",
+   "country": "France",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:Germany",
+   "type": "Location",
+   "name": "Germany",
+   "country": "Germany",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:Italy",
+   "type": "Location",
+   "name": "Italy",
+   "country": "Italy",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:Romania",
+   "type": "Location",
+   "name": "Romania",
+   "country": "Romania",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:Spain",
+   "type": "Location",
+   "name": "Spain",
+   "country": "Spain",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:The Netherlands",
+   "type": "Location",
+   "name": "The Netherlands",
+   "country": "The Netherlands",
+   "identifiers": {}
+  }
+ ],
+ "assertions": [
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:aripiprazole-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Aripiprazole Zentiva Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "LocatedIn",
+   "object": "country:Romania",
+   "qualifier": {
+    "address": "B-dul Theodor Pallady nr.50, sector 3,, Bucureşti, cod 032266, Romania"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-aripiprazole-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A. B-dul Theodor Pallady nr.50, sector 3, Bucureşti, cod 032266 Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:aripiprazole-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-aripiprazole-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A. B-dul Theodor Pallady nr.50, sector 3, Bucureşti, cod 032266 Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "LocatedIn",
+   "object": "country:Italy",
+   "qualifier": {
+    "address": "VIA DELLA PACE 25/A, SAN PROSPERO (MO), 41030, Italy"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-aripiprazole-zentiva",
+     "page": null,
+     "fragment": "LAMP SAN PROSPERO SPA VIA DELLA PACE 25/A SAN PROSPERO (MO) 41030 Italy"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:aripiprazole-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-aripiprazole-zentiva",
+     "page": null,
+     "fragment": "LAMP SAN PROSPERO SPA VIA DELLA PACE 25/A SAN PROSPERO (MO) 41030 Italy"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:clopidogrel-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Clopidogrel Zentiva (previously Clopidogrel Winthrop) Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "LocatedIn",
+   "object": "country:France",
+   "qualifier": {
+    "address": "1, rue de la Vierge, Ambarès & Lagrave, F-33565 Carbon Blanc cedex, France"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-clopidogrel-zentiva",
+     "page": null,
+     "fragment": "Sanofi Winthrop Industrie 1, rue de la Vierge Ambarès & Lagrave F-33565 Carbon Blanc cedex France"
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "SuppliesTo",
+   "object": "product:clopidogrel-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Clopidogrel Zentiva 75 mg film-coated tablets"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-clopidogrel-zentiva",
+     "page": null,
+     "fragment": "Sanofi Winthrop Industrie 1, rue de la Vierge Ambarès & Lagrave F-33565 Carbon Blanc cedex France"
+    }
+   ]
+  },
+  {
+   "subject": "site:004",
+   "relation": "LocatedIn",
+   "object": "country:France",
+   "qualifier": {
+    "address": "6, Boulevard de l’Europe, F-21800 Quétigny, France"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-clopidogrel-zentiva",
+     "page": null,
+     "fragment": "Delpharm Dijon 6, Boulevard de l’Europe F-21800 Quétigny France"
+    }
+   ]
+  },
+  {
+   "subject": "site:004",
+   "relation": "SuppliesTo",
+   "object": "product:clopidogrel-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Clopidogrel Zentiva 75 mg film-coated tablets"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-clopidogrel-zentiva",
+     "page": null,
+     "fragment": "Delpharm Dijon 6, Boulevard de l’Europe F-21800 Quétigny France"
+    }
+   ]
+  },
+  {
+   "subject": "site:005",
+   "relation": "LocatedIn",
+   "object": "country:Romania",
+   "qualifier": {
+    "address": "B-dul Theodor Pallady nr. 50, sector 3,, 032266 Bukarest, Romania"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-clopidogrel-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A. B-dul Theodor Pallady nr. 50, sector 3, 032266 Bukarest Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:005",
+   "relation": "SuppliesTo",
+   "object": "product:clopidogrel-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Clopidogrel Zentiva 75 mg film-coated tablets"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-clopidogrel-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A. B-dul Theodor Pallady nr. 50, sector 3, 032266 Bukarest Romania"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:duloxetine-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Duloxetine Zentiva Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:006",
+   "relation": "LocatedIn",
+   "object": "country:Romania",
+   "qualifier": {
+    "address": "Bulevardul Pallady Theodor Nr. 50, 032266 Bucharest, Romania"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-duloxetine-zentiva",
+     "page": null,
+     "fragment": "Zentiva S.A. Bulevardul Pallady Theodor Nr. 50 032266 Bucharest Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:006",
+   "relation": "SuppliesTo",
+   "object": "product:duloxetine-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-duloxetine-zentiva",
+     "page": null,
+     "fragment": "Zentiva S.A. Bulevardul Pallady Theodor Nr. 50 032266 Bucharest Romania"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:efavirenz-emtricitabine-tenofovir-disoproxil-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Efavirenz/Emtricitabine/Tenofovir disoproxil Zentiva Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:007",
+   "relation": "LocatedIn",
+   "object": "country:Romania",
+   "qualifier": {
+    "address": "Bvd. Theodor Pallady, nr. 50, Sector 3, 032266 Bucharest, Romania"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-efavirenz-emtricitabine-tenofovir-disoproxil-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A. Bvd. Theodor Pallady, nr. 50 Sector 3 032266 Bucharest Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:007",
+   "relation": "SuppliesTo",
+   "object": "product:efavirenz-emtricitabine-tenofovir-disoproxil-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-efavirenz-emtricitabine-tenofovir-disoproxil-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A. Bvd. Theodor Pallady, nr. 50 Sector 3 032266 Bucharest Romania"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:emtricitabine-tenofovir-disoproxil-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Emtricitabine/Tenofovir disoproxil Zentiva Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:008",
+   "relation": "LocatedIn",
+   "object": "country:Romania",
+   "qualifier": {
+    "address": "50 Theodor Pallady Blvd., Bucharest 032266, Romania"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-emtricitabine-tenofovir-disoproxil-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A. 50 Theodor Pallady Blvd. Bucharest 032266 Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:008",
+   "relation": "SuppliesTo",
+   "object": "product:emtricitabine-tenofovir-disoproxil-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-emtricitabine-tenofovir-disoproxil-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A. 50 Theodor Pallady Blvd. Bucharest 032266 Romania"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:enwylma",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Enwylma Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:009",
+   "relation": "LocatedIn",
+   "object": "country:Spain",
+   "qualifier": {
+    "address": "Parque Tecnológico de León, Edifício GENHELIX, C/Julia Morros, s/n, Armunia, 24009 León, Spain"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-enwylma",
+     "page": null,
+     "fragment": "GH GENHELIX S.A. Parque Tecnológico de León Edifício GENHELIX C/Julia Morros, s/n Armunia, 24009 León, Spain"
+    }
+   ]
+  },
+  {
+   "subject": "site:009",
+   "relation": "SuppliesTo",
+   "object": "product:enwylma",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-enwylma",
+     "page": null,
+     "fragment": "GH GENHELIX S.A. Parque Tecnológico de León Edifício GENHELIX C/Julia Morros, s/n Armunia, 24009 León, Spain"
+    }
+   ]
+  },
+  {
+   "subject": "site:009",
+   "relation": "SuppliesTo",
+   "object": "product:enwylma",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-enwylma",
+     "page": null,
+     "fragment": "GH GENHELIX S.A. Parque Tecnológico de León Edifício GENHELIX C/Julia Morros, s/n Armunia, 24009 León, Spain"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:irbesartan-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Irbesartan Zentiva (previously Irbesartan Winthrop) Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:010",
+   "relation": "LocatedIn",
+   "object": "country:France",
+   "qualifier": {
+    "address": "1 Rue de la vierge, Ambarès et Lagrave, 33 565 Carbon Blanc cedex, France"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-irbesartan-zentiva",
+     "page": null,
+     "fragment": "Sanofi Winthrop Industrie 1 Rue de la vierge Ambarès et Lagrave 33 565 Carbon Blanc cedex France"
+    }
+   ]
+  },
+  {
+   "subject": "site:010",
+   "relation": "SuppliesTo",
+   "object": "product:irbesartan-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-irbesartan-zentiva",
+     "page": null,
+     "fragment": "Sanofi Winthrop Industrie 1 Rue de la vierge Ambarès et Lagrave 33 565 Carbon Blanc cedex France"
+    }
+   ]
+  },
+  {
+   "subject": "site:011",
+   "relation": "LocatedIn",
+   "object": "country:France",
+   "qualifier": {
+    "address": "30-36 Avenue Gustave Eiffel, 37 100 Tours, France"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-irbesartan-zentiva",
+     "page": null,
+     "fragment": "Sanofi Winthrop Industrie 30-36 Avenue Gustave Eiffel 37 100 Tours France"
+    }
+   ]
+  },
+  {
+   "subject": "site:011",
+   "relation": "SuppliesTo",
+   "object": "product:irbesartan-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-irbesartan-zentiva",
+     "page": null,
+     "fragment": "Sanofi Winthrop Industrie 30-36 Avenue Gustave Eiffel 37 100 Tours France"
+    }
+   ]
+  },
+  {
+   "subject": "site:012",
+   "relation": "LocatedIn",
+   "object": "country:Czech Republic",
+   "qualifier": {
+    "address": "U kabelovny 130, 102 37 Prague 10, Czech Republic"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-irbesartan-zentiva",
+     "page": null,
+     "fragment": "Zentiva, k.s. U kabelovny 130 102 37 Prague 10 Czech Republic"
+    }
+   ]
+  },
+  {
+   "subject": "site:012",
+   "relation": "SuppliesTo",
+   "object": "product:irbesartan-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-irbesartan-zentiva",
+     "page": null,
+     "fragment": "Zentiva, k.s. U kabelovny 130 102 37 Prague 10 Czech Republic"
+    }
+   ]
+  },
+  {
+   "subject": "site:013",
+   "relation": "LocatedIn",
+   "object": "country:Spain",
+   "qualifier": {
+    "address": "Ctra. C-35 (La Batlloria-Hostalric), km. 63.09, 17404 Riells i Viabrea (Girona), Spain"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-irbesartan-zentiva",
+     "page": null,
+     "fragment": "Sanofi-Aventis, S.A. Ctra. C-35 (La Batlloria-Hostalric), km. 63.09 17404 Riells i Viabrea (Girona) Spain"
+    }
+   ]
+  },
+  {
+   "subject": "site:013",
+   "relation": "SuppliesTo",
+   "object": "product:irbesartan-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-irbesartan-zentiva",
+     "page": null,
+     "fragment": "Sanofi-Aventis, S.A. Ctra. C-35 (La Batlloria-Hostalric), km. 63.09 17404 Riells i Viabrea (Girona) Spain"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:ivabradine-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Ivabradine Zentiva Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:014",
+   "relation": "LocatedIn",
+   "object": "country:Czech Republic",
+   "qualifier": {
+    "address": "U Kabelovny 130, Dolni Měcholupy, 102 37 Prague 10, Czech Republic"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ivabradine-zentiva",
+     "page": null,
+     "fragment": "Zentiva, k.s. U Kabelovny 130 Dolni Měcholupy 102 37 Prague 10 Czech Republic"
+    }
+   ]
+  },
+  {
+   "subject": "site:014",
+   "relation": "SuppliesTo",
+   "object": "product:ivabradine-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ivabradine-zentiva",
+     "page": null,
+     "fragment": "Zentiva, k.s. U Kabelovny 130 Dolni Měcholupy 102 37 Prague 10 Czech Republic"
+    }
+   ]
+  },
+  {
+   "subject": "site:015",
+   "relation": "LocatedIn",
+   "object": "country:Romania",
+   "qualifier": {
+    "address": "50 Theodor Pallady Blvd,, District 3,, 032266 Bucharest, Romania"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ivabradine-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A 50 Theodor Pallady Blvd, District 3, 032266 Bucharest Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:015",
+   "relation": "SuppliesTo",
+   "object": "product:ivabradine-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ivabradine-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A 50 Theodor Pallady Blvd, District 3, 032266 Bucharest Romania"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:leflunomide-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Leflunomide Zentiva (previously Leflunomide Winthrop) Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:016",
+   "relation": "LocatedIn",
+   "object": "country:France",
+   "qualifier": {
+    "address": "56, Route de Choisy, 60200 Compiègne, France"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-leflunomide-zentiva",
+     "page": null,
+     "fragment": "Opella Healthcare International SAS 56, Route de Choisy 60200 Compiègne France"
+    }
+   ]
+  },
+  {
+   "subject": "site:016",
+   "relation": "SuppliesTo",
+   "object": "product:leflunomide-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Leflunomide Zentiva 100 mg film-coated tablets"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-leflunomide-zentiva",
+     "page": null,
+     "fragment": "Opella Healthcare International SAS 56, Route de Choisy 60200 Compiègne France"
+    }
+   ]
+  },
+  {
+   "subject": "site:017",
+   "relation": "LocatedIn",
+   "object": "country:Romania",
+   "qualifier": {
+    "address": "B-dul. Theodor Pallady no. 44B, sector 3, code 032266, Bucharest,, Romania"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-leflunomide-zentiva",
+     "page": null,
+     "fragment": "LABORMED- PHARMA S.A. B-dul. Theodor Pallady no. 44B, sector 3 code 032266, Bucharest, Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:017",
+   "relation": "SuppliesTo",
+   "object": "product:leflunomide-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Leflunomide Zentiva 10 mg, 20 mg film-coated tablets"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-leflunomide-zentiva",
+     "page": null,
+     "fragment": "LABORMED- PHARMA S.A. B-dul. Theodor Pallady no. 44B, sector 3 code 032266, Bucharest, Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:018",
+   "relation": "LocatedIn",
+   "object": "country:Romania",
+   "qualifier": {
+    "address": "B-dul. Theodor Pallady no. 50, sector 3, code 032266, Bucharest,, Romania"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-leflunomide-zentiva",
+     "page": null,
+     "fragment": "ZENTIVA S.A. B-dul. Theodor Pallady no. 50, sector 3 code 032266, Bucharest, Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:018",
+   "relation": "SuppliesTo",
+   "object": "product:leflunomide-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Leflunomide Zentiva 10 mg, 20 mg film-coated tablets"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-leflunomide-zentiva",
+     "page": null,
+     "fragment": "ZENTIVA S.A. B-dul. Theodor Pallady no. 50, sector 3 code 032266, Bucharest, Romania"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:pomalidomide-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Pomalidomide Zentiva Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:019",
+   "relation": "LocatedIn",
+   "object": "country:Spain",
+   "qualifier": {
+    "address": "Calle De Castello 1, 08830 Sant Boi de Llobregat, Spain"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-pomalidomide-zentiva",
+     "page": null,
+     "fragment": "Synthon Hispania S.L. Calle De Castello 1 08830 Sant Boi de Llobregat Spain"
+    }
+   ]
+  },
+  {
+   "subject": "site:019",
+   "relation": "SuppliesTo",
+   "object": "product:pomalidomide-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-pomalidomide-zentiva",
+     "page": null,
+     "fragment": "Synthon Hispania S.L. Calle De Castello 1 08830 Sant Boi de Llobregat Spain"
+    }
+   ]
+  },
+  {
+   "subject": "site:020",
+   "relation": "LocatedIn",
+   "object": "country:The Netherlands",
+   "qualifier": {
+    "address": "Microweg 22, 6545 CM Nijmegen, The Netherlands"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-pomalidomide-zentiva",
+     "page": null,
+     "fragment": "Synthon B.V. Microweg 22 6545 CM Nijmegen The Netherlands"
+    }
+   ]
+  },
+  {
+   "subject": "site:020",
+   "relation": "SuppliesTo",
+   "object": "product:pomalidomide-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-pomalidomide-zentiva",
+     "page": null,
+     "fragment": "Synthon B.V. Microweg 22 6545 CM Nijmegen The Netherlands"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:pregabalin-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Pregabalin Zentiva Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:021",
+   "relation": "LocatedIn",
+   "object": "country:Czech Republic",
+   "qualifier": {
+    "address": "U Kabelovny 130, 102 37 Prague 10, Czech Republic"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-pregabalin-zentiva",
+     "page": null,
+     "fragment": "Zentiva, k.s. U Kabelovny 130 102 37 Prague 10 Czech Republic"
+    }
+   ]
+  },
+  {
+   "subject": "site:021",
+   "relation": "SuppliesTo",
+   "object": "product:pregabalin-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-pregabalin-zentiva",
+     "page": null,
+     "fragment": "Zentiva, k.s. U Kabelovny 130 102 37 Prague 10 Czech Republic"
+    }
+   ]
+  },
+  {
+   "subject": "site:022",
+   "relation": "LocatedIn",
+   "object": "country:Romania",
+   "qualifier": {
+    "address": "B-dul Theodor Pallady nr.50, sector 3, Bucharest, cod 032266, Romania"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-pregabalin-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva, S.A. B-dul Theodor Pallady nr.50, sector 3, Bucharest, cod 032266 Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:022",
+   "relation": "SuppliesTo",
+   "object": "product:pregabalin-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-pregabalin-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva, S.A. B-dul Theodor Pallady nr.50, sector 3, Bucharest, cod 032266 Romania"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:riluzole-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Riluzole Zentiva Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:016",
+   "relation": "SuppliesTo",
+   "object": "product:riluzole-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-riluzole-zentiva",
+     "page": null,
+     "fragment": "Opella Healthcare International SAS 56, Route de Choisy 60200 Compiègne France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:tenofovir-disoproxil-zentiva",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Tenofovir disoproxil Zentiva Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:008",
+   "relation": "SuppliesTo",
+   "object": "product:tenofovir-disoproxil-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-tenofovir-disoproxil-zentiva",
+     "page": null,
+     "fragment": "S.C. Zentiva S.A. 50 Theodor Pallady Blvd. Bucharest 032266 Romania"
+    }
+   ]
+  },
+  {
+   "subject": "site:023",
+   "relation": "LocatedIn",
+   "object": "country:Germany",
+   "qualifier": {
+    "address": "Brüningstraße 50, 65926 Frankfurt am Main, Germany"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-tenofovir-disoproxil-zentiva",
+     "page": null,
+     "fragment": "Winthrop Arzneimittel GmbH Brüningstraße 50 65926 Frankfurt am Main Germany"
+    }
+   ]
+  },
+  {
+   "subject": "site:023",
+   "relation": "SuppliesTo",
+   "object": "product:tenofovir-disoproxil-zentiva",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-tenofovir-disoproxil-zentiva",
+     "page": null,
+     "fragment": "Winthrop Arzneimittel GmbH Brüningstraße 50 65926 Frankfurt am Main Germany"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:zadenvi",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Zadenvi Zentiva k.s."
+    }
+   ]
+  },
+  {
+   "subject": "site:009",
+   "relation": "SuppliesTo",
+   "object": "product:zadenvi",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-zadenvi",
+     "page": null,
+     "fragment": "GH GENHELIX S.A. Parque Tecnológico de León Edifício GENHELIX C/Julia Morros, s/n Armunia, 24009 León, Spain"
+    }
+   ]
+  },
+  {
+   "subject": "site:009",
+   "relation": "SuppliesTo",
+   "object": "product:zadenvi",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-zadenvi",
+     "page": null,
+     "fragment": "GH GENHELIX S.A. Parque Tecnológico de León Edifício GENHELIX C/Julia Morros, s/n Armunia, 24009 León, Spain"
+    }
+   ]
+  }
+ ]
+}

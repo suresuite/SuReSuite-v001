@@ -7,6 +7,7 @@ on:
       - "sim-worker/**"
       - "src/lib/policies/registry.generated.json"
       - "supabase/functions/_shared/**"
+      - "scripts/kg_reference/data/**"
       - "scripts/check_registry_bridge.mjs"
       - "scripts/build_engine_wheels.sh"
       - "public/engine/**"
@@ -144,9 +145,12 @@ jobs:
       # The shared grading module (§8.2) — the ONE grader the browser and the
       # sim-command gate both import. Locked to the golden parity fixture; the
       # sim-worker job below asserts the engine half of the same contract.
+      # kgResolver_test.ts (Phase 19 / WP 19.1, docs/PLAN.md §29): the one
+      # knowledge-graph identity rule, pinned against the three committed
+      # reference datasets in scripts/kg_reference/data/.
       - name: Grader contract tests (golden fixture + gate semantics)
         if: ${{ !cancelled() }}
-        run: deno test --allow-read grading_test.ts env_test.ts
+        run: deno test --allow-read grading_test.ts env_test.ts kgResolver_test.ts
         working-directory: supabase/functions/_shared
 
   sim-worker:

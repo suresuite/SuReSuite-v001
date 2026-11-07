@@ -1,0 +1,409 @@
+{
+ "sources": [
+  {
+   "id": "ema-epar-pi-actraphane",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/actraphane-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "26dbeb74a547c17fa19179da3b8be82ef51aad193f03783398c99de5d9352ec6",
+   "bytes": 981712,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-actrapid",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/actrapid-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "ade3655c1fe49f32845b18a44598531b9a6c464c01849fa3c2d264410742fc65",
+   "bytes": 1056670,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-alhemo",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/alhemo-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "5fce5f4d770bcf88408c9c2a94dddea27b5aa712b2a9d10509a9386c1322fe98",
+   "bytes": 823963,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-aripiprazole-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/aripiprazole-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "19a0fd8397c8d49ac81f1d35fd7856a088b9bc1c9cd3328f6a1d69ac1b5721ee",
+   "bytes": 336365,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-awiqli",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/awiqli-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "f7c14bdfab20b7d2be0412e5c06fc35000bb5d4ed6941816bb111cb1cf89ed79",
+   "bytes": 516518,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-clopidogrel-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/clopidogrel-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "e0215a720388221c98b7ac2dbc71d7bb651807eaa839c43dbd3c29e450499ab6",
+   "bytes": 447138,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-duloxetine-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/duloxetine-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "a6188d2978ea09f7e5b7445a447f5e2a57efdecb0d31b2c6eef34f98353221c3",
+   "bytes": 361933,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-efavirenz-emtricitabine-tenofovir-disoproxil-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/efavirenz-emtricitabine-tenofovir-disoproxil-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "c270a1cdb7da090e33611100f559dae18fdf880f595613a4f2237902fa4e3508",
+   "bytes": 510706,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-emtricitabine-tenofovir-disoproxil-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/emtricitabine-tenofovir-disoproxil-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "b5bb27eee5664c354454ec83c92e260583834d02461904425360856edf6a560f",
+   "bytes": 425457,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-enwylma",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/enwylma-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "623a3871e6868a84e6e4d9ed2c6ac3990eacad90dd7435140f84ce48d0b34baa",
+   "bytes": 420112,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-esperoct",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/esperoct-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "e7beeca4e8208c5032d7e7bf569bcf870ed3ba5e82a6b61ae85b78eb9ec4d742",
+   "bytes": 389934,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-fiasp",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/fiasp-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "cbdd8db95da9ad3e09cdfef4c5ca9ed0226822fa096c0076bdd9f0a7a859b459",
+   "bytes": 1081048,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-insulatard",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/insulatard-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "b514ffb1b7d2737e7435ee92da43fe84dc00ca121f1fb290d535e4eb6fc52920",
+   "bytes": 1450846,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-irbesartan-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/irbesartan-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "0092c887bcadea7534c547ade6559eb7d177209ab809f286e9b308c26287bde2",
+   "bytes": 559176,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-ivabradine-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/ivabradine-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "cf8394b598d7771cbf7fe0c054e2454bdb3007a0414d4f1d023d9469ba7ec0f4",
+   "bytes": 442942,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-kayshild",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/kayshild-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "e8388bbb9aa9ed1ce7d6c3ce4cc95d9f7d20b32a0761f589574bd818716958e5",
+   "bytes": 512609,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-kyinsu",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/kyinsu-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "95948a15fe992839ee37193f3edebd5d5ce595b8b071c0a2e9bf00f2802612cc",
+   "bytes": 619620,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-leflunomide-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/leflunomide-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "bed6a472e84572491a61af1acb52b0f05e60157fe2f2f53c93e4e488c7c80e1b",
+   "bytes": 951379,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-levemir",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/levemir-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "f2dce42e61ebc94b66c4ed9218db75538c2d50223fdd9ddd163a69c26e372423",
+   "bytes": 1537517,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-mixtard",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/mixtard-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "6f5b0cbd7924d3f8fc676646a82c37907875f834271b75ee6e7920db1e310786",
+   "bytes": 978282,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-novoeight",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/novoeight-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "970fc8130473536f695eff21cbd8387a957d8897cefe506cd74b59d9f73906e3",
+   "bytes": 515554,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-novomix",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/novomix-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "a9b6af8deb9323a5e47af7edaf7c4d716632fe6a60c5ba5c930ab9830ed01a03",
+   "bytes": 1326069,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-novonorm",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/novonorm-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "21f3e9a965985080da26b53db087c3ea5427f5ec520967dcb4970774d891373a",
+   "bytes": 599461,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-novorapid",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/novorapid-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "596b72a285a1a6a53ef22a3d8e8f5b78afcad8d6266d30dcb5e7e2429eede7f2",
+   "bytes": 999531,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-novoseven",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/novoseven-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "4cde9b1f299068eba5f867a596fb73966c9f4132d6fc783820f32def35917cf3",
+   "bytes": 587030,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-novothirteen",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/novothirteen-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "ee060d5554c73ddc93e72599b54db641ab4663275ec3819e024fe2e0ea2735d4",
+   "bytes": 1547427,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-ozempic",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/ozempic-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "57219aa6be0c50a4f2cc98001152ec6dcce36b4e4c6ae43650c37f58899b3d2c",
+   "bytes": 1400861,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-pomalidomide-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/pomalidomide-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "28e348d14b20b89124691e8e2b45bfeec18ef145c10d6a72cd8f42e307e259fb",
+   "bytes": 1020532,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-prandin",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/prandin-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "4c973e31eb747a16f464340bcfe327b4eb470ef0597a3a9d0a9fc8e0d35f01d0",
+   "bytes": 597081,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-pregabalin-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/pregabalin-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "0632c8a84e4925d536acd2268911c26109503fc6b301b074e5a6f4faca5ec0f7",
+   "bytes": 582539,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-protaphane",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/protaphane-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "96e6f3238059fb60b143a7e42a104dc5b85a7e801c3bcda1c735f95d742e3eef",
+   "bytes": 1118299,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-refixia",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/refixia-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "6073b7beb8d62f938364001f87af89806c5a46c5d2f19d7a37de4ffa50088aae",
+   "bytes": 363026,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-riluzole-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/riluzole-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "1ebce6a1ea8cfcd37b0a250dfca17176f3f6881ab45dbb76ba8eb11901c00ea3",
+   "bytes": 192374,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-rybelsus",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/rybelsus-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "92f8cd4bbfc5e1b56bb6383ebaaeb7f5b41beee2ff07448d020f2af2ee2b7172",
+   "bytes": 718611,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-ryzodeg",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/ryzodeg-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "df86c897629e7225a3f88c7dfc6b236d532d632db8a5b3a5204db17fb07d7e2e",
+   "bytes": 644859,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-saxenda",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/saxenda-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "357d6ea14e3f7cd7f368c344031642fb028c08e95b657181ef2b4674a30f65e4",
+   "bytes": 550622,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-sogroya",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/sogroya-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "eaf5e4dab533bfd4c803b9bbde965757b0299ce4be51c90d44a29cb540844a53",
+   "bytes": 1018170,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-tenofovir-disoproxil-zentiva",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/tenofovir-disoproxil-zentiva-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "d3c0075e2e253b5498aea953ad0fcd47cc3b569eeb05148fdfd0f984d05bbe31",
+   "bytes": 473989,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-tresiba",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/tresiba-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "b4c099eb5b8b3565c60749a59b5111f9719658ee1e926d19ddcb8806358606fc",
+   "bytes": 845290,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-victoza",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/victoza-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "3a502ddc6b1f34762776a7b9d1d0598e240a894a70f095fa9d0346bd835291c7",
+   "bytes": 493616,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-wegovy",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/wegovy-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "75e75f36bfa5240a6cabd2a4f64106e8c0e234bfb5766e2c5e59965e76569a01",
+   "bytes": 1567394,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-xultophy",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/xultophy-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "a7d7c9b9466581209cafd8573496579754b87e259d5bc2843f330d525f02ca26",
+   "bytes": 569541,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-epar-pi-zadenvi",
+   "url": "https://www.ema.europa.eu/en/documents/product-information/zadenvi-epar-product-information_en.pdf",
+   "publisher": "European Medicines Agency",
+   "sha256": "ce8983ebf451e486fbb43e81c5149e2ebe620fc60d5c6dae182577447576398c",
+   "bytes": 472919,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "ema-medicines-output",
+   "url": "https://www.ema.europa.eu/en/documents/report/medicines-output-medicines-report_en.xlsx",
+   "publisher": "European Medicines Agency",
+   "sha256": "a5a064ee81b981095c2d888842d8fc809f599772a488412c64ade93222b0fec4",
+   "bytes": 906336,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "European Medicines Agency public document; EMA permits reuse with acknowledgement of the source. Facts and short fragments only."
+  },
+  {
+   "id": "fairphone-sce-2024",
+   "url": "https://www.fairphone.com/wp-content/uploads/2024/05/SCE-2024.pdf",
+   "publisher": "Fairphone B.V.",
+   "sha256": "4ebb9f53ea94ee04db41c1e0275a8ad949821c6308abb77147fbc83456ef94d8",
+   "bytes": 1202369,
+   "retrieved_at": "2026-11-07",
+   "licence_note": "Published by Fairphone for transparency; robots.txt permits the path. Facts and short fragments only; the document is not redistributed."
+  }
+ ]
+}

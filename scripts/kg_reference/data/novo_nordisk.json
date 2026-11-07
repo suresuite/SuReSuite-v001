@@ -1,0 +1,3110 @@
+{
+ "dataset": "novo_nordisk",
+ "label": "Mapped from public European Medicines Agency records (EPAR product information, Annex II.A). Not endorsed by or affiliated with Novo Nordisk A/S. Names manufacturing and batch-release sites only; says nothing about who makes a small-molecule active ingredient, volumes or availability.",
+ "focal": "focal",
+ "sources": [
+  "ema-medicines-output",
+  "ema-epar-pi-actraphane",
+  "ema-epar-pi-actrapid",
+  "ema-epar-pi-alhemo",
+  "ema-epar-pi-awiqli",
+  "ema-epar-pi-esperoct",
+  "ema-epar-pi-fiasp",
+  "ema-epar-pi-insulatard",
+  "ema-epar-pi-kayshild",
+  "ema-epar-pi-kyinsu",
+  "ema-epar-pi-levemir",
+  "ema-epar-pi-mixtard",
+  "ema-epar-pi-novoeight",
+  "ema-epar-pi-novomix",
+  "ema-epar-pi-novonorm",
+  "ema-epar-pi-novorapid",
+  "ema-epar-pi-novoseven",
+  "ema-epar-pi-novothirteen",
+  "ema-epar-pi-ozempic",
+  "ema-epar-pi-prandin",
+  "ema-epar-pi-protaphane",
+  "ema-epar-pi-refixia",
+  "ema-epar-pi-rybelsus",
+  "ema-epar-pi-ryzodeg",
+  "ema-epar-pi-saxenda",
+  "ema-epar-pi-sogroya",
+  "ema-epar-pi-tresiba",
+  "ema-epar-pi-victoza",
+  "ema-epar-pi-wegovy",
+  "ema-epar-pi-xultophy"
+ ],
+ "counts": {
+  "products": 29,
+  "sites": 25,
+  "site_assertions": 103,
+  "products_without_annex_iia": 0
+ },
+ "skipped": [],
+ "entities": [
+  {
+   "ref": "focal",
+   "type": "Company",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {}
+  },
+  {
+   "ref": "holder:1",
+   "type": "Company",
+   "name": "Novo Nordisk A/S",
+   "country": null,
+   "identifiers": {}
+  },
+  {
+   "ref": "product:actraphane",
+   "type": "Product",
+   "name": "Actraphane",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000427",
+    "active_substance": "insulin human",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:001",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Novo Allé, DK-2880 Bagsværd, Denmark"
+  },
+  {
+   "ref": "site:002",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Hallas Allé, DK-4400 Kalundborg, Denmark"
+  },
+  {
+   "ref": "site:003",
+   "type": "Facility",
+   "name": "Novo Nordisk Production SAS",
+   "country": "France",
+   "identifiers": {},
+   "address": "45, Avenue d’Orléans, F-28000 Chartres, France"
+  },
+  {
+   "ref": "product:actrapid",
+   "type": "Product",
+   "name": "Actrapid",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000424",
+    "active_substance": "insulin human",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:alhemo",
+   "type": "Product",
+   "name": "Alhemo",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/005938",
+    "active_substance": "concizumab",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:004",
+   "type": "Facility",
+   "name": "Patheon Biologics LLC",
+   "country": "USA",
+   "identifiers": {},
+   "address": "4766 LaGuardia Drive,, St. Louis, MO 63134, USA"
+  },
+  {
+   "ref": "site:005",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Novo Alle 1, 2880 Bagsvaerd, Denmark"
+  },
+  {
+   "ref": "product:awiqli",
+   "type": "Product",
+   "name": "Awiqli",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/005978",
+    "active_substance": "insulin icodec",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:006",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Hallas Alle 1, DK-4400 Kalundborg, Denmark"
+  },
+  {
+   "ref": "site:007",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Novo Alle 1, DK-2880 Bagsvaerd, Denmark"
+  },
+  {
+   "ref": "product:esperoct",
+   "type": "Product",
+   "name": "Esperoct",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/004883",
+    "active_substance": "turoctocog alfa pegol",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:008",
+   "type": "Facility",
+   "name": "Novo Nordisk US Bio Production Inc.",
+   "country": "United States",
+   "identifiers": {},
+   "address": "9 Technology Drive, West Lebanon, New Hampshire, 03784, United States"
+  },
+  {
+   "ref": "product:fiasp",
+   "type": "Product",
+   "name": "Fiasp",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/004046",
+    "active_substance": "insulin aspart",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:009",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Hallas Alle, 4400 Kalundborg, Denmark"
+  },
+  {
+   "ref": "site:010",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Novo Alle 1, 2880 Bagsværd, Denmark"
+  },
+  {
+   "ref": "product:insulatard",
+   "type": "Product",
+   "name": "Insulatard",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000441",
+    "active_substance": "insulin human",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:kayshild",
+   "type": "Product",
+   "name": "Kayshild",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/006426",
+    "active_substance": "semaglutide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:011",
+   "type": "Facility",
+   "name": "Novo Nordisk Production SAS",
+   "country": "France",
+   "identifiers": {},
+   "address": "45, Avenue d’Orléans, 28000 Chartres, France"
+  },
+  {
+   "ref": "product:kyinsu",
+   "type": "Product",
+   "name": "Kyinsu",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/006279",
+    "active_substance": "insulin icodec;semaglutide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:levemir",
+   "type": "Product",
+   "name": "Levemir",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000528",
+    "active_substance": "Insulin detemir",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:mixtard",
+   "type": "Product",
+   "name": "Mixtard",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000428",
+    "active_substance": "insulin human",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:novoeight",
+   "type": "Product",
+   "name": "NovoEight",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/002719",
+    "active_substance": "turoctocog alfa",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:012",
+   "type": "Facility",
+   "name": "BioReliance Ltd",
+   "country": "United Kingdom",
+   "identifiers": {},
+   "address": "Todd Campus, West of Scotland Science Park,, Glasgow, G20 0XA, United Kingdom"
+  },
+  {
+   "ref": "site:013",
+   "type": "Facility",
+   "name": "Novo Nordisk US Bio Production Inc.",
+   "country": "USA",
+   "identifiers": {},
+   "address": "9 Technology Drive, West Lebanon, NH 03784, USA"
+  },
+  {
+   "ref": "product:novomix",
+   "type": "Product",
+   "name": "NovoMix",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000308",
+    "active_substance": "insulin aspart",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:novonorm",
+   "type": "Product",
+   "name": "NovoNorm",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000187",
+    "active_substance": "repaglinide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:novorapid",
+   "type": "Product",
+   "name": "NovoRapid",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000258",
+    "active_substance": "insulin aspart",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:novoseven",
+   "type": "Product",
+   "name": "NovoSeven",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000074",
+    "active_substance": "eptacog alfa (activated)",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:novothirteen",
+   "type": "Product",
+   "name": "NovoThirteen",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/002284",
+    "active_substance": "catridecacog",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:014",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Hagedornsvej 1, DK-2820 Gentofte, Denmark"
+  },
+  {
+   "ref": "product:ozempic",
+   "type": "Product",
+   "name": "Ozempic",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/004174",
+    "active_substance": "semaglutide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:prandin",
+   "type": "Product",
+   "name": "Prandin",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000362",
+    "active_substance": "repaglinide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:protaphane",
+   "type": "Product",
+   "name": "Protaphane",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/000442",
+    "active_substance": "insulin human",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:refixia",
+   "type": "Product",
+   "name": "Refixia",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/004178",
+    "active_substance": "nonacog beta pegol",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:015",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Brennum Park 25K, DK-3400 Hillerød, Denmark"
+  },
+  {
+   "ref": "site:016",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Novo Alle, DK-2880 Bagsværd, Denmark"
+  },
+  {
+   "ref": "product:rybelsus",
+   "type": "Product",
+   "name": "Rybelsus",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/004953",
+    "active_substance": "semaglutide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:017",
+   "type": "Facility",
+   "name": "Hovione FarmaCiencia S.A.",
+   "country": "Portugal",
+   "identifiers": {},
+   "address": "Quinta Sao Pedro, Sete Casas, PT-2674-506 Loures, Portugal"
+  },
+  {
+   "ref": "site:018",
+   "type": "Facility",
+   "name": "Novo Nordisk Pharmaceutical Industries Inc.",
+   "country": "United States",
+   "identifiers": {},
+   "address": "3612 Powhatan Road, Clayton, North Carolina 27527-9217, United States"
+  },
+  {
+   "ref": "site:019",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Novo Allé, DK-2800 Bagsværd, Denmark"
+  },
+  {
+   "ref": "product:ryzodeg",
+   "type": "Product",
+   "name": "Ryzodeg",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/002499",
+    "active_substance": "insulin aspart;insulin degludec",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:saxenda",
+   "type": "Product",
+   "name": "Saxenda",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/003780",
+    "active_substance": "liraglutide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:020",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Hallas Alle 1, 4400 Kalundborg, Denmark"
+  },
+  {
+   "ref": "site:021",
+   "type": "Facility",
+   "name": "Novo Nordisk Production SAS",
+   "country": "France",
+   "identifiers": {},
+   "address": "45 Avenue D Orleans, 28000 Chartres, France"
+  },
+  {
+   "ref": "product:sogroya",
+   "type": "Product",
+   "name": "Sogroya",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/005030",
+    "active_substance": "somapacitan",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:022",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Novo Allé, DK-2880 Bagsvaerd, Denmark"
+  },
+  {
+   "ref": "product:tresiba",
+   "type": "Product",
+   "name": "Tresiba",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/002498",
+    "active_substance": "insulin degludec",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:victoza",
+   "type": "Product",
+   "name": "Victoza",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/001026",
+    "active_substance": "liraglutide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "product:wegovy",
+   "type": "Product",
+   "name": "Wegovy",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/005422",
+    "active_substance": "semaglutide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:023",
+   "type": "Facility",
+   "name": "Hovione FarmaCiencia S.A.",
+   "country": "Portugal",
+   "identifiers": {},
+   "address": "Quinta são Pedro, Sete Casas, PT-2674-506 Loures, Portugal"
+  },
+  {
+   "ref": "product:xultophy",
+   "type": "Product",
+   "name": "Xultophy",
+   "country": null,
+   "identifiers": {
+    "ema_product_number": "EMEA/H/C/002647",
+    "active_substance": "insulin degludec;liraglutide",
+    "generic": "No",
+    "biosimilar": "No"
+   }
+  },
+  {
+   "ref": "site:024",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Hallas Alle, Kalundborg, 4400, Denmark"
+  },
+  {
+   "ref": "site:025",
+   "type": "Facility",
+   "name": "Novo Nordisk A/S",
+   "country": "Denmark",
+   "identifiers": {},
+   "address": "Novo Allé, Bagsværd, 2880, Denmark"
+  },
+  {
+   "ref": "country:Denmark",
+   "type": "Location",
+   "name": "Denmark",
+   "country": "Denmark",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:France",
+   "type": "Location",
+   "name": "France",
+   "country": "France",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:Portugal",
+   "type": "Location",
+   "name": "Portugal",
+   "country": "Portugal",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:USA",
+   "type": "Location",
+   "name": "USA",
+   "country": "USA",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:United Kingdom",
+   "type": "Location",
+   "name": "United Kingdom",
+   "country": "United Kingdom",
+   "identifiers": {}
+  },
+  {
+   "ref": "country:United States",
+   "type": "Location",
+   "name": "United States",
+   "country": "United States",
+   "identifiers": {}
+  }
+ ],
+ "assertions": [
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:actraphane",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Actraphane Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Novo Allé, DK-2880 Bagsværd, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actraphane",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:actraphane",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actraphane",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Hallas Allé, DK-4400 Kalundborg, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actraphane",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:actraphane",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actraphane",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:actraphane",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Actraphane 30 InnoLet and Actraphane 50 Penfill"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actraphane",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:actraphane",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Actraphane 30 vial, Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actraphane",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "LocatedIn",
+   "object": "country:France",
+   "qualifier": {
+    "address": "45, Avenue d’Orléans, F-28000 Chartres, France"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actraphane",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans F-28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "SuppliesTo",
+   "object": "product:actraphane",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Actraphane 30 vial, Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actraphane",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans F-28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:actrapid",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Actrapid Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:actrapid",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actrapid",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:actrapid",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actrapid",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:actrapid",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Actrapid InnoLet"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actrapid",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:actrapid",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Actrapid vial, Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actrapid",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "SuppliesTo",
+   "object": "product:actrapid",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Actrapid vial, Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-actrapid",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans F-28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:alhemo",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Alhemo Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:004",
+   "relation": "LocatedIn",
+   "object": "country:USA",
+   "qualifier": {
+    "address": "4766 LaGuardia Drive,, St. Louis, MO 63134, USA"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-alhemo",
+     "page": null,
+     "fragment": "Patheon Biologics LLC 4766 LaGuardia Drive, St. Louis, MO 63134 USA"
+    }
+   ]
+  },
+  {
+   "subject": "site:004",
+   "relation": "SuppliesTo",
+   "object": "product:alhemo",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-alhemo",
+     "page": null,
+     "fragment": "Patheon Biologics LLC 4766 LaGuardia Drive, St. Louis, MO 63134 USA"
+    }
+   ]
+  },
+  {
+   "subject": "site:005",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Novo Alle 1, 2880 Bagsvaerd, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-alhemo",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:005",
+   "relation": "SuppliesTo",
+   "object": "product:alhemo",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-alhemo",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:awiqli",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Awiqli Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:006",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Hallas Alle 1, DK-4400 Kalundborg, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-awiqli",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle 1 DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:006",
+   "relation": "SuppliesTo",
+   "object": "product:awiqli",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-awiqli",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle 1 DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:007",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Novo Alle 1, DK-2880 Bagsvaerd, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-awiqli",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 DK-2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:007",
+   "relation": "SuppliesTo",
+   "object": "product:awiqli",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-awiqli",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 DK-2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:esperoct",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Esperoct Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:008",
+   "relation": "LocatedIn",
+   "object": "country:United States",
+   "qualifier": {
+    "address": "9 Technology Drive, West Lebanon, New Hampshire, 03784, United States"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-esperoct",
+     "page": null,
+     "fragment": "Novo Nordisk US Bio Production Inc. 9 Technology Drive West Lebanon New Hampshire 03784 United States"
+    }
+   ]
+  },
+  {
+   "subject": "site:008",
+   "relation": "SuppliesTo",
+   "object": "product:esperoct",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-esperoct",
+     "page": null,
+     "fragment": "Novo Nordisk US Bio Production Inc. 9 Technology Drive West Lebanon New Hampshire 03784 United States"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:esperoct",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-esperoct",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:fiasp",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Fiasp Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:009",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Hallas Alle, 4400 Kalundborg, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-fiasp",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle 4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:009",
+   "relation": "SuppliesTo",
+   "object": "product:fiasp",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-fiasp",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle 4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:010",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Novo Alle 1, 2880 Bagsværd, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-fiasp",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:010",
+   "relation": "SuppliesTo",
+   "object": "product:fiasp",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-fiasp",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:insulatard",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Insulatard Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:insulatard",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-insulatard",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:insulatard",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-insulatard",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:insulatard",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Insulatard vial (40 international units/ml) and InnoLet"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-insulatard",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:insulatard",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Insulatard vial (100 international units/ml), Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-insulatard",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "SuppliesTo",
+   "object": "product:insulatard",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Insulatard vial (100 international units/ml), Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-insulatard",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans F-28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:kayshild",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Kayshild Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:006",
+   "relation": "SuppliesTo",
+   "object": "product:kayshild",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-kayshild",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle 1 DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:007",
+   "relation": "SuppliesTo",
+   "object": "product:kayshild",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-kayshild",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 DK-2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:011",
+   "relation": "LocatedIn",
+   "object": "country:France",
+   "qualifier": {
+    "address": "45, Avenue d’Orléans, 28000 Chartres, France"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-kayshild",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans 28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "site:011",
+   "relation": "SuppliesTo",
+   "object": "product:kayshild",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-kayshild",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans 28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:kyinsu",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Kyinsu Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:006",
+   "relation": "SuppliesTo",
+   "object": "product:kyinsu",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-kyinsu",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle 1 DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:007",
+   "relation": "SuppliesTo",
+   "object": "product:kyinsu",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-kyinsu",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 DK-2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:levemir",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Levemir Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:levemir",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-levemir",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:levemir",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-levemir",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:levemir",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Levemir InnoLet and FlexTouch"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-levemir",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:levemir",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Levemir Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-levemir",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "SuppliesTo",
+   "object": "product:levemir",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Levemir Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-levemir",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans F-28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:mixtard",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Mixtard Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:mixtard",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-mixtard",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:mixtard",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-mixtard",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:mixtard",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Mixtard 30 InnoLet and Mixtard 50 Penfill"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-mixtard",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:mixtard",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Mixtard 30 vial, Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-mixtard",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "SuppliesTo",
+   "object": "product:mixtard",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Mixtard 30 vial, Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-mixtard",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans F-28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:novoeight",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "NovoEight Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:012",
+   "relation": "LocatedIn",
+   "object": "country:United Kingdom",
+   "qualifier": {
+    "address": "Todd Campus, West of Scotland Science Park,, Glasgow, G20 0XA, United Kingdom"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novoeight",
+     "page": null,
+     "fragment": "BioReliance Ltd Todd Campus, West of Scotland Science Park, Glasgow, G20 0XA United Kingdom"
+    }
+   ]
+  },
+  {
+   "subject": "site:012",
+   "relation": "SuppliesTo",
+   "object": "product:novoeight",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novoeight",
+     "page": null,
+     "fragment": "BioReliance Ltd Todd Campus, West of Scotland Science Park, Glasgow, G20 0XA United Kingdom"
+    }
+   ]
+  },
+  {
+   "subject": "site:013",
+   "relation": "LocatedIn",
+   "object": "country:USA",
+   "qualifier": {
+    "address": "9 Technology Drive, West Lebanon, NH 03784, USA"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novoeight",
+     "page": null,
+     "fragment": "Novo Nordisk US Bio Production Inc. 9 Technology Drive West Lebanon NH 03784 USA"
+    }
+   ]
+  },
+  {
+   "subject": "site:013",
+   "relation": "SuppliesTo",
+   "object": "product:novoeight",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novoeight",
+     "page": null,
+     "fragment": "Novo Nordisk US Bio Production Inc. 9 Technology Drive West Lebanon NH 03784 USA"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novoeight",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novoeight",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:novomix",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "NovoMix Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novomix",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novomix",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:novomix",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novomix",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novomix",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "NovoMix 30 Penfill and NovoMix 30 FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novomix",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "SuppliesTo",
+   "object": "product:novomix",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "NovoMix 30 Penfill and NovoMix 30 FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novomix",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans F-28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novomix",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "NovoMix 50 Penfill and NovoMix 50 FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novomix",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:novonorm",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "NovoNorm Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novonorm",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novonorm",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:novorapid",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "NovoRapid Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:novorapid",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novorapid",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novorapid",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novorapid",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novorapid",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "NovoRapid Vial, InnoLet, FlexTouch and PumpCart"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novorapid",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novorapid",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "NovoRapid Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novorapid",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "SuppliesTo",
+   "object": "product:novorapid",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "NovoRapid Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novorapid",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans F-28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:novoseven",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "NovoSeven Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:novoseven",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novoseven",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novoseven",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novoseven",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:novothirteen",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "NovoThirteen Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novothirteen",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novothirteen",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:014",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Hagedornsvej 1, DK-2820 Gentofte, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novothirteen",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hagedornsvej 1 DK-2820 Gentofte Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:014",
+   "relation": "SuppliesTo",
+   "object": "product:novothirteen",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novothirteen",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hagedornsvej 1 DK-2820 Gentofte Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:novothirteen",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-novothirteen",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:ozempic",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Ozempic Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:ozempic",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ozempic",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:ozempic",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ozempic",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:011",
+   "relation": "SuppliesTo",
+   "object": "product:ozempic",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ozempic",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans 28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:prandin",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Prandin Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:prandin",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-prandin",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:protaphane",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Protaphane Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:protaphane",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-protaphane",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:protaphane",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-protaphane",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:protaphane",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Protaphane vial (40 international units/ml) and InnoLet"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-protaphane",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:protaphane",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Protaphane vial (100 international units/ml), Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-protaphane",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:003",
+   "relation": "SuppliesTo",
+   "object": "product:protaphane",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Protaphane vial (100 international units/ml), Penfill and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-protaphane",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans F-28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:refixia",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Refixia Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:015",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Brennum Park 25K, DK-3400 Hillerød, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-refixia",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Brennum Park 25K DK-3400 Hillerød Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:015",
+   "relation": "SuppliesTo",
+   "object": "product:refixia",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-refixia",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Brennum Park 25K DK-3400 Hillerød Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:014",
+   "relation": "SuppliesTo",
+   "object": "product:refixia",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-refixia",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hagedornsvej 1 DK-2820 Gentofte Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:016",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Novo Alle, DK-2880 Bagsværd, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-refixia",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:016",
+   "relation": "SuppliesTo",
+   "object": "product:refixia",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-refixia",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:rybelsus",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Rybelsus Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:rybelsus",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-rybelsus",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:017",
+   "relation": "LocatedIn",
+   "object": "country:Portugal",
+   "qualifier": {
+    "address": "Quinta Sao Pedro, Sete Casas, PT-2674-506 Loures, Portugal"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-rybelsus",
+     "page": null,
+     "fragment": "Hovione FarmaCiencia S.A. Quinta Sao Pedro, Sete Casas PT-2674-506 Loures Portugal"
+    }
+   ]
+  },
+  {
+   "subject": "site:017",
+   "relation": "SuppliesTo",
+   "object": "product:rybelsus",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-rybelsus",
+     "page": null,
+     "fragment": "Hovione FarmaCiencia S.A. Quinta Sao Pedro, Sete Casas PT-2674-506 Loures Portugal"
+    }
+   ]
+  },
+  {
+   "subject": "site:018",
+   "relation": "LocatedIn",
+   "object": "country:United States",
+   "qualifier": {
+    "address": "3612 Powhatan Road, Clayton, North Carolina 27527-9217, United States"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-rybelsus",
+     "page": null,
+     "fragment": "Novo Nordisk Pharmaceutical Industries Inc. 3612 Powhatan Road Clayton North Carolina 27527-9217 United States"
+    }
+   ]
+  },
+  {
+   "subject": "site:018",
+   "relation": "SuppliesTo",
+   "object": "product:rybelsus",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-rybelsus",
+     "page": null,
+     "fragment": "Novo Nordisk Pharmaceutical Industries Inc. 3612 Powhatan Road Clayton North Carolina 27527-9217 United States"
+    }
+   ]
+  },
+  {
+   "subject": "site:019",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Novo Allé, DK-2800 Bagsværd, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-rybelsus",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2800 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:019",
+   "relation": "SuppliesTo",
+   "object": "product:rybelsus",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-rybelsus",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2800 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:ryzodeg",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Ryzodeg Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:ryzodeg",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ryzodeg",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:ryzodeg",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ryzodeg",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:ryzodeg",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Ryzodeg Penfill"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ryzodeg",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:ryzodeg",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Ryzodeg FlexTouch and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ryzodeg",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:011",
+   "relation": "SuppliesTo",
+   "object": "product:ryzodeg",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Ryzodeg FlexTouch and FlexPen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-ryzodeg",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans 28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:saxenda",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Saxenda Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:020",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Hallas Alle 1, 4400 Kalundborg, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-saxenda",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle 1 4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:020",
+   "relation": "SuppliesTo",
+   "object": "product:saxenda",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-saxenda",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle 1 4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:010",
+   "relation": "SuppliesTo",
+   "object": "product:saxenda",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-saxenda",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:010",
+   "relation": "SuppliesTo",
+   "object": "product:saxenda",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-saxenda",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:021",
+   "relation": "LocatedIn",
+   "object": "country:France",
+   "qualifier": {
+    "address": "45 Avenue D Orleans, 28000 Chartres, France"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-saxenda",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45 Avenue D Orleans 28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "site:021",
+   "relation": "SuppliesTo",
+   "object": "product:saxenda",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-saxenda",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45 Avenue D Orleans 28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:sogroya",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Sogroya Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:008",
+   "relation": "SuppliesTo",
+   "object": "product:sogroya",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-sogroya",
+     "page": null,
+     "fragment": "Novo Nordisk US Bio Production Inc. 9 Technology Drive West Lebanon New Hampshire 03784 United States"
+    }
+   ]
+  },
+  {
+   "subject": "site:022",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Novo Allé, DK-2880 Bagsvaerd, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-sogroya",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:022",
+   "relation": "SuppliesTo",
+   "object": "product:sogroya",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-sogroya",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:tresiba",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Tresiba Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:006",
+   "relation": "SuppliesTo",
+   "object": "product:tresiba",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-tresiba",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle 1 DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:007",
+   "relation": "SuppliesTo",
+   "object": "product:tresiba",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-tresiba",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 DK-2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:007",
+   "relation": "SuppliesTo",
+   "object": "product:tresiba",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Tresiba Penfill 100 units/mL"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-tresiba",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 DK-2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:007",
+   "relation": "SuppliesTo",
+   "object": "product:tresiba",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Tresiba FlexTouch 200 units/mL"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-tresiba",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 DK-2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:021",
+   "relation": "SuppliesTo",
+   "object": "product:tresiba",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Tresiba FlexTouch 200 units/mL"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-tresiba",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45 Avenue D Orleans 28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "site:007",
+   "relation": "SuppliesTo",
+   "object": "product:tresiba",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Tresiba FlexPen and FlexTouch 100 units/mL"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-tresiba",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Alle 1 DK-2880 Bagsvaerd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:021",
+   "relation": "SuppliesTo",
+   "object": "product:tresiba",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Tresiba FlexPen and FlexTouch 100 units/mL"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-tresiba",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45 Avenue D Orleans 28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:victoza",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Victoza Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:victoza",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-victoza",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:victoza",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-victoza",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:wegovy",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Wegovy Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:wegovy",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": "Solution for injection in pre-filled pen and pre-filled syringe"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-wegovy",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:002",
+   "relation": "SuppliesTo",
+   "object": "product:wegovy",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": "Tablets"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-wegovy",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Allé DK-4400 Kalundborg Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:023",
+   "relation": "LocatedIn",
+   "object": "country:Portugal",
+   "qualifier": {
+    "address": "Quinta são Pedro, Sete Casas, PT-2674-506 Loures, Portugal"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-wegovy",
+     "page": null,
+     "fragment": "Hovione FarmaCiencia S.A. Quinta são Pedro, Sete Casas PT-2674-506 Loures Portugal"
+    }
+   ]
+  },
+  {
+   "subject": "site:023",
+   "relation": "SuppliesTo",
+   "object": "product:wegovy",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": "Tablets"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-wegovy",
+     "page": null,
+     "fragment": "Hovione FarmaCiencia S.A. Quinta são Pedro, Sete Casas PT-2674-506 Loures Portugal"
+    }
+   ]
+  },
+  {
+   "subject": "site:018",
+   "relation": "SuppliesTo",
+   "object": "product:wegovy",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": "Tablets"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-wegovy",
+     "page": null,
+     "fragment": "Novo Nordisk Pharmaceutical Industries Inc. 3612 Powhatan Road Clayton North Carolina 27527-9217 United States"
+    }
+   ]
+  },
+  {
+   "subject": "site:001",
+   "relation": "SuppliesTo",
+   "object": "product:wegovy",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Solution for injection in pre-filled pen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-wegovy",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2880 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:011",
+   "relation": "SuppliesTo",
+   "object": "product:wegovy",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Solution for injection in pre-filled pen"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-wegovy",
+     "page": null,
+     "fragment": "Novo Nordisk Production SAS 45, Avenue d’Orléans 28000 Chartres France"
+    }
+   ]
+  },
+  {
+   "subject": "site:019",
+   "relation": "SuppliesTo",
+   "object": "product:wegovy",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": "Solution for injection in pre-filled syringe and tablets"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-wegovy",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé DK-2800 Bagsværd Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "holder:1",
+   "relation": "Produces",
+   "object": "product:xultophy",
+   "qualifier": {
+    "role": "marketing_authorisation_holder"
+   },
+   "evidence": [
+    {
+     "source": "ema-medicines-output",
+     "page": null,
+     "fragment": "Xultophy Novo Nordisk A/S"
+    }
+   ]
+  },
+  {
+   "subject": "site:024",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Hallas Alle, Kalundborg, 4400, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-xultophy",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle, Kalundborg, 4400, Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:024",
+   "relation": "SuppliesTo",
+   "object": "product:xultophy",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-xultophy",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Hallas Alle, Kalundborg, 4400, Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:025",
+   "relation": "LocatedIn",
+   "object": "country:Denmark",
+   "qualifier": {
+    "address": "Novo Allé, Bagsværd, 2880, Denmark"
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-xultophy",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé, Bagsværd, 2880, Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:025",
+   "relation": "SuppliesTo",
+   "object": "product:xultophy",
+   "qualifier": {
+    "role": "active_substance_manufacturer",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-xultophy",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé, Bagsværd, 2880, Denmark"
+    }
+   ]
+  },
+  {
+   "subject": "site:025",
+   "relation": "SuppliesTo",
+   "object": "product:xultophy",
+   "qualifier": {
+    "role": "batch_release",
+    "strengths": null
+   },
+   "evidence": [
+    {
+     "source": "ema-epar-pi-xultophy",
+     "page": null,
+     "fragment": "Novo Nordisk A/S Novo Allé, Bagsværd, 2880, Denmark"
+    }
+   ]
+  }
+ ]
+}

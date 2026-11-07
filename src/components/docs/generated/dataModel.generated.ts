@@ -25,14 +25,14 @@ export type UndescribedGroup = {
 };
 
 /** The contract version these figures came from. §6.4: a version, never a date. */
-export const CONTRACT_VERSION = "62a6e8587a37";
+export const CONTRACT_VERSION = "228de9f30b2e";
 export const ENGINE_VERSION = "0.8.3";
-export const LAST_MIGRATION = "20261101000002_project_dates_day_early.sql";
+export const LAST_MIGRATION = "20261107000001_kg_entities.sql";
 
 export const COUNTS = {
-  "tablesInSchema": 94,
-  "tablesDescribed": 77,
-  "columnsDescribed": 1026,
+  "tablesInSchema": 97,
+  "tablesDescribed": 80,
+  "columnsDescribed": 1054,
   "tablesUndescribed": 17
 } as const;
 
@@ -190,6 +190,24 @@ export const TIERS: GlanceTier[] = [
         "table": "graph_level_versions",
         "grain": "One row per (project, level, content): the FIRST time a project's product, process, firm or simulation level had that hash. Numbered per project PER LEVEL, so \"Product graph v3\" and \"Firm graph v5\" are both sentences the system can say, and a change to one level moves that level's number and no other. A snapshot (`dataset_versions`) names its level versions — its tuple.",
         "columns": 10,
+        "owner": "platform"
+      },
+      {
+        "table": "kg_entities",
+        "grain": "One real firm, facility, product, material or location an organization's knowledge graph has evidence about — one identity, however many names the evidence uses for it (Phase 19, docs/PLAN.md §29).",
+        "columns": 10,
+        "owner": "platform"
+      },
+      {
+        "table": "kg_entity_aliases",
+        "grain": "One other name an entity of an organization's knowledge graph goes by, with the source that used it.",
+        "columns": 7,
+        "owner": "platform"
+      },
+      {
+        "table": "kg_identity_review",
+        "grain": "One name in an organization's evidence that matched more than one entity, waiting for a person to decide — the resolver never picks (docs/PLAN.md §29 rule 3).",
+        "columns": 11,
         "owner": "platform"
       },
       {
