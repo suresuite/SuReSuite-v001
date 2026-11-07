@@ -843,6 +843,7 @@ CONTEXT
 - Registry catalog for the slots in scope (schemas, ranges, allowed values,
   data each policy requires): {{catalog_slice_json}}
 - Current policy hash: {{policy_hash}}
+{{run_readiness_rows}}
 
 TASK
 - The user asked: "{{utterance}}"
@@ -864,6 +865,11 @@ TASK
 - If the ask targets a policy the catalog marks planned/not-yet-implemented,
   do NOT draft: name the catalog id and the milestone the catalog gives it,
   and say it is not configurable yet.
+- A primary supplier or a primary sourcing firm is a PER-ROW selection: an
+  override whose target_key is one of the RUN-READINESS ROWS in CONTEXT
+  (supplier::material for sourcing, customer::product for fulfillment), with
+  a firm listed for that row — never a family default, never a key or firm
+  that is not listed. If the rows you need are not listed, say so.
 - Call draft_policy_bundle ONCE. Then reply in 2-5 sentences: what changes,
   which slots/entities, what data it newly requires, and that applying will
   create a policy version snapshot for review.
@@ -917,7 +923,7 @@ TASK
 
 `payload` = `{schema_version: 1, diff, base_policy_version_id, rationale}`; `grounding` = `{policy_hash, registry_version}`; `provenance` = `llm_drafted` always (parameter *choices* are the LLM's; validity is the gate's). The diff vocabulary is deliberately the **v2 snapshot shape** (`_build_policy_snapshot`, `20260612000001`), so a reviewer reads the same structure `policy_versions` stores, and apply is a mechanical merge.
 
-**Hard gates.** In the tool handler (pre-proposal): (1) every `patch`/`defaults` field must exist in the registry-generated schema for its family/policy (validated against `registry.generated.json`, the same snapshot `grading.ts` consumes — unknown field ⇒ `invalid_params`, mirroring Pydantic `extra="forbid"`, asset A2); (2) range/enum validation from the same schemas; (3) `target_key` entities must resolve in the project (`project_scope_violation`); (4) the recompiled required-data manifest is graded and attached to the card (`findings_preview`). At apply (§4.4): grounding `policy_hash` match, transactional write + snapshot, post-snapshot `gradeManifest` with `block` ⇒ rollback `gate_blocked`. Engine-side, the snapshot re-validates at compile exactly as any human version (registry law §6.2 + `feasibility()`/`check_portfolio` when bundles land — Phase B1).
+**Hard gates.** In the tool handler (pre-proposal): (1) every `patch`/`defaults` field must exist in the registry-generated schema for its family/policy (validated against `registry.generated.json`, the same snapshot `grading.ts` consumes — unknown field ⇒ `invalid_params`, mirroring Pydantic `extra="forbid"`, asset A2); (2) range/enum validation from the same schemas; (3) `target_key` entities must resolve in the project (`project_scope_violation`); **(3b, v1.6 — §10 entry 38(x)) a run-readiness selection (`sourcing.primary_source`, `fulfillment.primary_source` / `sourcing_firm`) is per row: it is refused as a family default, must target a row the /policies grid is keyed on (`supplier::material` lane / `customer::product` lane), and a firm must be one that row's product ships from (`supply_chain_data.plant_name`, or the project's focal plant) — `invalid_params`, or `not_grounded` when the project's lanes name no firm; the check is structural (`runReadiness.ts`), never a re-decision of which row is primary;** (4) the recompiled required-data manifest is graded and attached to the card (`findings_preview`). At apply (§4.4): grounding `policy_hash` match, transactional write + snapshot, post-snapshot `gradeManifest` with `block` ⇒ rollback `gate_blocked`. Engine-side, the snapshot re-validates at compile exactly as any human version (registry law §6.2 + `feasibility()`/`check_portfolio` when bundles land — Phase B1).
 
 **Refusal rules.** Refuses to: emit KPI predictions ("this will raise fill rate to 97%") — outcomes are simulation's job; configure planned-but-unimplemented policies (registry `status != implemented` ⇒ names the milestone instead, honest-catalog asset A3); exceed 200 override rows; draft when `get_policy_config` fails; invent parameters for slots the registry slice does not cover (asks to widen scope instead).
 
@@ -1884,6 +1890,19 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     - **`ed-04` failed (4 of 11 runs):** the model drafted a single "baseline checkpoint … control arm for a later comparison", a comparison split into its first arm. The §5.4 refusal rule now names that pattern ("a baseline, a control arm, a checkpoint for a later comparison") as the same failure. This change is unmeasured; the next live run measures it.
 
     **Q3 status:** on `gpt-5`, the agent tier passes on two runs except for (1) `pc-06`, blocked on the shared run-readiness gate (a work package; until then the configurator is NOT safe for run-readiness asks on real projects), and (2) `ed-04`, intermittent, with its prompt sharpened. The Experiment Designer and Report Builder suites passed on the confirmation run. Re-enabling either remains one PR per agent, on two green live runs of its suite.
+    (x) **[DECIDED by the owner, 2026-11-07: the narrow fix] `pc-06`'s run-readiness gap, re-measured before any build.** The proposed fix (move the run-readiness half of `verification.ts` into `_shared` for the browser, `sim-command` and the agents) was costed against the code first, and three facts changed it:
+    1. **The browser AUTO-DECIDES the primaries.** `useStageRows` marks a single-source material's lane primary and, otherwise, the highest-volume lane; for each customer×product it marks the highest-volume firm. These are routing decisions (`__decided`, §4 D23) that count unless a user saved otherwise. So obligations 3–4 block only when a user un-selects a primary or no volume data exists.
+    2. **The server dispatch gate does not grade them at all.** `sim-command`/`dispatch.ts` never reads `primary_source`, and when nothing is saved the engine chooses its own sourcing primary (`primary_rank`, cheapest; `grading.ts` note at §4 D188).
+    3. **A faithful port would have to re-create the grid's routing logic on the server**: a second author of a decision the browser already makes. That is a multi-day data-layer package, and it buys server enforcement of something the browser mostly satisfies automatically.
+
+    **The real danger was narrower:** the configurator FILED wrong-row cards (live: `target_key "S1"`, an invented firm `"Acme"`, and in runs 87/88 `primary_source: true` as a family DEFAULT, which marks every row). Gate (3) let them through because it only checked that each `::` token was a known id. **The owner chose the narrow fix**, and it is what shipped:
+    - **Gate 3b** (`runReadiness.ts`, structural only). A run-readiness selection is refused as a family default, must target a row the /policies grid is keyed on (`supplier::material` / `customer::product`), and a firm must be one the row's product ships from (`supply_chain_data.plant_name`, the grid's own firm source, or the project's focal plant). With no firm in the lanes it is `not_grounded`, not a guess.
+    - **CONTEXT** gains `RUN-READINESS ROWS`: every lane with its volume, materials with a choice first, and every customer×product with its firms, budget-capped with true totals.
+    - **The §5.2 prompt** gains one rule (verbatim above).
+    - **The `pc-06` fixture now grounds its firm** (an outbound `supply_chain_data` lane shipping P1 from PLANT-1). Before, the mocked answer named a firm no row supported, and gate 3b correctly refused it.
+    - `policy_configurator_test.ts` pins the three live wrong cards as refusals and the right rows as a filing, and the CONTEXT block is pinned too. Mutation-checked: switching gate 3b off fails exactly the three refusal tests.
+
+    **What this does NOT do, stated so it is not mistaken for more:** the browser remains the only grader of obligations 3–4, and the server dispatch gate still does not enforce them. Blueprint §12's run-readiness contract is corrected in the same change to say so.
 
 ---
 
@@ -3748,5 +3767,5 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
 | Q1 | **Iteration 5 recommended for merge; Q1 not done.** On two runs: 35–36 misses (Q0 124, production today 75–79); vv .90/.82–.88 (production today .82–.84/.82); designer, report and draft schema validity meet target. Open: steward recall (owner labeling decision, 38(q)), configurator precision .895, advisory false-artifact .06–.09, needs-run .78, cache-checkable .75 | 38(g), 38(i), 38(k), 38(n)–(r) |
 | Q2 | **Met on `gpt-5`, five runs in a row** (steward and configurator schema validity 1.0, gate-violation attempts 0). `gpt-5-mini` is scored at Q4 | 38(h), 38(l), 38(n), 38(r) |
-| Q3 | **Agent tier green on `gpt-5` except two items** (runs `c28b0554`, `32fb484a`): coverage 9/9 with 0 fabrications and loop 1.0 on both runs; steward, V&V and report suites passed on both. Open: **`pc-06`** (scored by target rows it fails, because the configurator cannot see run-readiness blockers; needs the shared gate, a work package) and **`ed-04`** (intermittent; the refusal rule was sharpened and is unmeasured) | 38(s)–(w) |
+| Q3 | **Agent tier green on `gpt-5`** (runs `c28b0554`, `32fb484a`) except `pc-06`, now addressed by the owner-chosen narrow fix (gate 3b + run-readiness rows in CONTEXT, 38(x)), and `ed-04` (sharpened, unmeasured). Both are re-measured by the live runs this change fires | 38(s)–(x) |
 | Q4–Q5 | Not started | — |
