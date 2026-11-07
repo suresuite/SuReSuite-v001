@@ -1856,6 +1856,18 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     | **`pc-06`** | `defaults.sourcing.primary_source = true` (no per-row selections) | **Capability gap, not a prompt defect.** Run-readiness obligations 3–4 (one primary supplier per material, one primary sourcing firm per customer×product) are graded ONLY in the browser (`src/lib/policies/verification.ts`, from grid rows, including inferred primaries). Server-side `gradeDataset` does not grade them, so the agent cannot see what blocks the gate, and its post-apply "zero blocks" check is vacuous for these two obligations | **Not faked.** Writing a second, agent-only version of the gate would create two authors of one fact (`single-source`). The fix is a work package: move the run-readiness half of `verification.ts` into `_shared`, used by the browser, the `sim-command` gate and the agents. Until then `pc-06` stays red and that is the honest reading |
 
     The §5.3, §20.4 and §22.4 verbatim texts change with the code; `closed_loop_test.ts` pins the new §20.4 sentence.
+    (u) **Q3 fix run (`b25408b7`, `gpt-5`): every agent suite except the configurator's passes, and coverage is clean.**
+    - **Suites:** steward 8/8, V&V 5/5, designer 6/6, report builder 4/4 (`rb-03` skipped with its stated reason). Schema validity is 1.0 everywhere.
+    - **Coverage:** 9/9 with 0 fabrications (`cov-04` passes after the entity-label fix).
+    - **Loop:** cache-hit 1.0 (`cl-08` passes) and run-needed 1.0.
+    - **Routing, unchanged code, a sixth sample:** steward .929/.839, configurator .944/.971, V&V .906/.879, designer .893/.833, report .964/1.0.
+
+    **Two failures remain.**
+    - **`pc-06`:** the run-readiness capability gap in (t). The model's own rationale: "no entity names were provided, so defaults are used".
+    - **`cl-04`:** one rejected write (three before), still `pending → awaiting_approval`. The wording this session added caused it: "make a step 'active' (in one call) before you close it" reads as "do both in one call", while the handler checks each call against the SAVED plan.
+      - The description now says to set `active` in one call and move the step on in a LATER call.
+      - The rejection message itself tells the model how to recover, since the envelope is what the model reads next.
+      - Rule 3 itself is unchanged.
 
 ---
 
@@ -3720,5 +3732,5 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
 | Q1 | **Iteration 5 recommended for merge; Q1 not done.** On two runs: 35–36 misses (Q0 124, production today 75–79); vv .90/.82–.88 (production today .82–.84/.82); designer, report and draft schema validity meet target. Open: steward recall (owner labeling decision, 38(q)), configurator precision .895, advisory false-artifact .06–.09, needs-run .78, cache-checkable .75 | 38(g), 38(i), 38(k), 38(n)–(r) |
 | Q2 | **Met on `gpt-5`, five runs in a row** (steward and configurator schema validity 1.0, gate-violation attempts 0). `gpt-5-mini` is scored at Q4 | 38(h), 38(l), 38(n), 38(r) |
-| Q3 | **In progress.** Owner defaults applied (38(s)); every persistent failure diagnosed from recorded model output (38(t)): `cov-04` was a product defect (entity labels), `cl-08` an unfollowable prompt, `rb-01`/`rb-03`/`ed-02` over-strict or contradictory fixtures, `cl-04`/`vv-04`/`cov-08` prompt gaps. **`pc-06` is blocked on a capability gap** (server cannot grade run-readiness selections; needs a shared gate, not a second one) | 38(s), 38(t) |
+| Q3 | **Nearly done.** Fix run `b25408b7`: steward, V&V, designer and report suites all pass; coverage 9/9, 0 fabrications; cache-hit and run-needed 1.0. Open: `cl-04` (plan-call wording, fixed and re-run) and **`pc-06`, blocked on the shared run-readiness gate (a work package)** | 38(s)–(u) |
 | Q4–Q5 | Not started | — |
