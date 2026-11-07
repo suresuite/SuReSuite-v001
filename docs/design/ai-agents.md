@@ -2920,6 +2920,8 @@ The handler enriches every accepted `add_bom_line` row with the **recomputed** `
 
 **Stage & dependencies.** **Phase 4c** (this landing): the rate-method registry + `ioCoefficientsSeed.json` (§18.5 discipline), `get_bom_rate_estimates`, the v2 draft/normalize/mass-balance path, the apply v2 + G16 self-verification, the `20260728000001` migration (`assign_bom_line`, `assign_outbound_customer` — pinned against scratch Postgres), and nc-11…nc-16 in the deterministic tier. Flags: `AGENT_ENABLED_IDS` unchanged; **`CARTOGRAPHER_PRODUCT_LEVEL` default OFF** — off ⇒ byte-identical v1 behavior (nc-11 + the §9.1 golden transcripts are the proof). New materials/customers as master rows, edge economics estimation, `multi_tier_supply_chain` tier-position rows, and an inverse-diff revert class remain out of scope. Depends on: Phase 4a (B7 registry patterns) and Phase 4b (evidence store, v1 gates) as merged — none refactored.
 
+**v3 — the knowledge graph (planned, 2026-11-07):** a per-organization graph of canonical entities and dated, independence-weighted assertions over `external_evidence`, four free structured sources, a gap finder and link hypotheses (never evidence), and the Fairphone reference project — planned as **`docs/PLAN.md` §29, Phase 19**, which is the authority for it.
+
 **v3 — continuous:** scheduled refresh under §18.4; every refresh lands as a new dataset version in the existing `graph_hash` lineage — which is precisely the temporal-KG extension AlMahri et al. name as future work, i.e. the publishable delta this platform gets structurally for free.
 
 ### 18.3 B9 · Disruption Sentinel (`disruption-sentinel`, artifact `risk_alert`) *(v1 on-demand elaborated to §5 altitude in v1.5 — Phase 4d; Q28 resolved)*

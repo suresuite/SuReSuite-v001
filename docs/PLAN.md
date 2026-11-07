@@ -25270,6 +25270,7 @@ and §15 run `41283139980` taken in a push carrying no migration.
 | **16** | **16.0 – 16.6** | **stochastic lead times configured like demand (per supplier × material lane), a production lead time per product (P-P.13), and the FG inventory band laid out like the Supplier inventory band** | — | **16.0 ✅** the plan (§26), §4 D299–D302 registered from a verified reading (the brief's "`inbound_logistics` carries the spread" and "lead time is read-only" were both wrong by the time it ran — D290 had made the lead time an override), blueprint P-S.6 widened, P-P.13 added, §2.4's W^FG boundary made opt-in. **16.1 ✅** engine shapes (0.7.0): normal / triangular / uniform drawn per lane from a new world stream, CRN-safe under a changed primary, lognormal/gamma bit-identical · **16.2 ✅** per-lane data + mapper (`20261004000003`, rehearsal 840; D302 closed) · **16.3 ✅** Supplier cells: a shape per row and only its parameters, a bounded row's lead time is the bounds' mean (D299 closed) · **16.4 ✅** engine production lead time (0.8.0): starts complete at t + L through a per-product pipeline, the plan offset by E[L] net of WIP, WIP traced and uncharged, the honesty test extended · **16.5 ✅** product data + Plant cells (`20261004000004`, rehearsal 850; D300 closed) · **16.6 ✅** FG inventory laid out like the Supplier band (D301 closed). **PHASE COMPLETE** — §15 reading owed in the push after the merge |
 | **17** | **17.0 – 17.7** | **nexus by stress test: every material and supplier of a project disrupted alone under one shared scenario (full outage starting in week `max(26, t_w + 1)`, 2–9 weeks), the project's policies applied, shown as a table of lost sales in € per duration with an Average column it opens sorted by, stored with its baseline and read by the Nexus card with no Run click — first on `Project AA - ver3`** | — | **17.0 ✅** the plan (§27), §4 D310–D311 registered from a verified reading (a material cannot be disrupted; "week 26" needs a reference; backorder hides lost sales), four owner decisions settled 2026-10-21 (start week, the sortable table, €, GitHub Actions within its limits); targets are suppliers and the materials they supply, nothing else; the run-from-the-card flow written as WP 17.7 (Validated Model required; pick engine, baseline, data version). **17.1 ✅** engine 0.8.1: a material can be disrupted (D311 closed for the engine API; golden digests unmoved). **17.2 ✅** the battery (`scsim.stress.nexus`, 0.8.1 amendment; 12 tests). **17.3 ✅** the store (`20261021000001`, rehearsal 900): opens only on an active Validated Model, the server writes the binding, keyed on the simulation scope. **17.4** the job is built (`nexus-stress.yml`, `nexus_job.py`); its first run, for `Project AA - ver3`, is owed after the merge. **17.5 ✅** the card reads the stored battery: baseline, top three, the sortable table, no Run button |
 | **18** | **18.1 – 18.2** | **calendar time: a disruption start entered as a run week, an ISO 8601 week or a date through the project start (run week 0), what was entered kept beside the run week, every run stamped with the calendar it was read against, and the project window as the one authored run length** | — | **18.1 ✅** `calendarWeeks.ts` and `projectWindow.ts` are the only date↔week and run-length rules; `StartTimeControl` on the Lab and the network dialog; `simulation_runs.calendar_start` stamped at insert, past runs backfilled and labelled (`20261101000001`, rehearsal 940); the dialog's week-early date and the UTC+ day-early project start fixed (§4 D318). **18.2 ✅** the after-merge reading (§15 run `41220357251`): 164 backfilled, gates 0, every project start on 31 December — the UTC+ save bug, measured. **18.3 ✅** those windows moved to the days picked (`20261101000002`, rehearsal 950); runs keep their recorded calendar. **18.4 ✅** the after-merge reading (§15 run `41283139980`): every dated project starts on 1 January, gates 0. **18.5 ✅** one numbering: /policies counts run weeks from 0 like the engine and the Lab, dates beside each (D319). **Phase 18 complete** |
+| **19** | **19.0 – 19.8** | **the supply-chain knowledge graph: one identity per firm and site, per organization; evidence with time, independence and contradictions; four free structured sources; the Fairphone reference project; a gap finder and link hypotheses; the Cartographer reads the graph; a Network knowledge view** | — | planned — §29; owner decisions 2026-11-07 (per organization, all four sources, Fairphone, a new phase) |
 
 **27 work packages** (26 + the five 5.2 sub-packages counted as one). WP 3.0 was added at the Phase 2→3 boundary review, for the reason boundary reviews exist: nine defects had an owner that had already finished, which reads exactly like having an owner.
 Commit convention: `Phase N / WP N.M / <blueprint ref>: <title>`.
@@ -28529,3 +28530,124 @@ as the project start, so /policies — the one surface counting from 1 — adopt
 **Order.** 18.1 → 18.2 → 18.3 → 18.4 → 18.5. **Out of scope:** the stress-test library cleanup to supplier and material disruptions (owner: a later
 package; its material half is D311's platform path); renaming the /policies-vs-Lab "Week 1" labels (now D319, WP 18.5).
 
+
+---
+
+## 29. Phase 19 — The supply-chain knowledge graph: one identity per firm, evidence that remembers, and gaps the agent can aim at
+
+**Why.** Owner direction, 2026-11-07: build a knowledge graph and a "smart network" so the Network Cartographer (B8,
+`ai-agents.md` §18.2) maps a focal company's supply chain better. What B8 lacks today, read from the code: a firm's identity
+is its normalized name plus one checked-in LEI seed file, so one firm under two names is two firms; evidence is a flat,
+per-project list of triples in `external_evidence` (tier 4) with no time, no memory across documents and no notion of
+independence beyond counting `source_id`s; and the agent extracts only from documents it is handed, with nothing telling it
+which gaps in the focal firm's network matter. **Owner decisions (2026-11-07):** the graph is **per organization**; **all four**
+free structured sources are in scope (GLEIF, Wikidata, Open Supply Hub, UN Comtrade); the first focal company is a **real EU
+electronics firm with public data and low legal risk** — Fairphone B.V. (Amsterdam), chosen in WP 19.0; this is a **new phase**.
+
+**The rules this phase is held to.**
+1. **A fact is never invented, and a prediction is never a fact.** A link enters the network only through `network_map_diff`
+   and its existing gates (≥ 3 independent sources, verbatim evidence, the owner's approval). A predicted link is a
+   *hypothesis*: it ranks where to look, it is never counted as evidence and never proposed as a row.
+2. **Per organization.** Every graph table is keyed by `organization_id` (uuid, gate `uuid-identity`) and readable only inside
+   that organization; nothing an organization learns reaches another.
+3. **No identity by guess.** Two entities merge only on a shared registry identifier (LEI, Wikidata QID, Open Supply Hub id)
+   or an owner-approved review; an ambiguous name goes to a review queue (the B8 disambiguation law, generalized).
+4. **Outside the simulation until applied.** The graph is not in the `simulation` hash scope and no engine input reads it; only
+   rows applied into the project's tables reach a run (gate `page-equals-run` unaffected; no `ENGINE_VERSION` change).
+5. **No provider spend unless the owner pays for it** (`ai-agents.md` §10 entry 38(z)). WP 19.0–19.5 and 19.7 are
+   deterministic; only WP 19.6's live eval and model-based extraction from free text need provider credit, and wait for it.
+6. **Every new table is in the contract the day it lands** — sidecar, natural key, audit triggers, rehearsal — gates
+   `table-covered`, `natural-key`, `audit-actor`, `declared-capability`, `no-tier-skip`.
+
+### WP 19.0 — The plan, the baseline, and the focal company *(planned · no migration)*
+
+- **Baseline, measured before anything changes:** B8's corpus precision / recall / F1 (`nc-10`'s scorer), entity-resolution
+  accuracy on a new labelled fixture (same name / different country; a rename; parent vs subsidiary), and for the focal project
+  the share of materials with one known source and the count of tier-2 / tier-3 suppliers known. Every later package reports
+  against these numbers.
+- **The focal company: Fairphone B.V.** (Netherlands; smartphones and audio). It publishes, itself, what this phase needs:
+  per-model supplier lists with tiers and facility locations, a smelter and refiner annex, an interactive supplier map, annual
+  Supply Chain Engagement reports, and Fraunhofer IZM life-cycle assessments with material composition. Because the company
+  discloses its own supply chain on purpose, mapping it from those documents carries the least legal risk of any candidate.
+  Backup if a document cannot be used: another EU electronics maker's published CSRD / LkSG supply-chain disclosures.
+- **Legal and ethical checklist, written into the project's description and enforced by the import:** only documents the
+  company or a public registry published; each stored as URL + retrieval date + content hash, never as a committed copy;
+  verbatim evidence limited to the short fragments B8's gate already enforces; no `Person` entities for this project; the
+  project labelled "mapped from public disclosures — not endorsed by or affiliated with Fairphone"; the website's terms read
+  before any automated fetch (documents are downloaded by hand until then); a correction from the company is applied as a
+  `ceased` / `contradicted` assertion (WP 19.2), never argued.
+
+### WP 19.1 — One identity per firm and site *(planned · migration · gates `natural-key`, `uuid-identity`, `audit-actor`)*
+
+- `kg_entities` (tier 3): `organization_id`, `entity_type` (Company · Facility · Material · Product · Location), canonical name,
+  country, identifiers (`lei`, `wikidata_qid`, `osh_id`), and `kg_key` — the strongest identifier as a string (`lei:…`, then
+  `wd:…`, then `osh:…`, else `name:<normalized>|<country>`). Natural key `(organization_id, kg_key)`.
+- `kg_entity_aliases`: every other name an entity goes by, with the evidence that said so.
+- **The resolver** (one shared module beside `networkEvidence.ts`, deterministic): identifier → LEI seed / GLEIF → normalized
+  name + country → alias; more than one candidate ⇒ the review queue, never a pick.
+- **Links into the project:** nullable `kg_entity_id` on `suppliers` and `node_list`, written only by an apply.
+- **Exit:** resolution accuracy above the WP 19.0 baseline on the hard fixture; `rehearsal/` proves org isolation (another
+  organization reads zero rows) and the audit row names the actor.
+
+### WP 19.2 — Evidence that remembers *(planned · migration · gates `single-source`, `input-hash`)*
+
+- `kg_assertions`: subject → relation → object between `kg_entities`, with `first_seen`, `last_seen`, `valid_from`, `valid_to`
+  and a status computed, not stored by hand. Relations: B8's four (SuppliesTo, Produces, LocatedIn, OwnedBy) plus Ships (with an
+  HS code), Operates (a facility) and CustomerOf. Natural key `(organization_id, subject, relation, object, qualifier)`.
+- `kg_assertion_evidence`: assertion ↔ `external_evidence` row. **`external_evidence` stays the one evidence store** — the
+  graph links to it and never copies it (gate `single-source`).
+- **Status rule, one function:** verified at ≥ 3 *independent* sources, where two documents from the same publisher or the same
+  parent company count once; evidence older than a declared age stops counting (stale); a contradicting statement ("ceased
+  supplying") is recorded beside the assertion, not over it. `VERIFY_MIN_SOURCES` stays the single threshold.
+- **Snapshots:** a graph state can be frozen into a hashed version for an analysis, outside the `simulation` scope (rule 4).
+
+### WP 19.3 — Four free structured sources *(planned · environment change for egress · gate `no-tier-skip`)*
+
+- **GLEIF** (LEI Level 1 + Level 2 parent/child, golden copy, CC0) — firm identity and ownership.
+- **Wikidata** (CC0) — headquarters, industry, ownership; QIDs as identifiers.
+- **Open Supply Hub** (CC BY-SA 4.0) — facilities and their operators; attribution carried on every derived row, and the
+  share-alike obligation stated on the project's export.
+- **UN Comtrade** (country × HS flows) — **priors only**: it ranks where to look (WP 19.5) and is never a firm-level fact.
+- Each source is a `sourceRegistry.ts` row (role, licence, screening rule), lands through tier 0 → tier 1 → promotion like
+  every other dataset, and refreshes from a scheduled workflow. The egress hosts need an environment change the owner approves.
+
+### WP 19.4 — The Fairphone reference project *(planned · data, no engine change)*
+
+- A project in the owner's organization built from Fairphone's own publications: the current model's supplier list annex
+  (final assembly, component suppliers, sub-suppliers, facility locations), the smelter and refiner annex, and the LCA's
+  material composition as product → material shares. Parsed **deterministically** from the downloaded documents into the
+  landing tables, so no model call is needed; each fact is an assertion with its document as evidence.
+- **It is the known answer** the rest of the phase is scored against: tiers as Fairphone reports them, counts reconciled to
+  each document's own totals, and every discrepancy between editions recorded rather than resolved silently.
+
+### WP 19.5 — The gap finder and link hypotheses *(planned · deterministic)*
+
+- **Gap finder:** for the focal firm, materials with one known source, BOM peers with no known tier-2 supplier, unresolved
+  identities and stale assertions — ranked by exposure (the Phase 17 nexus numbers where a run exists, else BOM share).
+- **Link hypotheses** with stated reasons, explainable heuristics first (shared HS code + country from UN Comtrade, common
+  neighbours, Adamic–Adar on the org's graph); a learned model (GNN) only if the heuristics plateau, and only with its own eval.
+- **Scored honestly:** hide 20 % of the Fairphone project's known links, report hits@k, and publish the blind spots (T3).
+
+### WP 19.6 — The Cartographer reads the graph *(planned · edge function · live eval owner-gated)*
+
+- Read tools `get_known_entities`, `get_mapping_gaps`, `get_link_hypotheses`; B8 resolves against the graph before extracting
+  (fewer model calls) and writes assertions; proposals still go through `network_map_diff` and its gates unchanged.
+- The proposal card shows evidence count, freshness and independence per row.
+- Deterministic fixtures `nc-17…`; the live model-scored eval waits for the owner's credit (rule 5); the agent stays out of
+  `AGENT_ENABLED_IDS` until it passes, per `ai-agents.md` §25.
+
+### WP 19.7 — "Network knowledge" in the Data Manager *(planned · UI)*
+
+- The focal firm's tier-n graph with each link coloured verified / corroborated / provisional / hypothesis, an evidence drawer
+  per link (document, date, fragment), the gap list, and the identity review queue. Desktop first; the phone layout follows
+  `docs/mobile-ui-spec.md`.
+
+### WP 19.8 — The after-merge reading *(planned · §15)*
+
+Every organization's graph rows are readable only inside it; no assertion is `verified` with fewer than three independent
+sources; no hypothesis is linked to a project row; taken in the push after the merge (D153).
+
+**Order.** 19.0 → 19.1 → 19.2 → 19.4 → 19.5 → 19.3 → 19.6 → 19.7 → 19.8 (19.4 and 19.5 need only the two tables, so the
+reference project and the gap finder do not wait for the external sources). **Out of scope:** licensed sources (FactSet,
+Bloomberg SPLC, Orbis, Panjiva — `ai-agents.md` §18.5, not wired); a graph shared across organizations; background
+extraction without a request (§18.4); anything that changes an engine input.
