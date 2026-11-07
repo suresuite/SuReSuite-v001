@@ -603,3 +603,21 @@ Deno.test("the id lexicon is learned from THIS turn's envelopes — a differentl
   assert(!foreign.ok);
   assert(foreign.violations.every((v) => v.class === "number"), JSON.stringify(foreign.violations));
 });
+
+// ── §19.5 / §10 entry 38(t): list_project_entities labels by master name ─────
+
+Deno.test("cov-04 snapshot: list_project_entities labels suppliers with their master NAME, so a name fragment is findable", async () => {
+  const fx = await loadCov("cov-04-disambiguation");
+  const { ctx } = makeCtx(structuredClone(fx.project_snapshot));
+  const env = await executeTool("list_project_entities", { entity_type: "supplier" }, ctx);
+  const rows = tableRows(env) as string[][];
+  const byId = Object.fromEntries(rows.map(([, id, label]) => [id, label]));
+  assertEquals(byId["604"], "ACME NORTH");
+  assertEquals(byId["6042"], "ACME SOUTH");
+  // An entity with no master row keeps its id as the label (enrichment only).
+  const { ctx: bare } = makeCtx({
+    inbound_logistics: [{ project_id: PROJECT, supplier_id: "S9", material_id: "M1", volume: 1, time_unit: "week", lead_time: 1, unit_price: 1 }],
+  });
+  const env2 = await executeTool("list_project_entities", { entity_type: "supplier" }, bare);
+  assertEquals((tableRows(env2) as string[][]).map(([, id, label]) => [id, label]), [["S9", "S9"]]);
+});

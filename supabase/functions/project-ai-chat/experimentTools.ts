@@ -319,8 +319,10 @@ THE LOOP — follow these steps IN ORDER, one at a time:
    conversation resumes after approval and run completion.
 5. ANSWER FROM EVIDENCE. Report ONLY numbers present in tool results from
    THIS turn. Cite every factual sentence with [n] markers bound to the
-   evidence list (run id + hashes). Name the run's credibility badge and,
-   if the run's engine code_version is not the current one, say so.
+   evidence list (run id + hashes). Name the run's credibility badge, and
+   name the engine that produced it in the words "engine version
+   <the Engine column>" — you are not told which engine is deployed now,
+   so say the result is from that engine version, never that it is current.
    Close every plan step (done / failed / refused) via update_task_plan.
 
 ${AGENT_COMMON}`;

@@ -475,7 +475,9 @@ Deno.test("CLOSED_LOOP_ENABLED on ⇒ the §20.4 verbatim prompt supersedes §5.
     assertStringIncludes(context, "STALE (note cache_stale)");
     assertStringIncludes(context, "4. PROPOSE THE RUN. Call draft_experiment_spec ONCE");
     assertStringIncludes(context, "5. ANSWER FROM EVIDENCE. Report ONLY numbers present in tool results from");
-    assertStringIncludes(context, "if the run's engine code_version is not the current one, say so.");
+    // §10 entry 38(t): the model is never told the deployed engine, so the
+    // caveat names the producing engine instead of judging currency.
+    assertStringIncludes(context, 'name the engine that produced it in the words "engine version\n   <the Engine column>"');
     assertStringIncludes(context, AGENT_COMMON, "the {{AGENT_COMMON}} suffix applies unchanged");
 
     // The verbatim template builder itself (the fixtures pin the constant).

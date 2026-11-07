@@ -984,6 +984,10 @@ TASK
   narrative and the recommendation, not the numbers. Recommend verdict
   "validated" only if all validation tests passed and adequacy is met;
   otherwise recommend "rejected" or basis "face" and say why.
+- If there is no COMPLETED evidence run to adopt (none in CONTEXT, or the
+  run-results read says there are none), do NOT call
+  draft_model_card_narrative at all: say a card needs a completed run and
+  offer to set one up. A card with no run id is refused, never filed.
 - Reply in 2-6 sentences; end adoption replies with: the card must be
   reviewed and approved before it governs Lab runs.
 
@@ -1838,6 +1842,20 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     **First Q3 change: evidence before fixes.** A failed live fixture now records `observed`: the model's reply, the proposal payload it filed and the tools it called (clipped, report-only, failures only). For a rejected plan write, it records the rejection reason. Without this, a persistent failure cannot be told from a too-strict fixture without guessing.
     - One case did not need it. `ed-02`'s live scorer compared the new scenario's free-text NAME to the mocked args' `"S1 outage — 6 weeks"`, which no fixture description asks for. It now checks what the ask means: a new scenario whose schedule carries an S1 outage of 42 days (`new_scenario_outage`), with replications checked as before. The deterministic tier still pins the mocked name.
     - **`rb-03` cannot pass live, by construction.** Its utterance and snapshot are exactly `rb-02`'s, and `rb-02`'s correct answer is a cited disruption brief. `rb-03` exists to prove the GATE refuses an uncited narrative, which only its mocked arguments produce. A correct model therefore writes `rb-02`'s proposal and "fails" `rb-03`, as it did 8 of 8 times. The fixture now carries `live_tier: false` with that reason: the live tier reports it as skipped (`liveSkipped`), never as a pass, and the deterministic tier still pins the refusal.
+    (t) **The diagnostic run (`42350489796`, `gpt-5`) recorded what the model DID on every failed fixture, and every persistent failure had a cause.** Each fix below is stated with its evidence:
+
+    | Fixture | What the model did (observed) | Cause | Fix |
+    |---|---|---|---|
+    | `cov-04` | "I don't see a supplier named 'acme' … 604 (604), 6042 (6042)" | **Product defect.** `list_project_entities` labelled every entity with its id, so a user's word ("ACME NORTH") never appeared. `resolveEntity` already matched on master names; this list did not | `list_project_entities` labels supplier/customer/material/product rows with their master name, read through the same `masterNames()` enrichment (an id label is kept when there is no name). Pinned in `coverage_test.ts` (mutation-checked) |
+    | `rb-01` | A run-results XLSX with an extra **cited** AI-commentary narrative (2 sections) | Fixture stricter than its description; the tool accepts the template's optional narrative | `allow_cited_narrative`: one extra section is accepted only if it is a narrative WITH citations (the §4.3 rule stays the point) |
+    | `cl-08` | "…engine code version scsim-0.9.0" | **Unfollowable prompt.** §20.4 said "if the run's engine code_version is not the current one, say so", but no tool or CONTEXT tells the agent which engine is deployed | §20.4 now asks the agent to name the producing engine "in the words 'engine version <Engine>'" and never to call it current. The hit table's posture (return the version, never judge it) is unchanged |
+    | `cl-04` | `pending → awaiting_approval`, `pending → refused`, `pending → done` (all rejected) | The `update_task_plan` description never stated the §21.1 rule-3 transitions that its handler enforces | The description now lists the legal transitions and says to make a step `active` first |
+    | `vv-04` (schema validity .8) | `draft_model_card_narrative` with `evidence_run_id: ""` on a project with no runs | Same class as the steward's empty draft (38(l)) | §5.3 prompt: with no completed evidence run, do not call the draft tool; say so and offer to set one up |
+    | `cov-08` (1 in 10 runs) | "OTIF is well below a typical **95%** target" | A rule of thumb from training data, which the verifier correctly flags | §22.4 v2: the no-ungrounded-number rule now names industry benchmarks, "typical" targets and rules of thumb |
+    | `pc-04` (2 in 9) | Mapped "EOQ lot sizing" onto `inventory.type = rop` | The model ignored an existing rule ("planned policy: do NOT draft") | None; intermittent, and the rule already says it. Watched |
+    | **`pc-06`** | `defaults.sourcing.primary_source = true` (no per-row selections) | **Capability gap, not a prompt defect.** Run-readiness obligations 3–4 (one primary supplier per material, one primary sourcing firm per customer×product) are graded ONLY in the browser (`src/lib/policies/verification.ts`, from grid rows, including inferred primaries). Server-side `gradeDataset` does not grade them, so the agent cannot see what blocks the gate, and its post-apply "zero blocks" check is vacuous for these two obligations | **Not faked.** Writing a second, agent-only version of the gate would create two authors of one fact (`single-source`). The fix is a work package: move the run-readiness half of `verification.ts` into `_shared`, used by the browser, the `sim-command` gate and the agents. Until then `pc-06` stays red and that is the honest reading |
+
+    The §5.3, §20.4 and §22.4 verbatim texts change with the code; `closed_loop_test.ts` pins the new §20.4 sentence.
 
 ---
 
@@ -3231,8 +3249,10 @@ THE LOOP — follow these steps IN ORDER, one at a time:
    conversation resumes after approval and run completion.
 5. ANSWER FROM EVIDENCE. Report ONLY numbers present in tool results from
    THIS turn. Cite every factual sentence with [n] markers bound to the
-   evidence list (run id + hashes). Name the run's credibility badge and,
-   if the run's engine code_version is not the current one, say so.
+   evidence list (run id + hashes). Name the run's credibility badge, and
+   name the engine that produced it in the words "engine version
+   <the Engine column>" — you are not told which engine is deployed now,
+   so say the result is from that engine version, never that it is current.
    Close every plan step (done / failed / refused) via update_task_plan.
 
 {{AGENT_COMMON}}
@@ -3479,7 +3499,8 @@ DATA RULES
   you did not receive from a tool. Never continue a partial list by
   pattern.
 - Every entity id, name, or number you state must appear in a tool result
-  you received this turn. If it does not, you may not say it.
+  you received this turn. If it does not, you may not say it — and that
+  includes industry benchmarks, "typical" targets and rules of thumb.
 - RESULTS come from runs. For "what would happen / what did the run show"
   questions, check find_completed_run and get_run_results before saying no
   data exists. Numbers from a run must name the run. Never predict a KPI.
@@ -3699,5 +3720,5 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Q0 | **Done (2026-11-06).** Baseline taken on `gpt-5` and `gpt-5-mini`; per-row misses and invalid draft args recorded; `AGENT_ENABLED_IDS` narrowed to `vv-analyst`; Gemini and DeepSeek hidden from users (38(j)). The last two take effect on merge | §10 entry 38 (f)–(j); run `42291434086` |
 | Q1 | **Iteration 5 recommended for merge; Q1 not done.** On two runs: 35–36 misses (Q0 124, production today 75–79); vv .90/.82–.88 (production today .82–.84/.82); designer, report and draft schema validity meet target. Open: steward recall (owner labeling decision, 38(q)), configurator precision .895, advisory false-artifact .06–.09, needs-run .78, cache-checkable .75 | 38(g), 38(i), 38(k), 38(n)–(r) |
 | Q2 | **Met on `gpt-5`, five runs in a row** (steward and configurator schema validity 1.0, gate-violation attempts 0). `gpt-5-mini` is scored at Q4 | 38(h), 38(l), 38(n), 38(r) |
-| Q3 | **In progress.** Owner defaults applied (38(s)); failure evidence (`observed`) now recorded; `ed-02` scored by meaning. A diagnostic `gpt-5` run has been fired to read the persistent failures | 38(s) |
+| Q3 | **In progress.** Owner defaults applied (38(s)); every persistent failure diagnosed from recorded model output (38(t)): `cov-04` was a product defect (entity labels), `cl-08` an unfollowable prompt, `rb-01`/`rb-03`/`ed-02` over-strict or contradictory fixtures, `cl-04`/`vv-04`/`cov-08` prompt gaps. **`pc-06` is blocked on a capability gap** (server cannot grade run-readiness selections; needs a shared gate, not a second one) | 38(s), 38(t) |
 | Q4–Q5 | Not started | — |

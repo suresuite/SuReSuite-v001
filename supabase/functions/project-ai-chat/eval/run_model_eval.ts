@@ -789,9 +789,17 @@ function scoreAgentOutcome(cfg: AgentEvalConfig, proposals: Row[], exp: Record<s
     if (exp.proposal.format && payload.format !== exp.proposal.format) {
       return { pass: false, detail: `expected format ${exp.proposal.format}, got ${payload.format}` };
     }
-    if (exp.proposal.sections !== undefined &&
-        ((payload.sections as unknown[]) ?? []).length !== exp.proposal.sections) {
-      return { pass: false, detail: `expected ${exp.proposal.sections} sections, got ${((payload.sections as unknown[]) ?? []).length}` };
+    if (exp.proposal.sections !== undefined) {
+      const secs = (payload.sections as Array<{ kind: string; citations?: unknown[] }>) ?? [];
+      // §10 entry 38(t): an extra AI-commentary section is the template's own
+      // optional narrative (the tool accepts it, §16.1) — allowed only when it
+      // is CITED, because the §4.3 citation-mandatory rule is the point.
+      const extraCitedNarrative = exp.proposal.allow_cited_narrative === true &&
+        secs.length === exp.proposal.sections + 1 &&
+        secs.some((x) => x.kind === "narrative" && Array.isArray(x.citations) && x.citations.length > 0);
+      if (secs.length !== exp.proposal.sections && !extraCitedNarrative) {
+        return { pass: false, detail: `expected ${exp.proposal.sections} sections, got ${secs.length}` };
+      }
     }
     if (exp.proposal.narrative_cited) {
       const narrative = ((payload.sections as Array<{ kind: string; citations?: unknown[] }>) ?? [])

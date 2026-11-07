@@ -142,6 +142,10 @@ export const updateTaskPlanDeclaration: ToolDeclaration = {
     "multi-part decomposition) — single-step answers need no plan. Steps are append-only (never drop " +
     "an id; a step that turned out wrong goes to 'refused' with a note); at most one step is 'active'; " +
     "'awaiting_approval' steps must carry ref.proposal_id and 'awaiting_run' steps ref.run_id. " +
+    "A step's status moves ONLY along pending → active → done|failed|refused, or active → " +
+    "awaiting_approval|awaiting_run → active|done|failed — so make a step 'active' (in one call) " +
+    "before you close it or bind it to a card; pending → done or pending → awaiting_approval is " +
+    "refused (§21.1 rule 3). " +
     "Omit plan_id to create; pass it to update the thread's active plan. Close every step " +
     "(done / failed / refused) before you finish.",
   parameters: {
