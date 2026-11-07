@@ -54,7 +54,7 @@ Written by the `_build_dataset_snapshot` database function, never by a page — 
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
 | `DataManager.tsx` | rpc record_model_validation | `src/hooks/useModelValidation.tsx:547` | yes |
-| `DeveloperApi.tsx` | rpc list_dataset_versions | `src/pages/DeveloperApi.tsx:375` | yes |
+| `DeveloperApi.tsx` | rpc list_dataset_versions | `src/pages/DeveloperApi.tsx:383` | yes |
 | `ProductLevelNetwork.tsx` | rpc project_freshness (GraphVersionChip → FreshnessBadge, WP 10.1) | `src/components/trust/useProjectFreshness.ts:28` | yes |
 | `ProjectPolicies.tsx` | rpc record_validated_model (Save Validated Model, WP 10.3) | `src/hooks/useModelValidation.tsx:594` | yes |
 | `SimulationLab.tsx` | rpc record_model_validation | `src/hooks/useModelValidation.tsx:547` | yes |
@@ -107,7 +107,7 @@ Surrogate identifier for the version. Referenced by runs.
 | Validated at ingest | — |
 | Rendered at | `[object Object]` |
 
-**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:127`) —
+**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:129`) —
 each of these names this column in an explicit `select` list, so the claim
 is about the column and not only about the table.
 
@@ -141,7 +141,7 @@ A human-chosen name for this version, so a user can say which one they mean.
 | Validated at ingest | — |
 | Rendered at | `[object Object]` |
 
-**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:127`) —
+**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:129`) —
 each of these names this column in an explicit `select` list, so the claim
 is about the column and not only about the table.
 
@@ -162,7 +162,7 @@ The frozen tier-2 rows themselves, as JSON. What the run actually ran against, n
 | Validated at ingest | — |
 | Rendered at | `[object Object]` |
 
-**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:127`) —
+**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:129`) —
 each of these names this column in an explicit `select` list, so the claim
 is about the column and not only about the table.
 
@@ -183,7 +183,7 @@ The fingerprint of the snapshot. Two runs with the same graph_hash saw the same 
 | Validated at ingest | — |
 | Rendered at | `[object Object]` |
 
-**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:127`) —
+**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:129`) —
 each of these names this column in an explicit `select` list, so the claim
 is about the column and not only about the table.
 
@@ -235,7 +235,7 @@ When the version was frozen. Server-set.
 | Validated at ingest | — |
 | Rendered at | `[object Object]` |
 
-**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:127`) —
+**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:129`) —
 each of these names this column in an explicit `select` list, so the claim
 is about the column and not only about the table.
 
@@ -254,7 +254,7 @@ SHA-256 over the `inputs` domain of the snapshot — the tier-2 tables a SIMULAT
 | Validated at ingest | — |
 | Rendered at | `[object Object]` |
 
-**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:127`) —
+**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:129`) —
 each of these names this column in an explicit `select` list, so the claim
 is about the column and not only about the table.
 
@@ -275,7 +275,7 @@ SHA-256 over the `network` domain — `tier2_suppliers`, `tier3_suppliers`, `mul
 | Validated at ingest | — |
 | Rendered at | `[object Object]` |
 
-**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:127`) —
+**Rendered on** `ProjectPolicies.tsx` (`src/hooks/useVerifiableExports.tsx:129`) —
 each of these names this column in an explicit `select` list, so the claim
 is about the column and not only about the table.
 
@@ -412,6 +412,6 @@ This snapshot's SIMULATION scope version — the `graph_level_versions` row whos
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `62a6e8587a37`, engine `0.8.3`,
 sidecar `supabase/contract/dataset_versions.contract.yaml`, table created by `20260703000001_dataset_versions.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

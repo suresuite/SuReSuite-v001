@@ -70,8 +70,8 @@ partially or get corrected — the write fails.
 
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
-| `SimulationLab.tsx` | hook useSimulationRun → select * from simulation_runs | `src/hooks/useSimulationRun.tsx:109` | yes |
-| `ProjectPolicies.tsx` | useVerifiableExports → select * from simulation_runs | `src/hooks/useVerifiableExports.tsx:216` | yes |
+| `SimulationLab.tsx` | hook useSimulationRun → select * from simulation_runs | `src/hooks/useSimulationRun.tsx:140` | yes |
+| `ProjectPolicies.tsx` | useVerifiableExports → select * from simulation_runs | `src/hooks/useVerifiableExports.tsx:219` | yes |
 
 Each row says the page READS the table by that path, at that line. It does
 not say every column below is displayed there — a column carries its own
@@ -707,6 +707,6 @@ How `calendar_start` was recorded: 'dispatch' (stamped at insert) or 'backfill' 
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `62a6e8587a37`, engine `0.8.3`,
 sidecar `supabase/contract/simulation_runs.contract.yaml`, table created by `20260607121406_fcbd47e9-93de-4b3b-988f-7f4718159c91.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

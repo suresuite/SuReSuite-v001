@@ -317,22 +317,22 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "FirmLevelNetwork.tsx",
         "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
-        "evidence": "src/components/MLPrediction.tsx:77"
+        "evidence": "src/components/MLPrediction.tsx:84"
       },
       {
         "page": "ProcessLevelNetwork.tsx",
         "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
-        "evidence": "src/components/MLPrediction.tsx:77"
+        "evidence": "src/components/MLPrediction.tsx:84"
       },
       {
         "page": "ProductLevelNetwork.tsx",
         "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
-        "evidence": "src/components/MLPrediction.tsx:77"
+        "evidence": "src/components/MLPrediction.tsx:84"
       },
       {
         "page": "ProductLevelNetwork.tsx",
         "via": "rpc get_product_level_metrics (kind product_metrics, PLAN.md §4 D313)",
-        "evidence": "src/pages/ProductLevelNetwork.tsx:289"
+        "evidence": "src/pages/ProductLevelNetwork.tsx:284"
       }
     ],
     "governance": {
@@ -542,17 +542,17 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "FirmLevelNetwork.tsx",
         "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
-        "evidence": "src/components/MLPrediction.tsx:77"
+        "evidence": "src/components/MLPrediction.tsx:84"
       },
       {
         "page": "ProcessLevelNetwork.tsx",
         "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
-        "evidence": "src/components/MLPrediction.tsx:77"
+        "evidence": "src/components/MLPrediction.tsx:84"
       },
       {
         "page": "ProductLevelNetwork.tsx",
         "via": "rpc get_nexus_stress_results (MLPrediction, PLAN.md §27 WP 17.5)",
-        "evidence": "src/components/MLPrediction.tsx:77"
+        "evidence": "src/components/MLPrediction.tsx:84"
       },
       {
         "page": "ProductLevelNetwork.tsx",
@@ -1080,7 +1080,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DeveloperApi.tsx",
         "via": "rpc list_api_keys",
-        "evidence": "src/pages/DeveloperApi.tsx:318"
+        "evidence": "src/pages/DeveloperApi.tsx:326"
       },
       {
         "page": "Profile.tsx",
@@ -2021,27 +2021,27 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc get_project_dataset_status",
-        "evidence": "src/pages/DataManager.tsx:447"
+        "evidence": "src/pages/DataManager.tsx:446"
       },
       {
         "page": "InteractiveNetworkSpace.tsx",
         "via": "table read",
-        "evidence": "src/pages/InteractiveNetworkSpace.tsx:478"
+        "evidence": "src/pages/InteractiveNetworkSpace.tsx:473"
       },
       {
         "page": "ProcessLevelNetwork.tsx",
         "via": "table read",
-        "evidence": "src/pages/ProcessLevelNetwork.tsx:385"
+        "evidence": "src/pages/ProcessLevelNetwork.tsx:380"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "table read",
-        "evidence": "src/lib/policies/projectLanes.ts:48"
+        "evidence": "src/lib/policies/projectLanes.ts:49"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "table read",
-        "evidence": "src/lib/policies/projectLanes.ts:48"
+        "evidence": "src/lib/policies/projectLanes.ts:49"
       }
     ],
     "governance": {
@@ -2384,17 +2384,17 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc get_project_dataset_status",
-        "evidence": "src/pages/DataManager.tsx:447"
+        "evidence": "src/pages/DataManager.tsx:446"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "rpc ensure_item_masters",
-        "evidence": "src/hooks/useItemMasters.tsx:244"
+        "evidence": "src/hooks/useItemMasters.tsx:257"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "rpc ensure_item_masters",
-        "evidence": "src/hooks/useItemMasters.tsx:244"
+        "evidence": "src/hooks/useItemMasters.tsx:257"
       }
     ],
     "governance": {
@@ -3190,7 +3190,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DeveloperApi.tsx",
         "via": "rpc list_dataset_versions",
-        "evidence": "src/pages/DeveloperApi.tsx:375"
+        "evidence": "src/pages/DeveloperApi.tsx:383"
       },
       {
         "page": "ProductLevelNetwork.tsx",
@@ -7182,17 +7182,17 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc get_project_dataset_status",
-        "evidence": "src/pages/DataManager.tsx:447"
+        "evidence": "src/pages/DataManager.tsx:446"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "rpc ensure_item_masters",
-        "evidence": "src/hooks/useItemMasters.tsx:244"
+        "evidence": "src/hooks/useItemMasters.tsx:257"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "rpc ensure_item_masters",
-        "evidence": "src/hooks/useItemMasters.tsx:244"
+        "evidence": "src/hooks/useItemMasters.tsx:257"
       }
     ],
     "governance": {
@@ -12093,17 +12093,17 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc delete_project_dataset",
-        "evidence": "src/pages/DataManager.tsx:737"
+        "evidence": "src/pages/DataManager.tsx:736"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "rpc get_project_datasets",
-        "evidence": "src/lib/policies/projectLanes.ts:82"
+        "evidence": "src/lib/policies/projectLanes.ts:108"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "rpc get_project_datasets",
-        "evidence": "src/lib/policies/projectLanes.ts:82"
+        "evidence": "src/lib/policies/projectLanes.ts:108"
       }
     ],
     "governance": {
@@ -12361,7 +12361,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc get_project_dataset_status",
-        "evidence": "src/pages/DataManager.tsx:447"
+        "evidence": "src/pages/DataManager.tsx:446"
       }
     ],
     "governance": {
@@ -12761,7 +12761,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc get_project_dataset_status",
-        "evidence": "src/pages/DataManager.tsx:447"
+        "evidence": "src/pages/DataManager.tsx:446"
       },
       {
         "page": "ProductLevelNetwork.tsx",
@@ -13897,7 +13897,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc get_node_list",
-        "evidence": "src/pages/DataManager.tsx:459"
+        "evidence": "src/pages/DataManager.tsx:458"
       },
       {
         "page": "FirmLevelNetwork.tsx",
@@ -14881,7 +14881,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DeveloperApi.tsx",
         "via": "rpc list_api_keys",
-        "evidence": "src/pages/DeveloperApi.tsx:318"
+        "evidence": "src/pages/DeveloperApi.tsx:326"
       }
     ],
     "governance": {
@@ -15376,17 +15376,17 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc get_project_dataset_status",
-        "evidence": "src/pages/DataManager.tsx:447"
+        "evidence": "src/pages/DataManager.tsx:446"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "rpc ensure_item_masters",
-        "evidence": "src/hooks/useItemMasters.tsx:244"
+        "evidence": "src/hooks/useItemMasters.tsx:257"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "rpc ensure_item_masters",
-        "evidence": "src/hooks/useItemMasters.tsx:244"
+        "evidence": "src/hooks/useItemMasters.tsx:257"
       }
     ],
     "governance": {
@@ -16365,17 +16365,17 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProjectIntelligence.tsx",
         "via": "table read",
-        "evidence": "src/hooks/usePolicies.tsx:185"
+        "evidence": "src/hooks/usePolicies.tsx:183"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "table read",
-        "evidence": "src/hooks/usePolicies.tsx:185"
+        "evidence": "src/hooks/usePolicies.tsx:183"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "table read",
-        "evidence": "src/hooks/usePolicies.tsx:185"
+        "evidence": "src/hooks/usePolicies.tsx:183"
       }
     ],
     "governance": {
@@ -16788,17 +16788,17 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProjectIntelligence.tsx",
         "via": "table read",
-        "evidence": "src/hooks/usePolicies.tsx:186"
+        "evidence": "src/hooks/usePolicies.tsx:184"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "table read",
-        "evidence": "src/hooks/usePolicies.tsx:186"
+        "evidence": "src/hooks/usePolicies.tsx:184"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "table read",
-        "evidence": "src/hooks/usePolicies.tsx:186"
+        "evidence": "src/hooks/usePolicies.tsx:184"
       }
     ],
     "governance": {
@@ -17332,7 +17332,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProjectPolicies.tsx",
         "via": "table read",
-        "evidence": "src/hooks/usePolicies.tsx:514"
+        "evidence": "src/hooks/usePolicies.tsx:512"
       }
     ],
     "governance": {
@@ -19860,47 +19860,47 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc list_projects",
-        "evidence": "src/pages/DataManager.tsx:215"
+        "evidence": "src/lib/projects/projectsCache.ts:59"
       },
       {
         "page": "DeveloperApi.tsx",
         "via": "rpc list_projects",
-        "evidence": "src/pages/DeveloperApi.tsx:320"
+        "evidence": "src/pages/DeveloperApi.tsx:328"
       },
       {
         "page": "FirmLevelNetwork.tsx",
         "via": "rpc list_projects",
-        "evidence": "src/pages/FirmLevelNetwork.tsx:273"
+        "evidence": "src/lib/projects/projectsCache.ts:59"
       },
       {
         "page": "InteractiveNetworkSpace.tsx",
         "via": "rpc list_projects",
-        "evidence": "src/pages/InteractiveNetworkSpace.tsx:339"
+        "evidence": "src/lib/projects/projectsCache.ts:59"
       },
       {
         "page": "ProcessLevelNetwork.tsx",
         "via": "rpc list_projects",
-        "evidence": "src/pages/ProcessLevelNetwork.tsx:286"
+        "evidence": "src/lib/projects/projectsCache.ts:59"
       },
       {
         "page": "ProductLevelNetwork.tsx",
         "via": "rpc list_projects",
-        "evidence": "src/pages/ProductLevelNetwork.tsx:259"
+        "evidence": "src/lib/projects/projectsCache.ts:59"
       },
       {
         "page": "ProjectIntelligence.tsx",
         "via": "rpc list_projects",
-        "evidence": "src/pages/ProjectIntelligence.tsx:187"
+        "evidence": "src/lib/projects/projectsCache.ts:59"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "rpc list_projects",
-        "evidence": "src/hooks/useProjects.ts:24"
+        "evidence": "src/lib/projects/projectsCache.ts:59"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "rpc list_projects",
-        "evidence": "src/hooks/useProjects.ts:24"
+        "evidence": "src/lib/projects/projectsCache.ts:59"
       }
     ],
     "governance": {
@@ -20711,12 +20711,12 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "FirmLevelNetwork.tsx",
         "via": "table read",
-        "evidence": "src/pages/FirmLevelNetwork.tsx:330"
+        "evidence": "src/pages/FirmLevelNetwork.tsx:326"
       },
       {
         "page": "ProductLevelNetwork.tsx",
         "via": "table read",
-        "evidence": "src/pages/ProductLevelNetwork.tsx:385"
+        "evidence": "src/pages/ProductLevelNetwork.tsx:382"
       }
     ],
     "governance": {
@@ -21155,12 +21155,12 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProjectPolicies.tsx",
         "via": "component ItemSeriesExplorer (mounted by RunValidateStage) → select kind,item_id,series from run_item_series (every item, paged)",
-        "evidence": "src/components/sim/ItemSeriesExplorer.tsx:119"
+        "evidence": "src/components/sim/ItemSeriesExplorer.tsx:118"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "component ItemSeriesExplorer (mounted by ResultsDashboard) → select kind,item_id,series from run_item_series (every item, paged)",
-        "evidence": "src/components/sim/ItemSeriesExplorer.tsx:119"
+        "evidence": "src/components/sim/ItemSeriesExplorer.tsx:118"
       }
     ],
     "governance": {
@@ -21384,17 +21384,17 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProjectPolicies.tsx",
         "via": "hook useSimulationRun → select * from run_replications",
-        "evidence": "src/hooks/useSimulationRun.tsx:119"
+        "evidence": "src/hooks/useSimulationRun.tsx:150"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "hook useSimulationRun::loadReps → select * from run_replications",
-        "evidence": "src/hooks/useSimulationRun.tsx:234"
+        "evidence": "src/hooks/useSimulationRun.tsx:265"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "useVerifiableExports → select * from run_replications",
-        "evidence": "src/hooks/useVerifiableExports.tsx:227"
+        "evidence": "src/hooks/useVerifiableExports.tsx:230"
       }
     ],
     "governance": {
@@ -25896,12 +25896,12 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "SimulationLab.tsx",
         "via": "hook useSimulationRun → select * from simulation_runs",
-        "evidence": "src/hooks/useSimulationRun.tsx:109"
+        "evidence": "src/hooks/useSimulationRun.tsx:140"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "useVerifiableExports → select * from simulation_runs",
-        "evidence": "src/hooks/useVerifiableExports.tsx:216"
+        "evidence": "src/hooks/useVerifiableExports.tsx:219"
       }
     ],
     "governance": {
@@ -27304,7 +27304,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc combine_project_into_supply_chain",
-        "evidence": "src/pages/DataManager.tsx:674"
+        "evidence": "src/pages/DataManager.tsx:673"
       },
       {
         "page": "ProductLevelNetwork.tsx",
@@ -27858,22 +27858,22 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DataManager.tsx",
         "via": "rpc combine_project_into_supply_chain",
-        "evidence": "src/pages/DataManager.tsx:674"
+        "evidence": "src/pages/DataManager.tsx:673"
       },
       {
         "page": "InteractiveNetworkSpace.tsx",
         "via": "table read",
-        "evidence": "src/pages/InteractiveNetworkSpace.tsx:355"
+        "evidence": "src/pages/InteractiveNetworkSpace.tsx:350"
       },
       {
         "page": "ProcessLevelNetwork.tsx",
         "via": "rpc get_supply_chain_data_multi_tier",
-        "evidence": "src/services/network.ts:41"
+        "evidence": "src/services/network.ts:38"
       },
       {
         "page": "ProjectPolicies.tsx",
         "via": "rpc get_supply_chain_data_multi_tier",
-        "evidence": "src/hooks/useProjectContext.tsx:49"
+        "evidence": "src/hooks/useProjectContext.tsx:48"
       }
     ],
     "governance": {

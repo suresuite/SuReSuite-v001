@@ -362,5 +362,5 @@ surfaces:
   - page: "SimulationLab.tsx"
     via: "table read"
     grain: column
-    evidence: "src/hooks/useVerifiableExports.tsx:222"
+    evidence: "src/hooks/useVerifiableExports.tsx:225"
     confirmed: true

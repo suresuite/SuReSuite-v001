@@ -68,9 +68,9 @@ it rather than duplicating it.
 
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
-| `DataManager.tsx` | rpc get_project_dataset_status | `src/pages/DataManager.tsx:447` | yes |
-| `ProjectPolicies.tsx` | rpc ensure_item_masters | `src/hooks/useItemMasters.tsx:244` | yes |
-| `SimulationLab.tsx` | rpc ensure_item_masters | `src/hooks/useItemMasters.tsx:244` | yes |
+| `DataManager.tsx` | rpc get_project_dataset_status | `src/pages/DataManager.tsx:446` | yes |
+| `ProjectPolicies.tsx` | rpc ensure_item_masters | `src/hooks/useItemMasters.tsx:257` | yes |
+| `SimulationLab.tsx` | rpc ensure_item_masters | `src/hooks/useItemMasters.tsx:257` | yes |
 
 Each row says the page READS the table by that path, at that line. It does
 not say every column below is displayed there — a column carries its own
@@ -281,6 +281,6 @@ The tier-1 staged row this was promoted from (WP 3.3). Its `source_row_number` i
 
 ---
 
-*Generated from data contract `984857e696e8`, engine `0.8.3`,
+*Generated from data contract `62a6e8587a37`, engine `0.8.3`,
 sidecar `supabase/contract/bom_single_level.contract.yaml`, table created by `20250820145837_5a2d95f1-7a5f-4bbb-8ac8-995d53011bce.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

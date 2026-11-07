@@ -55,6 +55,10 @@
 pages_without_project_data:
   - About.tsx                # static marketing copy; no query of any kind
   - Auth.tsx                 # sign-in; reaches approved_users only through useAuth
+  - DemoEntry.tsx            # /demo front door; sets a sessionStorage flag (demoSession.ts)
+                             # and reloads onto a demo page. Reads approved_users only
+                             # through useAuth; the demo PAGES it opens are covered
+                             # by their own surfaces entries
   - AuthForgotPassword.tsx   # /auth's "Forgot password?" form; one RPC, request_password_reset,
                              # which records a note for a super admin and reads no project data
   - Forbidden.tsx            # 403 interstitial; renders a message and a link

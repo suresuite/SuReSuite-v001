@@ -153,7 +153,7 @@ export const draftPolicyBundleDeclaration: ToolDeclaration = {
       },
       base_policy_version_id: {
         type: "string",
-        description: "The saved policy version the diff was drafted against (from CONTEXT). Omit if none exists.",
+        description: "The id (a uuid) of the saved policy version the diff was drafted against, as CONTEXT lists it under the latest policy version. It is never the policy hash. Omit it if no version exists or you are unsure.",
       },
       title: { type: "string", description: "Card title (max 140 chars)." },
       rationale: { type: "string", description: "Why this change serves the ask (max 2000 chars)." },
