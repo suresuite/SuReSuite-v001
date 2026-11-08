@@ -1475,10 +1475,18 @@ export default function FirmLevelNetwork({ isCollapsed, setIsCollapsed }: FirmLe
                 edges: lens.allEdges,
                 groupOf: (n) => (n.data as NodeData).tier,
                 // The Firm lens's own rings read well at this size; its outermost tier is the one that
-                // bunches into clusters, so that tier alone is spread as an even band around the rest.
+                // bunches up around a few parents, so that tier alone is re-placed as a ragged fringe
+                // outside the rest: each firm at the angle of its suppliers, stacking outward where
+                // many share one.
                 layout: {
                   kind: 'page',
-                  spread: { layerOf: (n) => LEGEND_TIERS.indexOf((n.data as NodeData).tier ?? 'Tier 1'), layers: [3] },
+                  // irregularity 0 = ruler-straight, 1 = grown
+                  spread: {
+                    layerOf: (n) => LEGEND_TIERS.indexOf((n.data as NodeData).tier ?? 'Tier 1'),
+                    layers: [3],
+                    irregularity: 0.8,
+                    style: 'fringe',
+                  },
                 },
                 weight: {
                   label: 'Revenue',

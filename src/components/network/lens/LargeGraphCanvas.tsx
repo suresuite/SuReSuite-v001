@@ -38,8 +38,8 @@ import { LENS } from './tokens';
 export type LargeLayout =
   | {
       kind: Extract<LayoutKind, 'page'>;
-      /** Outer layers to spread as even bands around the page's layout (Firm: tier 3). */
-      spread?: { layerOf: (n: Node) => number; layers: number[] };
+      /** Outer layers to re-place around the page's layout, as a band or a fringe (Firm: tier 3). */
+      spread?: { layerOf: (n: Node) => number; layers: number[]; irregularity?: number; style?: 'band' | 'fringe' };
     }
   | { kind: Exclude<LayoutKind, 'page'>; layerOf: (n: Node) => number; layerCount: number; tieKey?: (n: Node) => string };
 
@@ -115,7 +115,7 @@ export const LargeGraphCanvas = forwardRef<LargeGraphCanvasHandle, Props>(functi
       layout.kind === 'page' ? 1 : layout.layerCount,
       le,
       aspect,
-      layout.kind === 'page' ? layout.spread?.layers : undefined,
+      layout.kind === 'page' && layout.spread ? layout.spread : undefined,
     );
     return buildScene(
       nodes.map((n, i) => ({

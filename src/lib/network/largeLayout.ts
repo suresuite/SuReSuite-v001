@@ -254,15 +254,42 @@ export function ringLayout(
   return { x, y, w: pitch * 0.62, h: pitch * 0.62 };
 }
 
+/** A small seeded generator: the same seed gives the same sequence, so a layout never shimmers. */
+function mulberry32(seed: number): () => number {
+  let t = seed >>> 0;
+  return () => {
+    t = (t + 0x6d2b79f5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return (((r ^ (r >>> 14)) >>> 0) / 4294967296);
+  };
+}
+
+/** How `spreadOuterBand` lays an outer layer out. */
+export type OuterStyle = 'band' | 'fringe';
+
 /**
- * Re-place the OUTER layers of a layout as even bands around the rest of it.
+ * Re-place the OUTER layers of a layout around the rest of it.
  *
  * A lens that seats each outer node next to its parent (the Firm lens's tier 3) gets clusters
  * that bunch up around a few parents and leave the rim empty between them. This keeps every other
- * node where the lens put it and spreads the chosen layers around a band outside everything
- * placed so far: nodes ordered by the mean angle of their neighbours already placed (so a node
- * stays on the side of the firms it is linked to), then spaced evenly around the band, on as many
- * staggered sub-rings as the circumference needs. Mutates `x` and `y`.
+ * node where the lens put it and re-places the chosen layers outside everything placed so far.
+ * Mutates `x` and `y`.
+ *
+ * `style: 'band'` (the default) spreads the layer evenly: nodes ordered by the mean angle of their
+ * neighbours already placed (so a node stays on the side of the firms it is linked to), then
+ * spaced around the band, on as many staggered sub-rings as the circumference needs.
+ *
+ * `style: 'fringe'` is a ragged fringe just outside the ring inside. Every node sits at the angle
+ * of the firms it buys from; where several lean the same way the next one steps one lane outward
+ * rather than sideways, so the fringe is thick in front of a busy supplier and one node deep
+ * elsewhere. There are no groups to draw and nothing is spread to fill the rim: the shape is the
+ * supply relationships, and the bigger of two firms with the same suppliers takes the inner lane.
+ *
+ * `irregularity` (0 = ruler-straight, 1 = the default) makes it look grown rather than stamped:
+ * each node is nudged a little in angle and in distance (and, in a band, its outer edge swells and
+ * recedes in two slow waves). It is DETERMINISTIC — the same graph gives the same picture on every
+ * draw — and it never moves a node inside the layers placed before it.
  */
 export function spreadOuterBand(
   x: Float32Array,
@@ -271,6 +298,8 @@ export function spreadOuterBand(
   layer: ArrayLike<number>,
   edges: readonly LayoutEdge[],
   spreadLayers: readonly number[],
+  irregularity = 1,
+  style: OuterStyle = 'band',
 ): void {
   const n = x.length;
   const spreadSet = new Set(spreadLayers);
@@ -296,7 +325,9 @@ export function spreadOuterBand(
     if (L.length === 0) continue;
     const sizes = L.map((i) => w[i]).sort((a, b) => a - b);
     const s = Math.max(8, sizes[Math.floor(sizes.length / 2)] ?? 8);
-    const slot = s * 1.3; // room one node takes along a ring
+    const irr = Math.max(0, irregularity);
+    const slot = s * (1.3 + 0.25 * irr); // room one node takes along a ring: looser when it is meant to be loose
+    const ringStep = s * (1.5 + 0.25 * irr);
     const key = L.map((i) => {
       let sx = 0, sy = 0, c = 0;
       for (const u of adj[i]) {
@@ -313,27 +344,93 @@ export function spreadOuterBand(
     const order = L.map((_, k) => k).sort((a, b) => key[a] - key[b] || a - b);
 
     const R0 = reach + s * 2.5;
+    if (style === 'fringe') {
+      // ── a fringe: each node at the angle of its suppliers, stepping outward where they crowd ────
+      const TAU = 2 * Math.PI;
+      const rng = mulberry32(0x85ebca6b ^ (l * 6151) ^ (L.length * 31));
+      const big = sizes[Math.floor(sizes.length * 0.85)] ?? s;
+      const laneStep = Math.max(s * 1.6, big * 1.15);
+      const gap = s * 0.25;
+      // biggest first among nodes that lean the same way, so the biggest takes the inner lane
+      const seq = L.map((_, k) => k).sort((p, q) => key[p] - key[q] || w[L[q]] - w[L[p]] || p - q);
+      // Where many firms buy from the same supplier the fringe would be a wall, so no more than
+      // `MAX_LANES` firms may crowd one stretch of rim: firms are eased apart along it just enough,
+      // pushed forward and back by the same amount so the crowd stays centred on its supplier.
+      const MAX_LANES = 8;
+      const N = seq.length;
+      const need = (k: number) => (w[L[k]] * 1.1 + gap) / R0;
+      const ease = (dir: 1 | -1) => {
+        const out = seq.map((k) => key[k]);
+        const m = Math.min(MAX_LANES, N - 1);
+        for (let round = 0; round < 2 && m > 0; round++) {
+          for (let t = 0; t < N; t++) {
+            const i = dir === 1 ? t : N - 1 - t;
+            const j = i - dir * m;
+            const wrapped = j < 0 ? out[j + N] - TAU : j >= N ? out[j - N] + TAU : out[j];
+            out[i] = dir === 1 ? Math.max(out[i], wrapped + need(seq[i])) : Math.min(out[i], wrapped - need(seq[j < 0 ? j + N : j >= N ? j - N : j]));
+          }
+        }
+        return out;
+      };
+      const fwd = ease(1), bwd = ease(-1);
+      const eased = fwd.map((f, i) => (f + bwd[i]) / 2);
+      const lanes: { last: number; lastW: number; first: number; firstW: number }[] = [];
+      let widest = 0;
+      seq.forEach((k, ord) => {
+        const v = L[k];
+        const wv = w[v];
+        const a = eased[ord] + (rng() - 0.5) * ((wv * 0.3) / R0) * irr; // a nudge, far less than a node's width
+        let lane = 0;
+        for (; lane < lanes.length; lane++) {
+          const r = R0 + lane * laneStep;
+          const q = lanes[lane];
+          const ahead = (a - q.last) * r - ((q.lastW + wv) / 2) * 1.1 - gap >= 0;
+          const behind = (q.first + TAU - a) * r - ((q.firstW + wv) / 2) * 1.1 - gap >= 0;
+          if (ahead && behind) break;
+        }
+        if (lane === lanes.length) lanes.push({ last: a, lastW: wv, first: a, firstW: wv });
+        else if (a > lanes[lane].last) { lanes[lane].last = a; lanes[lane].lastW = wv; }
+        const r = R0 + lane * laneStep + (rng() - 0.5) * s * 0.5 * irr;
+        widest = Math.max(widest, r);
+        x[v] = cx + Math.cos(a) * r;
+        y[v] = cy + Math.sin(a) * r;
+        placed[v] = 1;
+      });
+      reach = widest + s;
+      continue;
+    }
+
     // as many sub-rings as it takes to hold every node at `slot` spacing
     let rings = 1;
     const capacity = (m: number) => {
       let c = 0;
-      for (let j = 0; j < m; j++) c += Math.floor((2 * Math.PI * (R0 + j * s * 1.5)) / slot);
+      for (let j = 0; j < m; j++) c += Math.floor((2 * Math.PI * (R0 + j * ringStep)) / slot);
       return c;
     };
     while (capacity(rings) < L.length) rings++;
     const counts = Array.from({ length: rings }, (_, j) => Math.floor(L.length / rings) + (j < L.length % rings ? 1 : 0));
     const next = new Array<number>(rings).fill(0);
+    // the band's outer edge swells and recedes: two slow waves, phases fixed by the layer
+    const p1 = (l * 2.399) % (2 * Math.PI);
+    const p2 = (l * 4.117 + 1) % (2 * Math.PI);
+    const swell = (a: number) => 0.5 + 0.5 * (0.6 * Math.sin(2 * a + p1) + 0.4 * Math.sin(5 * a + p2)); // 0..1
+    const noise = mulberry32(0x9e3779b1 ^ (l * 7919) ^ L.length);
+    let widest = 0;
     order.forEach((k, rank) => {
       const j = rank % rings;
       const pos = next[j]++;
       // staggered across sub-rings, so neighbours on adjacent rings do not line up
-      const a = (2 * Math.PI * (pos + (0.5 * j) / rings)) / counts[j];
-      const r = R0 + j * s * 1.5;
+      const slotAngle = (2 * Math.PI) / counts[j];
+      let a = (2 * Math.PI * (pos + (0.5 * j) / rings)) / counts[j];
+      a += (noise() - 0.5) * slotAngle * 0.7 * irr;
+      const outward = swell(a) * s * 4 * irr + (noise() - 0.3) * s * 0.9 * irr; // never inward of the band's start
+      const r = R0 + j * ringStep + Math.max(0, outward);
+      widest = Math.max(widest, r);
       x[L[k]] = cx + Math.cos(a) * r;
       y[L[k]] = cy + Math.sin(a) * r;
       placed[L[k]] = 1;
     });
-    reach = R0 + (rings - 1) * s * 1.5 + s;
+    reach = widest + s;
   }
 }
 
@@ -362,8 +459,9 @@ export interface Placed {
  * Where each node of a big network is drawn.
  *
  *   page      the lens's own layout — positions AND sizes — and the one a person already knows (the
- *             Firm lens's prominence-ordered rings). `spreadLayers` names outer layers to re-place as
- *             even bands around it (`spreadOuterBand`); everything else stays exactly where it is.
+ *             Firm lens's prominence-ordered rings). `spread` names outer layers to re-place around
+ *             it as a band or a fringe, loosened by `irregularity`
+ *             (`spreadOuterBand`); everything else stays exactly where it is.
  *   columns   `columnLayout`: for the flow lenses, whose own columns become a thin ribbon.
  *   rings     `ringLayout`.
  */
@@ -373,7 +471,7 @@ export function placeNodes(
   layerCount: number,
   edges: readonly LayoutEdge[],
   aspect: number,
-  spreadLayers: readonly number[] = [],
+  spread: { layers: readonly number[]; irregularity?: number; style?: OuterStyle } = { layers: [] },
 ): Placed {
   const n = nodes.length;
   if (kind === 'page') {
@@ -384,8 +482,11 @@ export function placeNodes(
       h: Float32Array.from(nodes, (v) => v.h),
     };
     // `layer` is only read for the layers to spread; the rest of the page's layout is left alone
-    if (spreadLayers.length) {
-      spreadOuterBand(placed.x, placed.y, placed.w, Int32Array.from(nodes, (v) => v.layer), edges, spreadLayers);
+    if (spread.layers.length) {
+      spreadOuterBand(
+        placed.x, placed.y, placed.w, Int32Array.from(nodes, (v) => v.layer), edges,
+        spread.layers, spread.irregularity ?? 1, spread.style ?? 'band',
+      );
     }
     return placed;
   }

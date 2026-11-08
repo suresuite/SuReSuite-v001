@@ -179,7 +179,7 @@ describe("spreadOuterBand", () => {
   const x = new Float32Array(n), y = new Float32Array(n), w = new Float32Array(n).fill(20);
   const layer = new Int32Array(n);
   for (let i = 1; i < nIn; i++) {
-    const a = r() * 2 * Math.PI, rad = 60 + r() * 140;
+    const a = r() * 2 * Math.PI, rad = 700 + r() * 300;
     x[i] = Math.cos(a) * rad; y[i] = Math.sin(a) * rad; layer[i] = 1;
   }
   const edges: LayoutEdge[] = [];
@@ -233,8 +233,141 @@ describe("spreadOuterBand", () => {
     spreadOuterBand(px, Float32Array.from(y), w, layer, edges, []);
     expect(Array.from(px)).toEqual(Array.from(x));
     const inputs: PlaceInput[] = Array.from({ length: n }, (_, i) => ({ x: x[i], y: y[i], w: 14 + (i % 3), h: 14, layer: layer[i], tie: 0 }));
-    const placed = placeNodes("page", inputs, 1, edges, 1.7, [2]);
+    const placed = placeNodes("page", inputs, 1, edges, 1.7, { layers: [2] });
     expect(Array.from(placed.w)).toEqual(inputs.map((v) => v.w));
     expect(placed.x[0]).toBe(x[0]);
+  });
+});
+
+describe("spreadOuterBand irregularity", () => {
+  const r = rand(5);
+  const nIn = 201, nOut = 500, n = nIn + nOut;
+  const x = new Float32Array(n), y = new Float32Array(n), w = new Float32Array(n).fill(20);
+  const layer = new Int32Array(n);
+  for (let i = 1; i < nIn; i++) { const a = r() * 6.2832, rad = 40 + r() * 120; x[i] = Math.cos(a) * rad; y[i] = Math.sin(a) * rad; layer[i] = 1; }
+  const edges: LayoutEdge[] = [];
+  for (let i = 0; i < nOut; i++) { const v = nIn + i; edges.push({ source: 1 + Math.floor(r() * 200), target: v }); layer[v] = 2; }
+  const run = (irr: number) => {
+    const px = Float32Array.from(x), py = Float32Array.from(y);
+    spreadOuterBand(px, py, w, layer, edges, [2], irr);
+    return { px, py };
+  };
+  const radii = (o: { px: Float32Array; py: Float32Array }) =>
+    Array.from({ length: nOut }, (_, i) => Math.hypot(o.px[nIn + i], o.py[nIn + i]));
+  const std = (a: number[]) => { const m = a.reduce((s, v) => s + v, 0) / a.length; return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length); };
+
+  it("0 is the even band (a handful of exact radii), and the default scatters them", () => {
+    const distinct = (o: { px: Float32Array; py: Float32Array }) => new Set(radii(o).map((v) => Math.round(v * 2))).size;
+    const even = run(0), loose = run(1);
+    expect(distinct(even)).toBeLessThanOrEqual(12);          // one per sub-ring
+    expect(distinct(loose)).toBeGreaterThan(distinct(even) * 8);
+    expect(std(radii(loose))).toBeGreaterThan(0);
+  });
+  it("gives every node its own place and is the same on every call", () => {
+    const a = run(1), b = run(1);
+    expect(Array.from(a.px)).toEqual(Array.from(b.px));
+    const seen = new Set(Array.from({ length: nOut }, (_, i) => `${a.px[nIn + i].toFixed(1)},${a.py[nIn + i].toFixed(1)}`));
+    expect(seen.size).toBe(nOut);
+  });
+  it("however loose, never moves a node inside what was already placed, or leaves a wide gap", () => {
+    for (const irr of [0.5, 1, 2]) {
+      const o = run(irr);
+      let reach = 0;
+      for (let i = 0; i < nIn; i++) reach = Math.max(reach, Math.hypot(x[i], y[i]));
+      for (const v of radii(o)) expect(v).toBeGreaterThan(reach);
+      for (let i = 0; i < nIn; i++) expect(o.px[i]).toBe(x[i]);
+      const angles = Array.from({ length: nOut }, (_, i) => (Math.atan2(o.py[nIn + i], o.px[nIn + i]) + 2 * Math.PI) % (2 * Math.PI)).sort((p, q) => p - q);
+      let maxGap = angles[0] + 2 * Math.PI - angles[nOut - 1];
+      for (let i = 1; i < nOut; i++) maxGap = Math.max(maxGap, angles[i] - angles[i - 1]);
+      expect(maxGap).toBeLessThan(((2 * Math.PI) / nOut) * 12);
+    }
+  });
+});
+
+describe("spreadOuterBand fringe", () => {
+  // 300 suppliers on a ring (a few big), 700 firms that each buy from one or two of the biggest
+  const r = rand(17);
+  const nIn = 301, nOut = 700, n = nIn + nOut;
+  const x = new Float32Array(n), y = new Float32Array(n), w = new Float32Array(n);
+  const layer = new Int32Array(n);
+  w[0] = 30;
+  for (let i = 1; i < nIn; i++) { const a = r() * 6.2832, rad = 700 + r() * 300; x[i] = Math.cos(a) * rad; y[i] = Math.sin(a) * rad; layer[i] = 1; w[i] = 10 + 40 * r() ** 3; }
+  const edges: LayoutEdge[] = [];
+  const parentsOf: number[][] = [];
+  const topInner = Array.from({ length: 300 }, (_, i) => i + 1).sort((a, b) => w[b] - w[a]).slice(0, 14);
+  for (let i = 0; i < nOut; i++) {
+    const v = nIn + i;
+    layer[v] = 2;
+    w[v] = 10 + 26 * r() ** 2;
+    const pick = () => (r() < 0.7 ? topInner[Math.floor(r() * topInner.length)] : 1 + Math.floor(r() * 300));
+    const ps = [pick()];
+    parentsOf.push(ps);
+    for (const p of ps) edges.push({ source: p, target: v });
+  }
+  const run = (irr = 0.8) => {
+    const px = Float32Array.from(x), py = Float32Array.from(y);
+    spreadOuterBand(px, py, w, layer, edges, [2], irr, "fringe");
+    return { px, py };
+  };
+  const o = run();
+  const outer = Array.from({ length: nOut }, (_, i) => nIn + i);
+  const circ = (a: number, b: number) => { const d = Math.abs(a - b) % (2 * Math.PI); return d > Math.PI ? 2 * Math.PI - d : d; };
+  const ang = (px: Float32Array, py: Float32Array, v: number) => Math.atan2(py[v], px[v]);
+
+  it("leaves every other node where it was and puts the layer outside them, each on its own place", () => {
+    let reach = 0;
+    for (let i = 0; i < nIn; i++) { expect(o.px[i]).toBe(x[i]); reach = Math.max(reach, Math.hypot(x[i], y[i])); }
+    for (const v of outer) expect(Math.hypot(o.px[v], o.py[v])).toBeGreaterThan(reach);
+    expect(new Set(outer.map((v) => `${o.px[v].toFixed(2)},${o.py[v].toFixed(2)}`)).size).toBe(nOut);
+  });
+
+  it("seats each firm on the side of its supplier, not spread over the rim", () => {
+    let total = 0;
+    for (const v of outer) total += circ(ang(o.px, o.py, v), ang(x as Float32Array, y as Float32Array, parentsOf[v - nIn][0]));
+    expect(total / nOut).toBeLessThan(0.1);
+  });
+
+  it("is thick in front of a busy supplier and thin elsewhere: no group shapes, an uneven fringe", () => {
+    const R = (v: number) => Math.hypot(o.px[v], o.py[v]);
+    const lo = Math.min(...outer.map(R));
+    const sector = new Map<number, number[]>();
+    for (const v of outer) { const k = Math.floor(((ang(o.px, o.py, v) + 2 * Math.PI) % (2 * Math.PI)) / (Math.PI / 12)); sector.set(k, [...(sector.get(k) ?? []), R(v)]); }
+    const depth = [...sector.values()].map((rs) => Math.max(...rs) - lo);
+    expect(Math.max(...depth)).toBeGreaterThan(Math.min(...depth) * 3 + 20);
+  });
+
+  it("never lets two firms overlap", () => {
+    let min = Infinity;
+    for (let a = 0; a < nOut; a++) for (let b = a + 1; b < nOut; b++) {
+      const va = nIn + a, vb = nIn + b;
+      const d = Math.hypot(o.px[va] - o.px[vb], o.py[va] - o.py[vb]);
+      min = Math.min(min, d / ((w[va] + w[vb]) / 2));
+    }
+    expect(min).toBeGreaterThan(0.6);
+  });
+
+  it("puts the bigger of firms with the same supplier on the inner lane", () => {
+    let inside = 0, groups = 0;
+    for (const p of topInner) {
+      const g = outer.filter((v) => parentsOf[v - nIn][0] === p).sort((a, b) => w[b] - w[a]);
+      if (g.length < 8) continue;
+      groups++;
+      const radii = g.map((v) => Math.hypot(o.px[v], o.py[v])).sort((a, b) => a - b);
+      if (Math.hypot(o.px[g[0]], o.py[g[0]]) <= radii[Math.floor(radii.length / 2)]) inside++;
+    }
+    expect(groups).toBeGreaterThanOrEqual(5);
+    expect(inside / groups).toBeGreaterThanOrEqual(0.8);
+  });
+
+  it("is the same on every call, and ruler-straight at irregularity 0", () => {
+    expect(Array.from(run().px)).toEqual(Array.from(o.px));
+    const radii = new Set(outer.map((v) => Math.round(Math.hypot(run(0).px[v], run(0).py[v]) * 2)));
+    expect(radii.size).toBeLessThanOrEqual(14); // a handful of lanes (at most 8 crowd one stretch), not a scatter
+  });
+
+  it("is reached through placeNodes with the same result", () => {
+    const inputs: PlaceInput[] = Array.from({ length: n }, (_, i) => ({ x: x[i], y: y[i], w: w[i], h: w[i], layer: layer[i], tie: 0 }));
+    const placed = placeNodes("page", inputs, 1, edges, 1.7, { layers: [2], irregularity: 0.8, style: "fringe" });
+    expect(Array.from(placed.x)).toEqual(Array.from(o.px));
   });
 });
