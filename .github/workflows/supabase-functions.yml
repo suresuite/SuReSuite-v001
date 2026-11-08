@@ -133,7 +133,14 @@ jobs:
       # the other four are re-added one at a time, each on a green live run.
       # A disabled agent's asks are answered as questions by the persona (the
       # router never offers it), so nothing errors — the user loses the
-      # "do it for me" card for that room, not the conversation. Values are deliberately literal: these
+      # "do it for me" card for that room, not the conversation.
+      # OWNER DECISION 2026-11-08 (ai-agents.md §10 entry 38(ab)): experiment-
+      # designer is re-added WITHOUT a green live run, which is the rule above
+      # overridden by the owner, not satisfied. Why: the §20.8 what-if loop
+      # drafts its card through code, not model tool choice, and needs this
+      # agent routable to file one. Note that the model-driven B4 turn also
+      # becomes reachable for other run questions; its live suite is
+      # unmeasured since 38(z). Values are deliberately literal: these
       # are deployment flags, not secrets, and this step is their single
       # source of truth. To kill a stage, edit the value here and re-run this
       # workflow (workflow_dispatch or ops-request.yml); every flag off ⇒
@@ -160,7 +167,7 @@ jobs:
           supabase secrets set --yes --project-ref wckdrutwkytwcomrlpib \
             AGENT_TELEMETRY_ENABLED=true \
             AGENT_ROUTER_ENABLED=true \
-            AGENT_ENABLED_IDS=vv-analyst \
+            AGENT_ENABLED_IDS=vv-analyst,experiment-designer \
             AGENT_EXPERIMENT_TYPES=single \
             CHAT_STORE_ENABLED=true \
             CHAT_SUMMARY_ENABLED=true \
