@@ -437,6 +437,19 @@ async function getValidationStatus(
   }
 }
 
+/** A run's scalar KPI means as one readable cell ("fill_rate 0.9512 ·
+ * max_backlog 104"), values verbatim. The underscore keys (`_meta`, `_range`)
+ * are run metadata, not KPIs, and stay out — they were what rendered as a
+ * JSON blob in the chat (ai-agents.md §20.8). */
+export function kpiText(aggregate: unknown): string {
+  if (!aggregate || typeof aggregate !== "object") return "-";
+  const parts = Object.entries(aggregate as Record<string, unknown>)
+    .filter(([k, v]) => !k.startsWith("_") && typeof v === "number" && Number.isFinite(v))
+    .slice(0, 8)
+    .map(([k, v]) => `${k} ${v}`);
+  return parts.length > 0 ? parts.join(" · ") : "-";
+}
+
 async function getRunResults(
   args: Record<string, unknown>,
   ctx: ToolContext,
@@ -480,18 +493,30 @@ async function getRunResults(
     if (runs.length === 0) {
       return { kind: "text", data: "No simulation runs on this project yet.", meta: { tool, row_count: 0, note: "empty" } };
     }
+    // Which scenario each run simulated — without it a reader (person or
+    // model) cannot tell a disruption run from a baseline, which is what sent
+    // the persona digging through unrelated reads (ai-agents.md §20.8).
+    const scenarioNames = new Map<string, string>();
+    try {
+      const ids = [...new Set(runs.map((r) => r.scenario_id).filter(Boolean))] as string[];
+      if (ids.length > 0) {
+        const { data: sc } = await db.from("scenarios").select("id,name").in("id", ids);
+        for (const s of (sc ?? []) as Array<Record<string, unknown>>) scenarioNames.set(String(s.id), String(s.name ?? s.id));
+      }
+    } catch { /* the id column still identifies it */ }
     return {
       kind: "table",
       data: {
-        columns: ["run_id", "status", "reps_done", "warmup_week", "gate_skipped", "policy_version_id", "aggregate_kpis"],
+        columns: ["run_id", "scenario", "status", "reps_done", "warmup_week", "gate_skipped", "policy_version_id", "kpis"],
         rows: runs.map((r) => [
           r.id,
+          r.scenario_id ? scenarioNames.get(String(r.scenario_id)) ?? String(r.scenario_id) : "-",
           r.status,
           Number(r.rep_count_done ?? 0),
           r.warmup_detected_at ?? "-",
           Boolean(r.gate_skipped),
           r.policy_version_id ?? "-",
-          JSON.stringify(r.aggregate_kpis ?? {}),
+          kpiText(r.aggregate_kpis),
         ]),
       },
       meta: { tool, row_count: runs.length },
