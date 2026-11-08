@@ -46,6 +46,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # `version: latest` floats. The CLI that shipped around 2026-11-06 made
+      # every state-changing command ask "Confirmation required" and, with no
+      # terminal to ask, exit 1 having changed nothing. Every function deploy
+      # from #426 to #432 failed at its first `secrets set` that way, so
+      # production kept the 2026-10-27 build while CI on main stayed green.
+      # Each such command now passes `--yes`.
       - uses: supabase/setup-cli@v1
         with:
           version: latest
@@ -71,7 +77,7 @@ jobs:
       # worst case they re-apply as no-ops when their branch merges.
       - name: Repair remote migration history
         run: |
-          supabase migration repair --status reverted \
+          supabase migration repair --yes --status reverted \
             20250815102121 20250815105909 20250815105931 20250815112141 20250815112919 \
             20250815113307 20250815113724 20250815115124 20250815115234 20250816031316 \
             20250816034626 20250816052310 20250816054205 20250816063310 20250816063523 \
@@ -125,7 +131,7 @@ jobs:
             | grep -v '^20260609040000' \
             | sed 's/_.*//' | tr '\n' ' ')
           if [ -n "$versions" ]; then
-            supabase migration repair --status applied $versions
+            supabase migration repair --yes --status applied $versions
           fi
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -134,7 +140,7 @@ jobs:
         id: push
         run: |
           set -o pipefail
-          supabase db push --include-all --password ${{ secrets.SUPABASE_DB_PASSWORD }} 2>&1 | tee /tmp/migrations.log
+          supabase db push --yes --include-all --password ${{ secrets.SUPABASE_DB_PASSWORD }} 2>&1 | tee /tmp/migrations.log
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

@@ -61,6 +61,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # `version: latest` floats. The CLI that shipped around 2026-11-06 made
+      # every state-changing command ask "Confirmation required" and, with no
+      # terminal to ask, exit 1 having changed nothing. Every function deploy
+      # from #426 to #432 failed at its first `secrets set` that way, so
+      # production kept the 2026-10-27 build while CI on main stayed green.
+      # Each such command now passes `--yes`.
       - uses: supabase/setup-cli@v1
         with:
           version: latest
@@ -103,7 +109,7 @@ jobs:
           [ -n "$FLY_API_TOKEN" ] && args+=("FLY_API_TOKEN=$FLY_API_TOKEN")
           [ -n "$FLY_APP_NAME" ]  && args+=("FLY_APP_NAME=$FLY_APP_NAME")
           if [ ${#args[@]} -gt 0 ]; then
-            supabase secrets set --project-ref wckdrutwkytwcomrlpib "${args[@]}"
+            supabase secrets set --yes --project-ref wckdrutwkytwcomrlpib "${args[@]}"
           else
             echo "No function secrets found in GitHub secrets; skipping (function will report 'not configured')."
           fi
@@ -127,7 +133,14 @@ jobs:
       # the other four are re-added one at a time, each on a green live run.
       # A disabled agent's asks are answered as questions by the persona (the
       # router never offers it), so nothing errors — the user loses the
-      # "do it for me" card for that room, not the conversation. Values are deliberately literal: these
+      # "do it for me" card for that room, not the conversation.
+      # OWNER DECISION 2026-11-08 (ai-agents.md §10 entry 38(ab)): experiment-
+      # designer is re-added WITHOUT a green live run, which is the rule above
+      # overridden by the owner, not satisfied. Why: the §20.8 what-if loop
+      # drafts its card through code, not model tool choice, and needs this
+      # agent routable to file one. Note that the model-driven B4 turn also
+      # becomes reachable for other run questions; its live suite is
+      # unmeasured since 38(z). Values are deliberately literal: these
       # are deployment flags, not secrets, and this step is their single
       # source of truth. To kill a stage, edit the value here and re-run this
       # workflow (workflow_dispatch or ops-request.yml); every flag off ⇒
@@ -151,10 +164,10 @@ jobs:
       #                             lacks the count-is-not-a-list rules)
       - name: Set AI-agent GA flags (ai-agents.md §9 GA flip)
         run: |
-          supabase secrets set --project-ref wckdrutwkytwcomrlpib \
+          supabase secrets set --yes --project-ref wckdrutwkytwcomrlpib \
             AGENT_TELEMETRY_ENABLED=true \
             AGENT_ROUTER_ENABLED=true \
-            AGENT_ENABLED_IDS=vv-analyst \
+            AGENT_ENABLED_IDS=vv-analyst,experiment-designer \
             AGENT_EXPERIMENT_TYPES=single \
             CHAT_STORE_ENABLED=true \
             CHAT_SUMMARY_ENABLED=true \
@@ -170,7 +183,7 @@ jobs:
       # Deploy the AI chat edge function. verify_jwt is configured in
       # supabase/config.toml, which the deploy reads.
       - name: Deploy project-ai-chat
-        run: supabase functions deploy project-ai-chat --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy project-ai-chat --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -178,7 +191,7 @@ jobs:
       # It imports MODEL_REGISTRY from project-ai-chat, so it redeploys on the
       # same path triggers.
       - name: Deploy project-ai-health
-        run: supabase functions deploy project-ai-health --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy project-ai-health --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -186,7 +199,7 @@ jobs:
       # of apply outcomes). It imports from project-ai-chat/ and _shared/, so
       # it redeploys on the same path triggers.
       - name: Deploy agent-apply
-        run: supabase functions deploy agent-apply --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy agent-apply --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -198,7 +211,7 @@ jobs:
       # (PR #81) — the function existed in-repo but was never deployed;
       # added at the v1.2 GA flip.
       - name: Deploy report-render
-        run: supabase functions deploy report-render --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy report-render --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -208,7 +221,7 @@ jobs:
       # not a declaration anybody reading the function would find. It must be off: this is
       # the endpoint that ISSUES the token, so requiring a token to reach it is a circle.
       - name: Deploy session-mint
-        run: supabase functions deploy session-mint --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy session-mint --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -216,7 +229,7 @@ jobs:
       # dispatch goes through. Without this deploy, the frontend gets
       # "Failed to send a request to the Edge Function" on Run.
       - name: Deploy sim-command
-        run: supabase functions deploy sim-command --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy sim-command --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -224,7 +237,7 @@ jobs:
       # off in config.toml — the gateway authenticates hashed API keys itself
       # and fails closed on auth/authz/quota.
       - name: Deploy api gateway
-        run: supabase functions deploy api --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy api --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -247,7 +260,7 @@ jobs:
       # `supabase/config.toml`, which the deploy reads; the wizard reaches it with the
       # anon key, as it does `sim-command` and `combine-project`.
       - name: Deploy ingest-file
-        run: supabase functions deploy ingest-file --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy ingest-file --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -260,7 +273,7 @@ jobs:
       # (`20260922000003`), one transaction, and relays the database's answer.
       # `verify_jwt = true` is declared in `supabase/config.toml`.
       - name: Deploy delete-project
-        run: supabase functions deploy delete-project --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy delete-project --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -300,25 +313,25 @@ jobs:
       # writes provenance — it writes `node_list` coordinates with no run at
       # all (D36's class). It is deployed so that stops being true silently.
       - name: Deploy calculate-network-science-metrics
-        run: supabase functions deploy calculate-network-science-metrics --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy calculate-network-science-metrics --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy calculate-node-prominence
-        run: supabase functions deploy calculate-node-prominence --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy calculate-node-prominence --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy predict-critical-nodes
-        run: supabase functions deploy predict-critical-nodes --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy predict-critical-nodes --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy combine-project
-        run: supabase functions deploy combine-project --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy combine-project --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       - name: Deploy geocode-locations
-        run: supabase functions deploy geocode-locations --project-ref wckdrutwkytwcomrlpib
+        run: supabase functions deploy geocode-locations --yes --project-ref wckdrutwkytwcomrlpib
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
