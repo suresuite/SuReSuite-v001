@@ -9,6 +9,10 @@ import {
   noteCompletion,
   tryConsumeLlmCall,
   wallExceeded,
+  wallWrapUpAffordable,
+  wallWrapUpDue,
+  WALL_WRAP_UP_INSTRUCTION,
+  WALL_WRAPUP_NOTE,
   type RequestBudget,
 } from "./budgets.ts";
 
@@ -185,6 +189,15 @@ const HOP_WRAP_UP_INSTRUCTION =
 /** The pre-existing exhaustion reply, kept verbatim as the fallback for when
  * the closing completion itself fails or comes back empty. */
 const HOPS_EXHAUSTED_REPLY = "I ran out of steps on that one. Try narrowing the question.";
+
+/** One evidence part per distinct payload: two hops that fetch the same rows
+ * (or a persona that re-reads what it already read) render ONE table, not two
+ * identical ones (v1.6, ai-agents.md §20.8). The model still receives every
+ * envelope — this only shapes what the user is shown. */
+function pushPart(parts: ChatRunResult["parts"], part: { kind: string; data: unknown }): void {
+  const key = JSON.stringify(part);
+  if (!parts.some((p) => JSON.stringify(p) === key)) parts.push(part);
+}
 
 // Friendly stand-in when a provider returns no visible text. If a tool already
 // produced data, the UI renders it — so just introduce it instead of orphaning it
@@ -369,11 +382,41 @@ async function runGemini(
   const collectedParts: ChatRunResult["parts"] = [];
   const toolCalls: ChatRunResult["toolCalls"] = [];
 
+  // One tool-free completion over the conversation so far — the closing
+  // answer for both the MAX_HOPS and the wall stop.
+  const closingGemini = async (instruction: string): Promise<string> => {
+    contents.push({ role: "user", parts: [{ text: instruction }] });
+    const closing = await providerFetch("gemini", `${endpoint}?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { role: "system", parts: [{ text: system }] },
+        contents,
+        generationConfig: { temperature: 0.4, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } },
+      }),
+    });
+    if (!closing.ok) return "";
+    const cData = await closing.json();
+    return (cData?.candidates?.[0]?.content?.parts ?? [])
+      .filter((p: GeminiPart) => p.text).map((p: GeminiPart) => p.text).join("").trim();
+  };
+
   for (let hop = 0; hop < MAX_HOPS; hop++) {
     // §21.5 wall budget, checked between hops: finish the current step (the
-    // hop that already ran), never start another. Honest exhaustion — the
-    // reply names the meter; §21.3 closes any plan step at request end.
-    if (hop > 0 && budget && wallExceeded(budget)) {
+    // hop that already ran), never start another — and stop INSIDE the
+    // wrap-up reserve, so the results already read are answered from rather
+    // than dumped (v1.6). Honest exhaustion: the reply names the meter.
+    if (hop > 0 && budget && wallWrapUpDue(budget)) {
+      if (wallWrapUpAffordable(budget)) {
+        try {
+          const cText = await closingGemini(WALL_WRAP_UP_INSTRUCTION);
+          if (cText) {
+            return { reply: `${cText}\n\n${WALL_WRAPUP_NOTE}`, parts: collectedParts, toolCalls, model: model.label };
+          }
+        } catch (e) {
+          console.warn("[wall-wrapup] gemini closing completion failed:", e instanceof Error ? e.message : e);
+        }
+      }
       return { reply: budgetExhaustedLine("wall"), parts: collectedParts, toolCalls, model: model.label };
     }
     const res = await providerFetch("gemini", `${endpoint}?key=${encodeURIComponent(apiKey)}`, {
@@ -415,7 +458,7 @@ async function runGemini(
       const result: ToolEnvelope = await executeTool(name, args, ctx);
       onToolResult?.(name, args, result);
       toolCalls.push({ name, args, ok: result.meta.note !== "error", row_count: result.meta.row_count });
-      if (result.meta.row_count > 0 || result.kind === "bullets") collectedParts.push({ kind: result.kind, data: result.data });
+      if (result.meta.row_count > 0 || result.kind === "bullets") pushPart(collectedParts, { kind: result.kind, data: result.data });
       contents.push({ role: "function", parts: [{ functionResponse: { name, response: result as unknown as Record<string, unknown> } }] });
     }
   }
@@ -428,22 +471,8 @@ async function runGemini(
   if (budget && budget.budgetHit === null) budget.budgetHit = "hops";
   if (!budget || !wallExceeded(budget)) {
     try {
-      contents.push({ role: "user", parts: [{ text: HOP_WRAP_UP_INSTRUCTION }] });
-      const closing = await providerFetch("gemini", `${endpoint}?key=${encodeURIComponent(apiKey)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { role: "system", parts: [{ text: system }] },
-          contents,
-          generationConfig: { temperature: 0.4, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } },
-        }),
-      });
-      if (closing.ok) {
-        const cData = await closing.json();
-        const cText = (cData?.candidates?.[0]?.content?.parts ?? [])
-          .filter((p: GeminiPart) => p.text).map((p: GeminiPart) => p.text).join("").trim();
-        if (cText) return { reply: cText, parts: collectedParts, toolCalls, model: model.label };
-      }
+      const cText = await closingGemini(HOP_WRAP_UP_INSTRUCTION);
+      if (cText) return { reply: cText, parts: collectedParts, toolCalls, model: model.label };
     } catch (e) {
       console.warn("[hop-wrapup] gemini closing completion failed:", e instanceof Error ? e.message : e);
     }
@@ -474,9 +503,41 @@ async function runOpenAICompatible(
   const collectedParts: ChatRunResult["parts"] = [];
   const toolCalls: ChatRunResult["toolCalls"] = [];
 
+  // One tool-free completion over the conversation so far (see runGemini).
+  const closingOpenAI = async (instruction: string): Promise<string> => {
+    messages.push({ role: "user", content: instruction });
+    const closingBody: any = { model: model.apiModel, messages };
+    if (model.provider === "openai" && model.apiModel.startsWith("gpt-5")) {
+      closingBody.max_completion_tokens = 4096;
+      closingBody.reasoning_effort = "low";
+    } else {
+      closingBody.temperature = 0.4;
+      closingBody.max_tokens = 2048;
+    }
+    const closing = await providerFetch(model.provider, `${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify(closingBody),
+    });
+    if (!closing.ok) return "";
+    const cData = await closing.json();
+    return (cData?.choices?.[0]?.message?.content ?? "").trim();
+  };
+
   for (let hop = 0; hop < MAX_HOPS; hop++) {
-    // §21.5 wall budget, checked between hops (see runGemini).
-    if (hop > 0 && budget && wallExceeded(budget)) {
+    // §21.5 wall budget, checked between hops, with the v1.6 wrap-up
+    // reserve (see runGemini).
+    if (hop > 0 && budget && wallWrapUpDue(budget)) {
+      if (wallWrapUpAffordable(budget)) {
+        try {
+          const cText = await closingOpenAI(WALL_WRAP_UP_INSTRUCTION);
+          if (cText) {
+            return { reply: `${cText}\n\n${WALL_WRAPUP_NOTE}`, parts: collectedParts, toolCalls, model: model.label };
+          }
+        } catch (e) {
+          console.warn("[wall-wrapup] closing completion failed:", e instanceof Error ? e.message : e);
+        }
+      }
       return { reply: budgetExhaustedLine("wall"), parts: collectedParts, toolCalls, model: model.label };
     }
     const body: any = {
@@ -527,7 +588,7 @@ async function runOpenAICompatible(
       const result: ToolEnvelope = await executeTool(name, args, ctx);
       onToolResult?.(name, args, result);
       toolCalls.push({ name, args, ok: result.meta.note !== "error", row_count: result.meta.row_count });
-      if (result.meta.row_count > 0 || result.kind === "bullets") collectedParts.push({ kind: result.kind, data: result.data });
+      if (result.meta.row_count > 0 || result.kind === "bullets") pushPart(collectedParts, { kind: result.kind, data: result.data });
       messages.push({
         role: "tool",
         tool_call_id: c.id,
@@ -541,25 +602,8 @@ async function runOpenAICompatible(
   if (budget && budget.budgetHit === null) budget.budgetHit = "hops";
   if (!budget || !wallExceeded(budget)) {
     try {
-      messages.push({ role: "user", content: HOP_WRAP_UP_INSTRUCTION });
-      const closingBody: any = { model: model.apiModel, messages };
-      if (model.provider === "openai" && model.apiModel.startsWith("gpt-5")) {
-        closingBody.max_completion_tokens = 4096;
-        closingBody.reasoning_effort = "low";
-      } else {
-        closingBody.temperature = 0.4;
-        closingBody.max_tokens = 2048;
-      }
-      const closing = await providerFetch(model.provider, `${baseUrl}/chat/completions`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify(closingBody),
-      });
-      if (closing.ok) {
-        const cData = await closing.json();
-        const cText = (cData?.choices?.[0]?.message?.content ?? "").trim();
-        if (cText) return { reply: cText, parts: collectedParts, toolCalls, model: model.label };
-      }
+      const cText = await closingOpenAI(HOP_WRAP_UP_INSTRUCTION);
+      if (cText) return { reply: cText, parts: collectedParts, toolCalls, model: model.label };
     } catch (e) {
       console.warn("[hop-wrapup] closing completion failed:", e instanceof Error ? e.message : e);
     }

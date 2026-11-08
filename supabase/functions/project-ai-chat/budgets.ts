@@ -128,6 +128,50 @@ export function wallExceeded(b: RequestBudget): boolean {
   return false;
 }
 
+/** §21.5 wall wrap-up reserve (v1.6, ai-agents.md §20.8). The wall was
+ * checked only once it was ALREADY spent, so a turn that ran out of time
+ * returned the canned line plus raw tool tables — every read it paid for,
+ * unread by anyone. The loop now stops starting tool hops this long BEFORE
+ * the wall and spends the reserve on one tool-free closing completion that
+ * answers from the results it has (the MAX_HOPS wrap-up, applied to time). */
+export const WRAP_UP_RESERVE_MS = 15_000;
+/** How far past the soft wall the closing completion may still START — the
+ * wall is soft headroom under the platform ceiling (§21.5), and a slow hop
+ * that overshoots should still get its answer written rather than discarded. */
+export const WRAP_UP_GRACE_MS = 30_000;
+
+function reserveMs(b: RequestBudget): number {
+  return Math.min(WRAP_UP_RESERVE_MS, b.wallBudgetMs / 4);
+}
+
+/** Between hops: true (and the wall hit recorded) once the remaining wall is
+ * inside the wrap-up reserve — start no further tool hop. */
+export function wallWrapUpDue(b: RequestBudget): boolean {
+  if (wallMs(b) > b.wallBudgetMs - reserveMs(b)) {
+    markHit(b, "wall");
+    return true;
+  }
+  return false;
+}
+
+/** Whether the closing completion may still start. Past this, the honest
+ * exhaustion line alone ships (nothing is guessed, nothing is hidden). */
+export function wallWrapUpAffordable(b: RequestBudget): boolean {
+  return wallMs(b) <= b.wallBudgetMs + Math.min(WRAP_UP_GRACE_MS, b.wallBudgetMs / 2);
+}
+
+/** Appended by the SERVER to a wall wrap-up answer, so the user is still told
+ * which meter stopped the work (§21.5: never silent truncation). */
+export const WALL_WRAPUP_NOTE =
+  "_I stopped looking things up at this request's time budget, so this answer uses only what I had already read. " +
+  "Ask a narrower follow-up if you need more._";
+
+/** Told to the model on the closing completion after a wall stop. */
+export const WALL_WRAP_UP_INSTRUCTION =
+  "You are out of time for tool steps on this request. Do not call any more tools. " +
+  "Answer the question now using only the tool results you already received, in 2-5 sentences. " +
+  "If they are not enough for a grounded answer, say exactly what is missing — never guess.";
+
 /** §21.5 honest exhaustion — the user is told WHICH meter ran out and that
  * work remains undone; never silent truncation. */
 export const BUDGET_EXHAUSTED_LINES: Record<Exclude<BudgetHit, null>, string> = {

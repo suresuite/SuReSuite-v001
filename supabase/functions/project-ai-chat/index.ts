@@ -37,7 +37,20 @@ import {
   OFFER_CHIP_TEXT,
   AGENT_NOT_ENABLED_TEXT,
   resolveRoutedUtterance,
+  routerEnabled,
 } from "./router.ts";
+// §20.8 (v1.6): the deterministic what-if loop — a disruption what-if is
+// parsed, resolved, cache-checked BY CONTENT and proposed in code; the model
+// only interprets a hit. Kill switch WHATIF_LOOP_ENABLED (default on).
+import {
+  parseWhatIf,
+  runWhatIfLoop,
+  whatIfInterpretationMessage,
+  WHATIF_INTERPRETER_SYSTEM,
+  whatIfLoopEnabled,
+  whatIfReply,
+  whatIfRouteDecision,
+} from "./whatIf.ts";
 // Importing agentTurn.ts registers the staged draft tools (draftTools.ts,
 // configuratorTools.ts, vvTools.ts, memory.ts) into the shared executeTool
 // registry (ai-agents.md §9.2–§9.4, §14.7).
@@ -728,12 +741,17 @@ serve(async (req) => {
         return baseClassifier(prompt);
       }
       : null;
-    const rawDecision = await decideRoute(routedUtterance, {
-      personaId: agentId ?? null,
-      hasProject: Boolean(projectId),
-      enabledAgents,
-      modelId: resolvedModel.id,
-    }, meteredClassifier);
+    // §20.8: a message that parses as a disruption what-if is routed by the
+    // parse, not by a classifier call — the ask is already understood.
+    const whatIfAsk = ctx && whatIfLoopEnabled() ? parseWhatIf(routedUtterance) : null;
+    const rawDecision = whatIfAsk
+      ? whatIfRouteDecision(routerEnabled() && enabledAgents.includes('experiment-designer'))
+      : await decideRoute(routedUtterance, {
+        personaId: agentId ?? null,
+        hasProject: Boolean(projectId),
+        enabledAgents,
+        modelId: resolvedModel.id,
+      }, meteredClassifier);
     const { decision: routeDecision, blocked: modeBlocked } = applyModeToRoute(rawDecision, chatMode);
     telemetry.emit('router.decision', {
       route: routeDecision.route,
@@ -869,7 +887,10 @@ serve(async (req) => {
       // prompt and the §20.2 tool surface for every routed B4 turn. needs_run
       // on an *advisory* route changes nothing deterministic (the persona may
       // honestly say a run would be needed — §19.4's nearest-grounded-action).
+      // §20.8: a parsed what-if never takes the model-driven agent turn (nor
+      // the matrix gate that guards it — no model capability is exercised).
       const routedAgentId =
+        !whatIfAsk &&
         (routeDecision.route === 'artifact' || routeDecision.route === 'mixed') && ctx !== null &&
         routeDecision.agent_id !== null && AGENT_TURNS[routeDecision.agent_id]
           ? routeDecision.agent_id
@@ -945,7 +966,87 @@ serve(async (req) => {
         }
       }
 
-      if (routedAgentId) {
+      if (whatIfAsk && ctx) {
+        // --- §20.8 the deterministic what-if loop. Understand → resolve →
+        // cache (by disruption content, then the unchanged §20.2 identity) →
+        // read on a hit / draft on a miss. Code decides every step; the one
+        // optional model call interprets a hit, tools withdrawn, and its
+        // prose is verified (§22.3) or dropped — the deterministic answer
+        // always ships, so a rate-limited provider cannot take this path down.
+        const canDraft = routeDecision.agent_id === 'experiment-designer';
+        const draftBlockedReason = modeBlocked
+          ? 'this thread is in Ask mode, which never files proposals'
+          : !routerEnabled()
+          ? 'agent drafting is switched off in this deployment'
+          : !enabledAgents.includes('experiment-designer')
+          ? "the Experiment Designer agent isn't enabled for your account"
+          : undefined;
+        const wiCtx: ToolContext = {
+          ...ctx,
+          draft: {
+            userEmail: userEmail ?? null,
+            threadId: typeof threadId === 'string' ? threadId : null,
+            modelCode: resolvedModel.id,
+            providerCode: resolvedModel.provider,
+            canProposals: capFeatures['agent_proposals'] === true,
+            utterance: routedUtterance,
+            mode: chatMode,
+            agentId: 'experiment-designer',
+          },
+        };
+        const wi = await runWhatIfLoop(wiCtx, whatIfAsk, { canDraft, draftBlockedReason });
+        const wiToolCalls = wi.calls.map((c) => ({
+          name: c.name,
+          args: c.args,
+          ok: c.envelope.meta.note !== 'error',
+          row_count: c.envelope.meta.row_count,
+        }));
+        telemetryToolCalls = wiToolCalls;
+        let reply = whatIfReply(wi.outcome);
+        const interpretation = whatIfInterpretationMessage(promptText, wi.outcome);
+        if (interpretation) {
+          try {
+            const interp = await runChat(model, interpretation, [], null, agentId, {
+              system: WHATIF_INTERPRETER_SYSTEM,
+              budget,
+            });
+            let prose = interp.blocked ? '' : (interp.reply ?? '').trim();
+            if (prose && verifierOn) {
+              const v = await verifyWithRetry<VerifiedTurn>({
+                projectId: projectId as string,
+                db: ctx.supabase,
+                userMessage: promptText,
+                contextText: interpretation,
+                attempt: { reply: prose, calls: wi.calls, result: interp },
+                retry: null,
+                nearestAction: null,
+              });
+              if (v.fallback) prose = '';
+              else verdict = { ...v, reply: prose };
+            }
+            if (prose) reply = `${reply}\n\n${prose}`;
+          } catch (e) {
+            // The deterministic answer stands on its own (e.g. a provider 429).
+            console.warn('[what-if] interpretation skipped:', e instanceof Error ? e.message : e);
+          }
+        }
+        if (wi.outcome.kind === 'proposed') {
+          proposalId = wi.outcome.proposal.proposal_id;
+          if (!wi.outcome.proposal.duplicate) {
+            makeTelemetry(supabaseAdmin, { ...telemetryBase, agent_id: 'experiment-designer' })
+              .emit('proposal.created', {
+                artifact_type: wi.outcome.proposal.artifact_type,
+                provenance: wi.outcome.proposal.provenance,
+              }, { proposal_id: proposalId });
+          }
+        }
+        result = {
+          reply,
+          parts: wi.parts,
+          toolCalls: wiToolCalls,
+          model: resolvedModel.label,
+        };
+      } else if (routedAgentId) {
         const agentUtterance = routeDecision.artifact_part ?? routedUtterance;
         const agentCtx: ToolContext = {
           ...(ctx as ToolContext),
