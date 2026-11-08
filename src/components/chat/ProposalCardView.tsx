@@ -14,7 +14,7 @@
  * rather than a silent revert. Rejected cards stay in the thread at reduced
  * opacity — the audit trail is the point.
  */
-import React from "react";
+import React, { useState } from "react";
 import { AGENT_COLOR, AGENT_MONO, LAYER, TD, TH, tint } from "../intelligence/piUi";
 import { cn } from "@/lib/utils";
 import { FROZEN_CELL, FROZEN_CELL_ON_TINT } from '@/components/shared';
@@ -43,6 +43,17 @@ export interface Proposal {
   expiresLabel?: string;
   rows: ProposalRow[];
   citations?: string[];
+  /** The pre-run check stored on the card at draft time (experiment specs,
+   * §5.4 `findings_preview`): block + warn findings only. */
+  findings?: Array<{ severity: string; field: string; message: string }>;
+  /** Warnings and no block: the reviewer must acknowledge them to run. The
+   * server honors the acknowledgment only because the card displayed them. */
+  ackRequired?: boolean;
+}
+
+/** What the reviewer decided on the card, sent with the apply request. */
+export interface ReviewOptions {
+  acknowledgeWarnings?: boolean;
 }
 
 /**
@@ -68,16 +79,21 @@ export function ProposalCardView({
   skin = false,
 }: {
   proposal: Proposal;
-  onApprove: (id: string) => void;
+  onApprove: (id: string, opts?: ReviewOptions) => void;
   onReject: (id: string) => void;
-  onRetry: (id: string) => void;
+  onRetry: (id: string, opts?: ReviewOptions) => void;
   skin?: boolean;
 }) {
+  const [ack, setAck] = useState(false);
   const color = AGENT_COLOR[proposal.agentId ?? ""] ?? LAYER.firm;
   const mono = AGENT_MONO[proposal.agentId ?? ""] ?? proposal.agent.slice(0, 2).toUpperCase();
   const isParam = proposal.artifactType === "parameter_estimate";
   const applying = proposal.status === "approved" && !proposal.applyError;
   const failed = proposal.status === "approved" && Boolean(proposal.applyError);
+  const findings = proposal.findings ?? [];
+  const blocked = findings.some((f) => f.severity === "block");
+  const needsAck = Boolean(proposal.ackRequired) && (proposal.status === "proposed" || failed);
+  const runOpts: ReviewOptions | undefined = proposal.ackRequired && ack ? { acknowledgeWarnings: true } : undefined;
 
   return (
     <div
@@ -162,6 +178,35 @@ export function ProposalCardView({
         </div>
       )}
 
+      {findings.length > 0 && (
+        <div className="mt-2 rounded-sm border border-[#ecd9a6] bg-[#fdf8ec] px-2.5 py-1.5 text-[12px] text-[#6b5414]">
+          <div className="font-medium">
+            Pre-run check: {blocked ? "blocked" : `${findings.length} warning${findings.length === 1 ? "" : "s"}`}
+          </div>
+          <ul className="mt-1 list-disc pl-4">
+            {findings.map((f, i) => (
+              <li key={i}>
+                <span className="font-mono">{f.field}</span>: {f.message}
+              </li>
+            ))}
+          </ul>
+          {needsAck && (
+            <label className="mt-1.5 flex items-start gap-1.5">
+              <input
+                type="checkbox"
+                className="mt-[3px]"
+                checked={ack}
+                onChange={(e) => setAck(e.target.checked)}
+              />
+              <span>I've read these warnings — run anyway with the stated fallbacks.</span>
+            </label>
+          )}
+          {blocked && (
+            <div className="mt-1">The run cannot start until the blocking item is fixed. Reject this card, fix the data, and ask again.</div>
+          )}
+        </div>
+      )}
+
       {proposal.status === "proposed" && proposal.expiresLabel && (
         <div className="mt-1.5 text-[11px] text-muted-foreground">{proposal.expiresLabel}</div>
       )}
@@ -193,8 +238,10 @@ export function ProposalCardView({
           <>
             <button
               type="button"
-              onClick={() => onApprove(proposal.id)}
-              className="rounded-sm bg-foreground px-3 py-1.5 text-[12.5px] text-background"
+              onClick={() => onApprove(proposal.id, runOpts)}
+              disabled={blocked || (Boolean(proposal.ackRequired) && !ack)}
+              title={proposal.ackRequired && !ack ? "Tick the box above to run with these warnings" : undefined}
+              className="rounded-sm bg-foreground px-3 py-1.5 text-[12.5px] text-background disabled:opacity-40"
             >
               Approve
             </button>
@@ -211,8 +258,10 @@ export function ProposalCardView({
           <>
             <button
               type="button"
-              onClick={() => onRetry(proposal.id)}
-              className="rounded-sm bg-foreground px-3 py-1.5 text-[12.5px] text-background"
+              onClick={() => onRetry(proposal.id, runOpts)}
+              disabled={blocked || (Boolean(proposal.ackRequired) && !ack)}
+              title={proposal.ackRequired && !ack ? "Tick the box above to run with these warnings" : undefined}
+              className="rounded-sm bg-foreground px-3 py-1.5 text-[12.5px] text-background disabled:opacity-40"
             >
               Retry
             </button>

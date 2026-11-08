@@ -6,6 +6,7 @@ import {
   type ProposalRow,
 } from "@/components/chat/ProposalCardView";
 import { useProposal, type Proposal } from "@/hooks/useProposals";
+import { EXPERIMENT_SPEC, experimentSpecRows, specGate } from "@/lib/chat/experimentSpecCard";
 
 /**
  * Proposal card (ai-agents.md §4.6) — the reviewable unit of Layer B output,
@@ -143,6 +144,8 @@ export function ProposalCard({ proposalId, onSuggestUtterance, skin = false }: P
     setBusy(false);
   };
 
+  const isSpec = proposal.artifact_type === EXPERIMENT_SPEC;
+  const gate = isSpec ? specGate(proposal.payload) : null;
   const view: ProposalView = {
     id: proposal.id,
     title: proposal.title,
@@ -154,8 +157,9 @@ export function ProposalCard({ proposalId, onSuggestUtterance, skin = false }: P
     applyError: proposal.apply_error,
     appliedAt: proposal.applied_at ? new Date(proposal.applied_at).toLocaleString() : null,
     expiresLabel: expiresIn(proposal.expires_at),
-    rows: toRows(proposal.payload),
+    rows: isSpec ? experimentSpecRows(proposal.payload) : toRows(proposal.payload),
     citations: toCitations(proposal.citations),
+    ...(gate ? { findings: gate.findings, ackRequired: gate.ackRequired } : {}),
   };
 
   return (
@@ -163,9 +167,9 @@ export function ProposalCard({ proposalId, onSuggestUtterance, skin = false }: P
       <ProposalCardView
         skin={skin}
         proposal={view}
-        onApprove={(id) => run(() => approve(id))}
+        onApprove={(id, opts) => run(() => approve(id, opts))}
         onReject={(id) => run(() => reject(id))}
-        onRetry={(id) => run(() => retryApply(id))}
+        onRetry={(id, opts) => run(() => retryApply(id, opts))}
       />
       {actionError && (
         <div className="mt-2 rounded-sm border border-[#f0c7cb] bg-[#fdf2f3] px-2.5 py-1.5 text-[12.5px] text-[#8a2a30]">
