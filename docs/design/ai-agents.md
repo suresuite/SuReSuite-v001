@@ -1937,6 +1937,13 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
 
     (ae) **[v1.7, 2026-11-09] Phase M delivered (§26.7).** At the owner's direction ("work on all of them"), all eight work packages landed in one change: the skill framework and registry, eight skills plus the capabilities front door, the comparison experiment type end to end (draft → card → apply → plan), skill-shaped resume, the generated platform-knowledge index, finding → fix mapping, the persona front door, and the 60-task benchmark at 60/60. The production flag `AGENT_EXPERIMENT_TYPES` is now `single,comparison` (owner decision 4: one card per study). Four deviations from §26.3/§26.4 are recorded in §26.7. Verification: the deterministic tier passes 344 tests, vitest 2057; typecheck, `audit:ui` and `check:docs` pass; eslint is unchanged per file. Live-unmeasured by owner decision (38(ad) item 1).
 
+    (af) **[2026-11-09] The Supabase CLI is pinned: `supabase/setup-cli@v3`, `version: 2.84.2`, in both deploy workflows.** `version: latest` floated three times in four days:
+    - (1) around 2026-11-06 a release made state-changing commands demand confirmation, so no function deploy from #426 to #432 reached production (fixed by `--yes`, 38(ab));
+    - (2) by 2026-11-08 `latest` made `migration repair` and `db push` target the LOCAL stack, so the #433 migrations run tried `127.0.0.1:54322` and failed. It was harmless only because nothing was pending, and the next migration merge would not have deployed;
+    - (3) on 2026-11-09 setup-cli@v1 could not resolve `latest` at all (GitHub API rate limit), so the #436 deploy failed before installing anything. A re-run of that job deployed #436.
+
+    @v3 installs from npm and takes an exact version. 2.84.2 was checked locally: `--yes` is a global flag, `db push` and `migration repair` default to `--linked`, and `functions deploy` takes `--project-ref`. Bump the version deliberately, after reading the CLI changelog for flag and default-target changes.
+
 ---
 
 ## 11. Traceability appendix
