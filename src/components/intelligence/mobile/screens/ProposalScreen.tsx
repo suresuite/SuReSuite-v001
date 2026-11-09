@@ -11,6 +11,7 @@ import { IntelBadge } from "../primitives";
 import { getIntel } from "../intel";
 import { versionOrdinal } from "../format";
 import { useProposal } from "@/hooks/useProposals";
+import { EXPERIMENT_SPEC, specGate } from "@/lib/chat/experimentSpecCard";
 import { usePolicies } from "@/hooks/usePolicies";
 import type { PolicyBundle } from "@/lib/policies/schemas";
 
@@ -76,6 +77,9 @@ export function ProposalScreen({
   const { defaults, overrides, versions } = usePolicies(proposal?.project_id ?? null);
   const [busy, setBusy] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  // §5.4: an experiment spec's pre-run warnings must be SHOWN and acknowledged
+  // by the reviewer; the server honors the acknowledgment only then.
+  const [ack, setAck] = React.useState(false);
 
   if (loading || !proposal) {
     return (
@@ -90,6 +94,7 @@ export function ProposalScreen({
 
   const intel = getIntel(proposal.agent_id);
   const isPolicyDiff = proposal.artifact_type === "policy_bundle_diff";
+  const gate = proposal.artifact_type === EXPERIMENT_SPEC ? specGate(proposal.payload) : null;
   const payload = proposal.payload as { diff?: PolicyDiff; rationale?: string; base_policy_version_id?: string | null };
   const diffRows = isPolicyDiff && payload.diff ? computeDiffRows(payload.diff, defaults, overrides) : [];
 
@@ -175,6 +180,24 @@ export function ProposalScreen({
           </div>
         )}
 
+        {gate && gate.findings.length > 0 && (
+          <div className="mb-4 rounded-[4px] border border-[#ecd9a6] bg-[#fdf8ec] px-3 py-2 text-[12.5px] text-[#6b5414]">
+            <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em]">pre-run check</div>
+            {gate.findings.map((f, i) => (
+              <div key={i} className="py-0.5">
+                <span className="font-mono">{f.field}</span>: {f.message}
+              </div>
+            ))}
+            {gate.ackRequired && (
+              <label className="mt-1.5 flex items-start gap-2">
+                <input type="checkbox" className="mt-[3px]" checked={ack} onChange={(e) => setAck(e.target.checked)} />
+                <span>I've read these warnings — run anyway with the stated fallbacks.</span>
+              </label>
+            )}
+            {gate.blocked && <div className="mt-1">The run cannot start until the blocking item is fixed.</div>}
+          </div>
+        )}
+
         {actionError && (
           <div className="mb-3 rounded-[4px] border border-[#f0c7cb] bg-[#fdf2f3] px-3 py-2 text-[12.5px] text-[#8a2a30]">
             {actionError}
@@ -187,7 +210,12 @@ export function ProposalScreen({
         primary={{
           label: isPolicyDiff ? `Save ${toLabel} & run` : "Accept",
           loading: busy || applying,
-          onClick: () => run(() => approve(proposal.id), () => onAccepted(toLabel)),
+          disabled: Boolean(gate && (gate.blocked || (gate.ackRequired && !ack))),
+          onClick: () =>
+            run(
+              () => approve(proposal.id, gate?.ackRequired && ack ? { acknowledgeWarnings: true } : undefined),
+              () => onAccepted(toLabel),
+            ),
         }}
         note={
           isPolicyDiff
