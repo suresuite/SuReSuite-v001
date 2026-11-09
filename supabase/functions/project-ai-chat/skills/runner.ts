@@ -133,10 +133,17 @@ export async function runSkillTurn(args: {
 /** §21.4 resume, skill-shaped: the run bound to the plan finished. Re-run
  * the skill on its stored question (now a cache hit), then close the plan:
  * run → done, answer → active → done (two calls: §21.1 rule 3). */
-export async function closeSkillPlan(ctx: ToolContext, plan: { id: string; steps: Array<Record<string, unknown>> }, answered: boolean): Promise<{ kind: string; data: unknown } | null> {
+export async function closeSkillPlan(
+  ctx: ToolContext,
+  plan: { id: string; steps: Array<Record<string, unknown>> },
+  answered: boolean,
+  /** The step that waited on the run — "run", or an appended "run-retry"
+   * when a Retry rebound the plan (planTools.ts, §10 entry 38(ah)). */
+  runStepId = "run",
+): Promise<{ kind: string; data: unknown } | null> {
   const base = plan.steps.map((s) => ({ ...s }));
   const set = (id: string, status: string) => base.map((s) => (s.id === id ? { ...s, status } : s));
-  let steps = set("run", "done");
+  let steps = set(runStepId, "done");
   await executeTool("update_task_plan", { plan_id: plan.id, steps }, ctx);
   steps = steps.map((s) => (s.id === "answer" ? { ...s, status: "active" } : s));
   await executeTool("update_task_plan", { plan_id: plan.id, steps }, ctx);

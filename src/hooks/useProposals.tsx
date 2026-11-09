@@ -61,6 +61,9 @@ interface BoundPlanStep {
   planId: string;
   threadId: string;
   stepId: string;
+  /** "failed" when an earlier apply attempt failed the step (§13.6 rule 3):
+   * a later successful Retry then asks the server to rebind (38(ah)). */
+  status: "awaiting_approval" | "failed";
 }
 
 /**
@@ -81,10 +84,11 @@ async function findBoundPlanStep(proposalId: string, userId: string): Promise<Bo
   }
   for (const plan of (Array.isArray(plans) ? plans : []) as PlanRowLite[]) {
     if (plan.status !== "active") continue;
-    const step = (plan.steps ?? []).find(
-      (s) => s.status === "awaiting_approval" && s.ref?.proposal_id === proposalId,
-    );
-    if (step) return { planId: plan.id, threadId, stepId: step.id };
+    const steps = plan.steps ?? [];
+    const waiting = steps.find((s) => s.status === "awaiting_approval" && s.ref?.proposal_id === proposalId);
+    if (waiting) return { planId: plan.id, threadId, stepId: waiting.id, status: "awaiting_approval" };
+    const failed = steps.find((s) => s.status === "failed" && s.ref?.proposal_id === proposalId);
+    if (failed) return { planId: plan.id, threadId, stepId: failed.id, status: "failed" };
   }
   return null;
 }
@@ -114,6 +118,14 @@ function useProposalActions(onChanged?: () => void): ProposalActions & { applyin
     try {
       const bound = await findBoundPlanStep(id, user.id);
       if (!bound) return;
+      if (bound.status === "failed") {
+        // An earlier attempt already failed this step (terminal). A Retry
+        // that succeeded dispatched a run nothing waits on: post the resume,
+        // and the server APPENDS a step bound to that run (planTools.ts
+        // runResumePreStep — the client never reopens a failed step).
+        if (outcome.kind === "applied") postPlanResume(bound.threadId, bound.planId);
+        return;
+      }
       if (outcome.kind === "applied") {
         const { data: prop } = await db
           .from("proposals").select("applied_result").eq("id", id).maybeSingle();

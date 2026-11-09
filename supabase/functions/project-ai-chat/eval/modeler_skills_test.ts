@@ -10,7 +10,8 @@ import { makeAgentRpcs, makeStubDb, type Row } from "./harness/stub_db.ts";
 import type { ToolContext } from "../tools.ts";
 import "../agentTurn.ts"; // registers the handlers, as index.ts does
 import { matchSkill, SKILLS, type SkillId } from "../skills/index.ts";
-import { runSkillTurn, parseSkillNote, skillNote } from "../skills/runner.ts";
+import { closeSkillPlan, runSkillTurn, parseSkillNote, skillNote } from "../skills/runner.ts";
+import { runResumePreStep } from "../planTools.ts";
 import { ciHalfWidth95, mean, pairedDelta, std, tCritical95 } from "../skills/common.ts";
 import * as browserStats from "../../../../src/lib/sim/stats.ts";
 import { makeRequestBudget } from "../budgets.ts";
@@ -360,3 +361,45 @@ Deno.test("M.3 note round-trip: skill id + question fit the 200-char note", () =
   assert(n.length <= 200);
   assertEquals(parseSkillNote(n)?.skillId, "mitigation");
 });
+
+Deno.test("38(ah) Retry rebind: a failed first apply, then a successful Retry ⇒ the resume APPENDS a step on the new run and the skill closes the plan", () =>
+  withEnv({ ...DESIGNER, CHAT_STORE_ENABLED: "true", PLAN_TOOL_ENABLED: "true" }, async () => {
+    const h = await harness();
+    const { turn } = await run("what if disruption with S1 at week 22 and duration of 4 weeks", h);
+    assertEquals(turn.result.outcome, "proposed");
+    const plan = h.tables.chat_plans[0] as Record<string, unknown>;
+    const proposalId = turn.result.proposal!.proposal_id;
+
+    // 1st apply fails (the production created_by FK): the client fails the step.
+    const { error } = await h.db.rpc("advance_chat_plan_step", {
+      p_plan_id: plan.id, p_step_id: "run", p_status: "failed", p_user_id: USER,
+      p_note: "run not created: simulation_runs_created_by_fkey",
+    });
+    assert(!error, error?.message);
+
+    // Retry succeeds: the card is applied with a run, which has finished.
+    const RETRY_RUN = "99999999-9999-4999-8999-999999999977";
+    h.tables.simulation_runs.push({ ...structuredClone(h.tables.simulation_runs[0]), id: RETRY_RUN, status: "done", rep_count_done: 5, rep_count_target: 5 });
+    const card = h.tables.proposals.find((p) => String(p.id) === proposalId)!;
+    card.status = "applied";
+    card.applied_result = { run_id: RETRY_RUN };
+
+    // The client posts the resume; the server rebinds by APPENDING a step.
+    const outcome = await runResumePreStep(h.db, { planId: String(plan.id), userId: USER });
+    assertEquals(outcome.kind, "run_done", JSON.stringify(outcome));
+    if (outcome.kind !== "run_done") return;
+    assertEquals(outcome.stepId, "run-retry");
+    assertEquals(outcome.runId, RETRY_RUN);
+    const ids = outcome.plan.steps.map((st) => `${st.id}:${st.status}`);
+    assertEquals(ids, ["check:done", "run:failed", "run-retry:active", "answer:pending"], "the failed step is never reopened");
+
+    // The skill resume closes the step that actually waited.
+    const part = await closeSkillPlan(h.ctx, outcome.plan as unknown as { id: string; steps: Array<Record<string, unknown>> }, true, outcome.stepId);
+    const closed = (part!.data as { steps: Array<{ id: string; status: string }> }).steps.map((st) => `${st.id}:${st.status}`);
+    assertEquals(closed, ["check:done", "run:failed", "run-retry:done", "answer:done"]);
+
+    // A second resume does not append another step for the same run.
+    const again = await runResumePreStep(h.db, { planId: String(plan.id), userId: USER });
+    assert(!(again.plan?.steps ?? []).some((st) => st.id === "run-retry2"), "one rebind per run");
+  }));
+

@@ -12,6 +12,10 @@ Seven evidence hashes had gone stale as main advanced past the reviewed commit (
 
 Two evidence hashes moved: `comparability.ts` (`runVersions` gains the run's recorded calendar; `canonicalSchedule` ignores `start_anchor`) and `CompareScenariosPanel.tsx` (a Calendar column in "What each run used"). Both were read against `experiments-and-comparison`, whose description of that table was corrected to name the calendar and to say that neither the calendar nor how a start was entered makes a column not like-for-like. `disruptions` gained the three ways to enter a start and how runs are dated. Not refreshed: every other hash, which still matches.
 
+## Refresh 2026-11-09 (ai-agents.md §10 entry 38(ag))
+
+One evidence hash moved: `_shared/dispatch.ts`. `dispatchExperimentRun` gained `opts.createdBy`, so a caller whose user id is an `approved_users` id (agent-apply) writes NULL into `simulation_runs.created_by`, a foreign key to `auth.users`, instead of failing the insert. The Lab and the public API are unchanged. Read against `roles-and-capabilities`: its claim that the dispatch helper assumes the caller already authorized the request, and does not establish the caller's project role, is unaffected. Who may dispatch did not change, only what is recorded as `created_by`. No manual text changed. Not refreshed: every other hash, which still matches.
+
 ## What changed
 
 - **Starting:** four reader paths now lead to an outcome. The analyst tutorial supplies seven synthetic CSVs, a precise experiment protocol, expected checkpoints, failure recovery and locally executed results.
