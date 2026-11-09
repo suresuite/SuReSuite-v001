@@ -3837,7 +3837,7 @@ export const ASSISTANT: Assistant = {
     {
       "id": "simulation-modeler",
       "name": "Simulation Modeler",
-      "blurb": "Design scenarios, stress tests, and recovery playbooks.",
+      "blurb": "What-ifs, mitigation studies, sensitivity sweeps, results, readiness and setup — ask \"what can you do?\"",
       "requiresProject": true
     },
     {
