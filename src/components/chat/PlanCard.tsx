@@ -1,3 +1,4 @@
+import { runLiveness, type RunLivenessInput } from "../../../supabase/functions/_shared/runLiveness";
 import { useCallback, useEffect, useState } from "react";
 import {
   Ban,
@@ -127,27 +128,43 @@ function ProposalStatusPill({ proposalId }: { proposalId: string }) {
  * realtime row; a status transition to done/failed posts ONE debounced
  * resume turn for this run id (§21.4 run resume). */
 function RunProgressLine({ runId, planId, threadId }: { runId: string; planId: string; threadId: string | null }) {
-  const [run, setRun] = useState<{ status: string; done: number; target: number } | null>(null);
+  const [run, setRun] = useState<RunLivenessInput | null>(null);
+  // Re-read the clock each minute, so "queued for N min" stays true while
+  // the card is on screen (38(ai)).
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     const apply = (r: Record<string, unknown> | null) => {
       if (cancelled || !r) return;
-      const next = {
+      const next: RunLivenessInput = {
         status: String(r.status ?? ""),
-        done: Number(r.rep_count_done ?? 0) || 0,
-        target: Number(r.rep_count_target ?? 0) || 0,
+        rep_count_done: Number(r.rep_count_done ?? 0) || 0,
+        rep_count_target: Number(r.rep_count_target ?? 0) || 0,
+        created_at: (r.created_at as string | null) ?? null,
+        started_at: (r.started_at as string | null) ?? null,
       };
       setRun(next);
       if ((next.status === "done" || next.status === "failed") && threadId) {
         resumeOnRunTransition(runId, threadId, planId);
       }
     };
-    db.from("simulation_runs")
-      .select("status,rep_count_done,rep_count_target")
-      .eq("id", runId)
-      .maybeSingle()
-      .then(({ data }: { data: Record<string, unknown> | null }) => apply(data));
+    const load = () =>
+      db.from("simulation_runs")
+        .select("status,rep_count_done,rep_count_target,created_at,started_at")
+        .eq("id", runId)
+        .maybeSingle()
+        .then(({ data }: { data: Record<string, unknown> | null }) => apply(data));
+    load();
+    // 38(ai): the realtime UPDATE is not guaranteed to arrive (the owner's
+    // S002 run finished while this card sat at 0/5 and never resumed). Re-read
+    // the row each minute; a done/failed row posts the resume exactly as the
+    // realtime path does (resumeOnRunTransition debounces per run id).
+    const poll = setInterval(load, 60_000);
     const channel = db
       .channel(`plan-run-${runId}`)
       .on("postgres_changes",
@@ -156,14 +173,16 @@ function RunProgressLine({ runId, planId, threadId }: { runId: string; planId: s
       .subscribe();
     return () => {
       cancelled = true;
+      clearInterval(poll);
       db.removeChannel(channel);
     };
   }, [runId, planId, threadId]);
 
   if (!run) return null;
+  const live = runLiveness(run, now);
   return (
-    <span className={cn("text-[11.5px]", PART_TREATMENTS.plan.accent)}>
-      run dispatched — {run.done}/{run.target} replications
+    <span className={cn("text-[11.5px]", live.state === "moving" ? PART_TREATMENTS.plan.accent : "text-[#8a2a30]")}>
+      {live.line}
     </span>
   );
 }

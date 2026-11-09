@@ -612,7 +612,12 @@ serve(async (req) => {
               resuming: true,
             });
           const answered = !!turn && ['hit', 'answered'].includes(turn.result.outcome);
-          const planPartNow = await closeSkillPlan(skillCtx, outcome.plan as unknown as { id: string; steps: Array<Record<string, unknown>> }, answered);
+          const planPartNow = await closeSkillPlan(
+            skillCtx,
+            outcome.plan as unknown as { id: string; steps: Array<Record<string, unknown>> },
+            answered,
+            outcome.stepId,
+          );
           return await finishResume({
             reply: turn?.reply ?? `The run finished, but I couldn't re-read the question "${skillRef.utterance}" — ask it again and I'll answer from the run.`,
             parts: [...(turn?.parts ?? []), ...(planPartNow ? [planPartNow] : [])],

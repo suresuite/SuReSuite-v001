@@ -17,6 +17,7 @@
 // closed loop caps itself to single-turn shapes and files no plan). Both
 // default off ⇒ byte-identical pre-H3 behavior (golden-transcript pinned).
 
+import { runWaitReply } from "../_shared/runLiveness.ts";
 import {
   registerToolHandler,
   type ToolContext,
@@ -586,7 +587,7 @@ export function progressLine(done: number, target: number): string {
 }
 
 export function progressReply(done: number, target: number): string {
-  return `Still working: ${progressLine(done, target)}. The thread resumes automatically when the run completes — waiting is a plan state, nothing is hung.`;
+  return `Still working: ${progressLine(done, target)}. The thread continues automatically when the run completes.`;
 }
 
 /** The deterministic resume instruction (§21.4: the resumed agent turn's
@@ -642,6 +643,43 @@ export async function runResumePreStep(
   }
   if (plan.status !== "active") {
     return { kind: "closed", reply: `This plan is already ${plan.status} — nothing to resume.`, plan };
+  }
+
+  // §21.4 retry rebind (v1.7, ai-agents.md §10 entry 38(ah)). The client
+  // fails the bound step on a typed apply failure (§13.6 rule 3, cl-10) — and
+  // the card still offers Retry. A Retry that SUCCEEDS used to strand the
+  // plan: `failed` is terminal, so the run it dispatched had no step to wait
+  // on and the answer never came back. Rebind by APPENDING a step bound to
+  // the now-applied card's run (steps stay append-only; a failed step is
+  // never reopened). Only when no step already waits and no step already
+  // carries that run.
+  if (!plan.steps.some((s) => s.status === "awaiting_run" || s.status === "awaiting_approval")) {
+    for (const failed of plan.steps.filter((s) => s.status === "failed" && s.ref?.proposal_id)) {
+      let applied: Record<string, unknown> | null = null;
+      try {
+        const { data } = await db.from("proposals").select("id,status,applied_result").eq("id", failed.ref!.proposal_id!).maybeSingle();
+        applied = (data as Record<string, unknown> | null) ?? null;
+      } catch { /* nothing to rebind */ }
+      const runId = (applied?.applied_result as Record<string, unknown> | null)?.run_id;
+      if (String(applied?.status ?? "") !== "applied" || typeof runId !== "string" || !uuidRe.test(runId)) continue;
+      if (plan.steps.some((s) => s.ref?.run_id === runId)) continue;
+      if (plan.steps.length >= PLAN_MAX_STEPS) break;
+      let n = 1;
+      while (plan.steps.some((s) => s.id === `${failed.id}-retry${n > 1 ? n : ""}`)) n++;
+      const retryStep: PlanStep = {
+        id: `${failed.id}-retry${n > 1 ? n : ""}`.slice(0, 40),
+        label: `${failed.label} — retried`.slice(0, 120),
+        status: "awaiting_run",
+        ref: { proposal_id: failed.ref!.proposal_id, run_id: runId },
+      };
+      // Insert it right after the step it replaces, so the checklist reads in order.
+      const at = plan.steps.findIndex((s) => s.id === failed.id) + 1;
+      const steps = [...plan.steps.slice(0, at), retryStep, ...plan.steps.slice(at)];
+      try {
+        plan = await writePlan(db, args.userId, { id: plan.id, thread_id: plan.thread_id, steps });
+      } catch { /* the plan stays as stored; the honest close below applies */ }
+      break;
+    }
   }
 
   let step = plan.steps.find((s) => s.status === "awaiting_run") ??
@@ -715,7 +753,7 @@ export async function runResumePreStep(
   try {
     const { data } = await db
       .from("simulation_runs")
-      .select("id,status,rep_count_done,rep_count_target,error_message")
+      .select("id,status,rep_count_done,rep_count_target,error_message,created_at,started_at")
       .eq("id", runId)
       .maybeSingle();
     run = (data as Record<string, unknown> | null) ?? null;
@@ -729,7 +767,9 @@ export async function runResumePreStep(
     // §21.4: zero LLM calls — a poll costs nothing.
     return {
       kind: "progress",
-      reply: progressReply(Number(run.rep_count_done ?? 0), Number(run.rep_count_target ?? 0)),
+      // 38(ai): what the run row says — a run the worker never started is
+      // reported as such, not as "nothing is hung".
+      reply: runWaitReply(run as unknown as Parameters<typeof runWaitReply>[0], Date.now()),
       plan,
     };
   }
