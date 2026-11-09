@@ -247,6 +247,11 @@ Deno.test("M.2 apply: ONE approval dispatches one run per arm through the single
     assertEquals(armScenarios.length, 3);
     assertEquals(new Set(armScenarios.map((s) => s.seed)).size, 1, "every arm on the same seed (CRN)");
     assertEquals(armScenarios.find((s) => String(s.name).endsWith("Expedite Shipments"))!.recovery_playbook_id, PB_EXP);
+    // 38(ag): `created_by` references auth.users; the approving account is an
+    // approved_users id, so an agent dispatch must leave it NULL (production
+    // failed every agent run with simulation_runs_created_by_fkey).
+    const newRuns = h.tables.simulation_runs.slice(before);
+    for (const r of newRuns) assertEquals(r.created_by ?? null, null, "agent runs never write an app id into created_by");
   }));
 
 // ── M5 sensitivity ─────────────────────────────────────────────────────────

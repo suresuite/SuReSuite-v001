@@ -320,7 +320,11 @@ export async function applyExperimentSpec(
         kind: "experiment.run",
         payload: { policy_version_id: policyVersionId, acknowledge_warnings: acknowledgeWarnings },
       },
+      // The approving account: the run's actor and quota owner (actor_user_id).
       args.userId ?? null,
+      // …but NOT `created_by`: that column references auth.users, and an
+      // approved_users id is not one (38(ag)). The approver is on the card.
+      { createdBy: null },
     );
     return await readRunStamps(db, run_id, { scenarioId, policyVersionId, replications });
   } catch (e) {

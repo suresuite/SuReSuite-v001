@@ -1944,6 +1944,8 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
 
     @v3 installs from npm and takes an exact version. 2.84.2 was checked locally: `--yes` is a global flag, `db push` and `migration repair` default to `--linked`, and `functions deploy` takes `--project-ref`. Bump the version deliberately, after reading the CLI changelog for flag and default-target changes.
 
+    (ag) **[2026-11-09] Every agent-dispatched run failed at insert with `simulation_runs_created_by_fkey`.** This was found on the first production what-if card after #436: the acknowledgment worked (38(ac)), and then the run insert failed. `simulation_runs.created_by` references `auth.users` and is "usually NULL" (D28: this application's accounts are not Supabase Auth users). The Lab passes the auth user (`sim-command`) and the public API passes NULL, but `applyExperimentSpec` passed the approving `approved_users` id. That one argument does two jobs in `dispatchExperimentRun`: the actor and quota owner (`actor_user_id`, `_actor_user_id`), which is correct for an approved id, and `created_by`, which is not. Fixed with an explicit `opts.createdBy` (default `userId`, so the Lab and API are unchanged). agent-apply passes `null`, and the approver stays the run's actor and the card's reviewer. Every agent dispatch path was affected: what-if, comparisons, and B9's linked spec. The stub DB enforces no foreign keys, which is why no deterministic test caught it. `modeler_skills_test.ts` now asserts `created_by` is NULL on agent runs (red against the old code).
+
 ---
 
 ## 11. Traceability appendix
