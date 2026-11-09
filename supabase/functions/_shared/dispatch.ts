@@ -267,7 +267,16 @@ export async function dispatchExperimentRun(
   deps: DispatchDeps,
   cmd: DispatchCommand,
   userId: string | null,
-  opts: { limits?: DispatchLimits } = {},
+  opts: {
+    limits?: DispatchLimits;
+    /** `simulation_runs.created_by`, a foreign key to `auth.users`. Defaults to
+     * `userId` (the Lab passes the Supabase Auth user, usually null — D28). A
+     * caller whose `userId` is an `approved_users` id — agent-apply, where the
+     * approving account is the actor and quota owner — passes null here: that
+     * id is not an auth user, and writing it failed every agent dispatch with
+     * `simulation_runs_created_by_fkey` (ai-agents.md §10 entry 38(ag)). */
+    createdBy?: string | null;
+  } = {},
 ): Promise<{ run_id: string; attached?: boolean }> {
   const { reader: sb, svc, upstash } = deps;
   if (!cmd.scenario_id) throw new Error("experiment.run requires scenario_id");
@@ -538,7 +547,7 @@ export async function dispatchExperimentRun(
     dataset_version_id: datasetVersionId,
     graph_hash: graphHash,
     hash_simulation: simulationHash,
-    created_by: userId,
+    created_by: opts.createdBy === undefined ? userId : opts.createdBy,
     scenario_hash: scenarioHash,
     model_validation_id: modelValidationId,
     gate_skipped: gateSkipped,
@@ -613,7 +622,7 @@ export async function dispatchExperimentRun(
         policy_hash: policyHash,
         dataset_version_id: datasetVersionId,
         graph_hash: graphHash,
-        created_by: userId,
+        created_by: opts.createdBy === undefined ? userId : opts.createdBy,
         // Spread-guarded so a database without the B0 migration still inserts.
         ...(scenarioHash ? { scenario_hash: scenarioHash } : {}),
         ...(modelValidationId ? { model_validation_id: modelValidationId } : {}),

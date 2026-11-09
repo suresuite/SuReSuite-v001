@@ -46,15 +46,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # `version: latest` floats. The CLI that shipped around 2026-11-06 made
-      # every state-changing command ask "Confirmation required" and, with no
-      # terminal to ask, exit 1 having changed nothing. Every function deploy
-      # from #426 to #432 failed at its first `secrets set` that way, so
-      # production kept the 2026-10-27 build while CI on main stayed green.
-      # Each such command now passes `--yes`.
-      - uses: supabase/setup-cli@v1
+      # PINNED (§10 entry 38(af)). `version: latest` floated twice in a week:
+      # around 2026-11-06 a release made state-changing commands demand
+      # confirmation (#426–#432 never deployed; fixed by `--yes`, #433), and
+      # by 2026-11-08 `latest` made `migration repair` / `db push` target the
+      # LOCAL stack by default — the #433 migrations run tried 127.0.0.1:54322.
+      # On 2026-11-09 setup-cli@v1 could not even resolve `latest` (GitHub API
+      # rate limit), so the #436 deploy failed before installing anything.
+      # @v3 installs from npm (no GitHub API lookup) and takes an exact
+      # version. 2.x targets the linked project by default and has the global
+      # `--yes`. Bump deliberately, reading the CLI's changelog for flag and
+      # default-target changes, never by floating.
+      - uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: 2.84.2
 
       - name: Link project
         run: supabase link --project-ref wckdrutwkytwcomrlpib
