@@ -3942,3 +3942,96 @@ The LLM's jobs shrink to language, choosing among skills when the parse cannot, 
 ### 26.6 What Phase M keeps (laws)
 
 Proposals, not applies; every number from a run or a named default (T1/T2); CRN pairing stated and descriptive differences labelled; no silent model substitution (§23.4); one source per fact: the policy registry for policy semantics, the engine for statistics, the gate for findings. Phase M adds procedures and one experiment type; it adds no way around a gate.
+
+---
+
+## 27. v1.8 plan — Phase V, *Validated baseline*: every chat experiment follows the Validated Model *(added v1.8, 2026-11-09; PLAN ONLY — nothing in this section is built)*
+
+### 27.1 What is wrong today (owner review, 2026-11-09)
+
+The platform's simulation storyline is: data → saved policy version → baseline scenario → **Validated Model** (V&V: warm-up, replication adequacy, tests; it fixes the policy version, the dataset version and a run **protocol**, and names its evidence run) → experiments that **follow the model** → comparison against the model's own baseline. The Lab enforces it (`labModel.ts`: `modelChoices`, `protocolDeviations`, `modelRunOffer`; `scenarioSeed.ts::worldOf`; `apply_validation_to_scenario`; `dispatchExperimentRun`'s `validated_model_id`).
+
+The §20.8/§26 chat skills skip all of it. A chat what-if:
+
+| The storyline requires | The chat skill does today |
+|---|---|
+| Run the Validated Model's policy and dataset versions | binds the newest saved policy version; sends no `validated_model_id` |
+| Seed the scenario's world from the model (`worldOf`) and inherit its protocol | builds the scenario from generic Lab defaults (`labScenarioDefaults`: 90 days, Poisson λ=50, seed 42, auto warm-up) |
+| Replications from the protocol; a deviation is recorded | 5 by default (38(ad)), recorded nowhere as a deviation |
+| A run without a model is labelled exploratory | not said; the answer shows "unvalidated/stale" with no explanation |
+| Compare against the model's baseline, paired | compares against any no-disruption run that happens to exist, or none |
+| A model that drifted offers: replay validated versions / run current data as exploratory / re-validate | no check, no offer |
+
+So a chat answer today is an exploratory number that looks like a result. That is the defect this phase closes.
+
+### 27.2 The rule (one sentence)
+
+**Every experiment the chat proposes follows the project's Validated Model — its versions, its world, its protocol, its baseline — and when it cannot, the chat says exactly why and offers the step that fixes it; it never silently runs something else.**
+
+### 27.3 Owner decisions (2026-11-09)
+
+1. **Replications default to the model's protocol** (replaces 38(ad)'s "5 unless stated" for runs that follow a model). **The user can change it**: a count stated in the message is used and shown on the card as a deviation from the protocol ("protocol 30, this run 10"); the answer then carries the wider-interval caveat. Exploratory runs (no model) keep 5 unless stated.
+2. The user also decides, on the card or in the message, between the offered ways to run when the model has drifted (27.5 rows 3–4).
+
+### 27.4 The flow, step by step
+
+```
+ask ──► 1 UNDERSTAND (parse; unchanged)
+        2 FIND THE MODEL      newest active validated model (the Lab's defaultModel rule)
+        3 GUARDRAILS          a) no model            → stop: offer validation (27.5 row 2)
+                              b) model drifted       → offer: replay / exploratory / re-validate (rows 3–4)
+                              c) pre-run data check  → findings on the card (existing)
+        4 BUILD FROM MODEL    world = worldOf(model); warm-up + replications = protocol;
+                              seed/CRN/stopping rule = protocol; + the asked disruption.
+                              Any difference from the protocol is listed as a deviation.
+        5 CACHE               a finished run of THIS model with this disruption? → answer (step 8)
+        6 ONE CARD            names the model, the protocol, deviations, total compute;
+                              includes the baseline arm only if the model has no usable baseline run
+        7 FOLLOW-UP           plan: approve → run(s) → auto-resume (built, §26 M.3)
+        8 ANSWER              paired difference vs the model's baseline, CIs, the model's badge,
+                              "follows model X" or "EXPLORATORY — not a validated result"
+```
+
+### 27.5 Typical situations and what the user sees
+
+| # | Situation | What the assistant does |
+|---|---|---|
+| 1 | **Happy path.** Validated model in force; "what if S001 is down weeks 22–25?" | Card: "Follows Validated Model *2026Q4 baseline* · protocol: 30 replications, 52 weeks, warm-up week 12, seed 42, CRN". Approve → run → "Fill rate 0.91 vs 0.97 baseline (−0.06 ± 0.02, paired, 30 replications). Validated model *2026Q4 baseline*." |
+| 2 | **No Validated Model yet.** | No run card. "This project has no Validated Model, so a what-if would be an unvalidated number. Next step: run and validate your baseline (Policies → Run & Validate)" + the V&V Analyst offer when enabled. If the user insists ("run it anyway"): an exploratory card, labelled EXPLORATORY on the card and in the answer. |
+| 3 | **Data changed since validation; the model names its dataset version.** | "Your data changed since this model was validated." Two choices on the card: **Replay the validated data** (a validated result about the validated world) or **Run current data as exploratory**. Plus the offer to re-validate. Default: replay. |
+| 4 | **Policies changed since validation** (the owner's current state: "stale (policy drift)"). | "A newer policy version exists than the one this model validated." Choices: **run the model as validated** (its policy version), **run the new policies as exploratory**, or **re-validate first** (V&V offer). Never silently binds the newer version. |
+| 5 | **The scenario's world or the engine changed** (the Lab's `blocked` case). | No run card. Says which changed and that the model must be re-validated; offers the V&V step. Exploratory only on explicit request. |
+| 6 | **User wants fewer/more replications.** "…with 10 replications" | Used. Card shows the deviation (protocol 30 → 10); the run records `protocol_overrides`; the answer says intervals are wider than the protocol's. |
+| 7 | **The disruption falls inside the warm-up or past the horizon.** | Inside warm-up: says the engine cannot measure it and proposes the first measurable week (the Lab's `warmupNote` rule). Past the horizon: proposes a longer horizon and shows it as a deviation — or asks, since it changes the validated world. |
+| 8 | **The model's baseline run is unusable** (expired series, or run under a different protocol than now). | The card includes a baseline arm (one approval, two runs, paired). Otherwise the model's evidence run is the baseline and nothing extra runs. |
+| 9 | **Mitigation study / sensitivity sweep.** | Same rules: every arm follows the model; the reference arm is the model's baseline + disruption; deviations listed once for the study. |
+| 10 | **Several validated models.** | Uses the newest in force (the Lab's default) and names it; "use model X" in the message chooses another. |
+| 11 | **Missing data warning** (e.g. `products.demand_cv`). | As today: shown on the card, must be acknowledged; plus the fix offer (§26 M.5). |
+| 12 | **Asked again later.** | A finished run of the same model + disruption answers at once, with the same paired comparison. A run of a *different* model or an exploratory run is offered as "an earlier exploratory result exists" — never presented as the answer to a validated question. |
+| 13 | **Results question with no model** ("what did the last run show?"). | Answers, and labels each run: follows model X / exploratory. |
+| 14 | **Ask mode, or the Designer not enabled.** | No card; the exact Lab steps: open model X, add this disruption, run. |
+
+### 27.6 Work packages
+
+| WP | Delivers | Exit test |
+|---|---|---|
+| **V.1 One rule for both surfaces** | Move the Lab's pure rules the chat needs into `supabase/functions/_shared/` and have `src/lib/sim/` re-export them (the `disruptionRules.ts` pattern): `modelChoices`/`defaultModel`, `worldOf`, `protocolDeviations`/`overridesOf`, `modelRunOffer`, `warmupNote`. No behaviour change in the Lab. | Lab tests unchanged and green; a parity test that the Lab and the chat import the same functions. |
+| **V.2 Model resolution + guardrails** | `skills/model.ts`: resolve the model, its credibility (the §9.5 badge derivation already in `vvTools.ts`), and the `modelRunOffer`. Outcomes: `faithful`, `moved` (with choices), `blocked`, `no_model`. | One test per row 2–5 of 27.5. |
+| **V.3 Build from the model** | The card payload gains `validated_model_id`, `run_mode` (`model` \| `exploratory`), `protocol` (shown), `deviations`. Scenario creation in `agent-apply` seeds the world from the model and applies `apply_validation_to_scenario` (the ONE definition of inheritance), then the disruption; dispatch sends `validated_model_id` + `protocol_overrides`, or `exploratory: true`. `labScenarioDefaults` is used only for exploratory runs with no model. | A chat-applied run's row equals a Lab run of the same model + disruption (provenance parity, like ed-08): `model_validation_id`, `protocol_overrides`, versions. |
+| **V.4 Replications** | Default = protocol; stated count = deviation; exploratory keeps 5. 38(ad)'s cap is narrowed to exploratory runs. | Rows 1 and 6. |
+| **V.5 Baseline pairing** | Baseline = the model's evidence run when its protocol matches, else a baseline arm in the same card (the §26 M.2 comparison). The cache and the answer only pair runs of the same model. | Rows 8 and 12; the answer's Δ is paired on the model's seed. |
+| **V.6 Card and answer wording** | Card header: the model's name/code and "Follows Validated Model" or "EXPLORATORY". A protocol block; a deviations block; the drift choice (radio) when `moved`. Answer: badge, model name, paired Δ, deviation caveats. | UI tests; every reply in 27.5 pinned. |
+| **V.7 All skills** | Mitigation, sensitivity, results, explain, setup read the same model resolution; results/explain label runs model-vs-exploratory. | Rows 9 and 13. |
+| **V.8 Benchmark + real-database rehearsal** | Extend M.0 with the 14 situations. Add a `supabase/rehearsal` file that drives draft → approve → apply → dispatch against real Postgres (foreign keys enforced) — the gap that let 38(ag) through. | Benchmark 100%; rehearsal green in `contract:rehearse`. |
+
+**Order:** V.1 → V.2 → V.3 + V.4 → V.5 → V.6 → V.7 → V.8. V.1–V.4 already make every chat run follow the model; V.5 makes the comparison right; the rest is wording, coverage and proof.
+
+### 27.7 What this phase does not change
+
+Approval before any run; the pre-run gate; the plan/resume mechanics; the comparison experiment type; the Lab itself (it gains nothing and loses nothing — the chat is brought to its rules, not the reverse).
+
+### 27.8 Open points for the owner
+
+1. **Row 2 strictness:** with no Validated Model, should "run it anyway" be allowed (exploratory, labelled), or should the chat refuse until a model exists? *Plan assumes: allowed on explicit request.*
+2. **Row 7:** when the asked disruption needs a longer horizon than the model's, extend it as a shown deviation, or ask first? *Plan assumes: ask first — it changes the validated world.*
+3. **Default when policies drifted (row 4):** run the model as validated (plan's default), or stop and ask every time?
