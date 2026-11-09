@@ -3821,3 +3821,71 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Q2 | **Met on `gpt-5`, five runs in a row** (steward and configurator schema validity 1.0, gate-violation attempts 0). `gpt-5-mini` is scored at Q4 | 38(h), 38(l), 38(n), 38(r) |
 | Q3 | **Agent tier green on `gpt-5`** (runs `c28b0554`, `32fb484a`) except `pc-06` (narrow fix merged, 38(x)) and `ed-04` (sharpened); both **live-unmeasured**. Live steps are PAUSED by owner directive: no provider spend (38(z)) | 38(s)–(z) |
 | Q4–Q5 | Not started. **Paused**: both are defined by live runs, which only the owner may now pay for (38(z)) | 38(z) |
+
+---
+
+## 26. v1.7 plan — Phase M, *Modeler*: an agent that can do a simulation modeler's job *(added v1.7, 2026-11-09)*
+
+The capability this section delivers: a modeler asks, in their own words, the questions their job is made of — what does this disruption do, which mitigation is worth it, how sensitive is the result to this input, is my model valid, what does this setting mean, why did this happen — and the assistant answers each one correctly from the engine and the project's own data. Where it needs a new run, it proposes one card that, once approved, completes the answer without the user asking twice. Flag per skill (`MODELER_SKILLS`, comma list; §9 conventions). Traceability: ai-agents.md §20 (closed loop), §21 (harness), §20.8 (the first skill); blueprint §9.2 (experiments), G10/G17.
+
+### 26.1 Diagnosis — why the agent is not smart today (each cause is a fact, not a taste)
+
+| # | Cause | Evidence |
+|---|---|---|
+| D1 | **"Simulation Modeler" is a persona, i.e. one prompt sentence with no tools of its own.** The capability lives in routed agents, and production enables two (`vv-analyst`, `experiment-designer`). | `agents.ts::SERVER_AGENTS`; `supabase-functions.yml` (38(ab)) |
+| D2 | **The model sequences known procedures itself, and loses.** A what-if spent seven tool hops on background reads and timed out. Only that one family now has a fixed procedure (§20.8). | §20.8 "What failed" |
+| D3 | **The experiment vocabulary is one run.** The engine has CRN portfolio studies with paired bootstrap deltas (`scsim/core/engine.py::run_portfolio_study`), synergy decomposition (`scsim/synergy/decompose.py`) and stress batteries (`scsim/stress/`). The worker accepts only `experiment.run`, so neither the Lab nor the chat can reach any of them. "Which mitigation is best" has no honest answer. | `sim-worker/sim_worker/worker.py` command switch |
+| D4 | **No continuity.** One request is one step. The plan harness and resume (§21) are off in production, so a result needs a second question, and a two-agent task (fill data → run) cannot be carried. | flags absent from `supabase-functions.yml` |
+| D5 | **No platform knowledge.** "What is warm-up / how do I set a scenario / what does P-P.1 do" is answered from the model's general training. The /docs bodies, the generated engine reference and the policy registry are not retrievable. | §19.2 I12 "persona prose" |
+| D6 | **Dead ends instead of next steps.** A gate warning or a data gap ends the turn. The finding names the owning field (e.g. `products.demand_cv`), but nothing turns it into the Steward or Estimator card that fixes it. | 38(ac) |
+| D7 | **No measure of "smart".** Live evals are paused (38(z)), and no metric counts *tasks completed*, only routing and schema validity. | §25.6 |
+
+### 26.2 The design principle: skills, not prompts
+
+A **skill** is a fixed procedure for one modeler task, written in code like §20.8. Each skill has:
+- **recognizer:** a conservative parse, with the classifier as tie-break; if unsure, it falls through to today's path;
+- **resolver:** entities resolved against the project by the engine's own rules, with ambiguity asked and defaults named;
+- **procedure:** reads and drafts through the registered handlers only, so every gate and meter still applies;
+- **answer:** deterministic, with at most one verified interpretation call;
+- **next step:** the one card or follow-up that moves the user's task forward.
+
+The LLM's jobs shrink to language, choosing among skills when the parse cannot, and interpretation; it never sequences a known procedure. The free tool loop stays as the fallback for everything no skill covers, with the §21.5 wrap-up reserve. Every skill ships with its own deterministic suite and a row in the M.0 benchmark. **Law kept:** a skill never gets a capability the Lab lacks. The agent drives the same pipeline a person does (§20.1 law "the gate is entered, never bypassed").
+
+### 26.3 The skill catalog (by the modeler's task)
+
+| Skill | The ask | Procedure (all existing interfaces unless marked NEW) | Answer / next step |
+|---|---|---|---|
+| **M1 Disruption what-if** | "what if S001 is down weeks 22–25" | **Shipped** (§20.8) | KPIs vs baseline, or one card |
+| **M2 Mitigation study** | "how do I mitigate it?", "which playbook is best for that outage?" | resolve the disruption (M1's parser); candidate arms = the project's recovery playbooks (`recommend_disruption_strategy`'s source) or the ones the user names; cache by content; on a miss, **one `study_spec` card** (NEW, WP M.2) running S0 + each arm under CRN | ranked table: Δ fill rate, Δ lost revenue, Δ resilience cost, each with a paired bootstrap CI, plus "cheapest arm meeting the service target". Differences whose CI spans 0 are said to be unresolved, not ranked. |
+| **M3 Results brief and compare** | "what did the last run show?", "compare run A and B" | `get_run_results`; comparability by `src/lib/sim/comparability.ts`'s rule (ported to `_shared/`, one source) | paired CI when the runs are CRN-comparable; otherwise "descriptive, not like-for-like" with the reason |
+| **M4 Readiness and model check** | "can I run?", "what's missing?", "is my model valid?" | `runValidationGate` + `get_validation_status` + `get_data_completeness` | one line per blocker or warning, each mapped to its fixing card (WP M.5) |
+| **M5 Sensitivity** | "how sensitive is fill rate to S001's lead time / demand CV?" | one-factor sweep as a `study_spec` (3–5 levels) | KPI-vs-level table with CIs; where the curve bends |
+| **M6 Model-setup advice** | "how many replications / what warm-up / how long a horizon?" | the V&V statistics already computed (`vvTools.ts`: MSER warm-up, per-KPI adequacy n*) | the number, its basis, and the adopt card |
+| **M7 Technical how-to** | "what is TTR?", "what does P-P.1 do?", "how do I add a scenario?" | `search_platform_knowledge` (NEW, WP M.4) over /docs bodies, the generated engine reference and `registry_export` | cited passages; refusal when no passage covers it |
+| **M8 Explain a result** | "why did fill rate drop at week 24?" | KPI series + the event timeline now; decision traces when B5 ships (§18, facet 11) | the timeline-grounded explanation, labelled as such until traces exist |
+
+### 26.4 Work packages
+
+| WP | Delivers | Size | Exit test |
+|---|---|---|---|
+| **M.0 Measure first** | `eval/modeler-tasks.jsonl`: 60 real modeler tasks (≥ 6 per skill + 10 fallback), each with the expected outcome (skill id, card type and args, every number traceable to the stub, or the refusal). Deterministic tier against stubs; live tier owner-funded. Metrics: **task success**, steps, latency, cards approved → applied. | S | baseline recorded; the benchmark gates every later WP |
+| **M.1 Skill registry** | `project-ai-chat/skills/`: §20.8 refactored into the first entry; recognizers run before the classifier, which also returns a `skill_id`; one telemetry kind `skill.outcome` (CHECK migration) | M | M1 unchanged (§20.8 suite green); fallback byte-identical |
+| **M.2 Study experiment type** *(the biggest lever)* | engine → worker → dispatch → card → Lab: worker command `experiment.study` wrapping `run_portfolio_study` (CRN, bootstrap, clean reference); a `study_spec` §4.4 row (schema, hard gates: ≤ 6 arms, arms × reps within quota, one disruption schedule); results persisted per arm with a study id and RunKey; the card shows arms, total compute and findings (38(ac)'s acknowledgment); **a Lab "Compare mitigations" surface on the same command**. Sensitivity arms need per-arm parameter overrides; the engine hook is scoped in M.2b. | L | a study is reproducible from its record (A5); paired deltas equal the engine's own; the cl-style suite for `study_spec` |
+| **M.3 Continuity** | turn on the §21 plan harness for skills; each skill files its plan (`awaiting_approval` → `awaiting_run` → answer); the client's existing run subscription posts the resume; the answer arrives with no second question | M | approve → run → cited answer in one conversation, in the deterministic tier |
+| **M.4 Platform knowledge** | build-time index (`scripts/` generator, committed like the contract artifacts) of `src/components/docs/bodies`, `scsim/docs`, `registry_export`; tool `search_platform_knowledge`; the verifier accepts doc citations | M | M7's suite: every answer cites a page; uncovered asks refuse |
+| **M.5 Next-step chaining** | finding → owning agent map, generated from the gate's `field`/`policy`, never hand-kept; every refusal or warning ends with the card or skill that fixes it | S | 38(ac)'s case ends in a Steward/Estimator card offer |
+| **M.6 One front door** | the "Simulation Modeler" persona becomes the modeler surface: it biases recognizers to M-skills and states what it can and cannot do; the persona/agent confusion is removed from the picker | S | UI + router fixtures |
+| **M.7 Qualify and roll out** | per-skill flag flips on an owner-funded live run of M.0's benchmark; §23 capability-matrix rows per skill | per skill | task success ≥ 0.85 per skill on every enabled model |
+
+**Order:** M.0 → M.1 (with M3, M4, M6, which need only existing reads) → M.2 (M2, then M5) → M.3 → M.4 (M7) → M.5 / M.6 → M.7 per skill. Measure first; then the cheap wins on existing reads; then the study type, which is the one piece of new platform capability; then continuity, which makes every skill feel finished.
+
+### 26.5 Owner decisions this plan needs (not readable from the repository)
+
+1. **Live-eval budget** for M.7 (38(z) paused all spend). Without it every skill ships "verified offline, live-unmeasured", which is honest but unmeasured.
+2. **Study compute quota:** arms × replications per study and per month. A 5-arm study at 161 reps is 966 replications.
+3. **Plan harness in production** (`CHAT_STORE_ENABLED` is on; `PLAN_TOOL_ENABLED`, `CLOSED_LOOP_ENABLED` are needed for M.3).
+4. **One card per study** (recommended), not one per arm: one approval, one compute charge, one comparable result.
+
+### 26.6 What Phase M keeps (laws)
+
+Proposals, not applies; every number from a run or a named default (T1/T2); CRN pairing stated and descriptive differences labelled; no silent model substitution (§23.4); one source per fact: the policy registry for policy semantics, the engine for statistics, the gate for findings. Phase M adds procedures and one experiment type; it adds no way around a gate.
