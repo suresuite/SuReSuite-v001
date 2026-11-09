@@ -65,4 +65,21 @@ describe("experiment_spec card (§5.4 / §20.8)", () => {
     });
     expect(cut[0].value).toBe("the plant, 40% capacity reduction, week 10");
   });
+
+  it("a comparison card lists every arm, the reference first, and the total replications (§26 M.2)", () => {
+    const rows = experimentSpecRows({
+      experiment_type: "comparison",
+      new_scenario: { name: "Mitigation: S001", horizon_days: 238, disruption_schedule: payload.new_scenario.disruption_schedule },
+      arms: [
+        { label: "No recovery", recovery_overrides: {} },
+        { label: "Expedite Shipments", recovery_overrides: { responses: ["expedite"] } },
+      ],
+      replications: 5,
+    });
+    expect(rows[0]).toMatchObject({ entity: "No recovery", field: "reference arm" });
+    expect(rows[0].value).toContain("no recovery response");
+    expect(rows[1]).toMatchObject({ entity: "Expedite Shipments", field: "arm 2" });
+    expect(rows[1].value).toContain("with recovery response");
+    expect(rows.at(-1)!.value).toBe("5 per arm × 2 arms = 10 (same random numbers in every arm)");
+  });
 });

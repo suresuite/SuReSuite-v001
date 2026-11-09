@@ -157,18 +157,37 @@ export async function checkApplyQuota(db: any, args: {
       .eq("status", "applied")
       .eq("reviewed_by", args.userId);
     if (error) throw error;
-    const runIds = ((applied ?? []) as Array<{ applied_result: Record<string, unknown> | null }>)
-      .map((p) => p.applied_result?.run_id)
+    // §26 M.2: a comparison counts every arm's run against the DAILY cap, and
+    // as ONE card against the concurrent cap (owner decision 4: one card, one
+    // approval, one comparable result — counting arms would refuse every
+    // study above 3 arms).
+    const appliedRows = (applied ?? []) as Array<{ applied_result: Record<string, unknown> | null }>;
+    const runIds = appliedRows
+      .flatMap((p) => {
+        const arms = p.applied_result?.arms;
+        return Array.isArray(arms)
+          ? (arms as Array<Record<string, unknown>>).map((a) => a.run_id)
+          : [p.applied_result?.run_id];
+      })
       .filter(isUuid);
+    const cardOfRun = new Map<string, number>();
+    appliedRows.forEach((p, i) => {
+      const arms = p.applied_result?.arms;
+      const ids = Array.isArray(arms) ? (arms as Array<Record<string, unknown>>).map((a) => a.run_id) : [p.applied_result?.run_id];
+      for (const id of ids) if (isUuid(id)) cardOfRun.set(String(id), i);
+    });
     if (runIds.length === 0) return null;
     const { data: runs, error: runsErr } = await db
       .from("simulation_runs")
       .select("id,status,created_at")
       .in("id", runIds);
     if (runsErr) throw runsErr;
-    const rows = (runs ?? []) as Array<{ status: string; created_at: unknown }>;
+    const rows = (runs ?? []) as Array<{ id?: string; status: string; created_at: unknown }>;
 
-    const concurrent = rows.filter((r) => r.status === "queued" || r.status === "running").length;
+    const concurrent = new Set(
+      rows.filter((r) => r.status === "queued" || r.status === "running")
+        .map((r, i) => cardOfRun.get(String(r.id ?? "")) ?? `run-${i}`),
+    ).size;
     if (concurrent >= EXPERIMENT_CONCURRENT_CAP) {
       return `Agent-run quota: ${concurrent} agent-applied runs are already queued or running for you on this project ` +
         `(limit ${EXPERIMENT_CONCURRENT_CAP} concurrent, 0 remaining). Wait for one to finish or cancel it in the Lab.`;

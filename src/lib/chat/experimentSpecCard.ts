@@ -71,7 +71,24 @@ export function experimentSpecRows(payload: Record<string, unknown> | undefined)
     : null;
   const scenarioName = ns ? String(ns.name ?? "") : String(payload.scenario_name ?? payload.scenario_id ?? "");
   const source = ns ? "new scenario" : "existing scenario";
-  if (ns) {
+  // §26 M.2: a comparison card lists its arms; the FIRST is the reference.
+  const arms = Array.isArray(payload.arms) ? (payload.arms as Array<Record<string, unknown>>) : null;
+  if (payload.experiment_type === "comparison" && ns && arms) {
+    const baseEvents = Array.isArray(ns.disruption_schedule) ? (ns.disruption_schedule as Array<Record<string, unknown>>) : [];
+    arms.forEach((a, i) => {
+      const events = Array.isArray(a.disruption_schedule) ? (a.disruption_schedule as Array<Record<string, unknown>>) : baseEvents;
+      const overrides = a.recovery_overrides && typeof a.recovery_overrides === "object" ? Object.keys(a.recovery_overrides as object) : [];
+      rows.push({
+        table: "scenarios",
+        entity: String(a.label ?? `arm ${i + 1}`),
+        field: i === 0 ? "reference arm" : `arm ${i + 1}`,
+        value: [events.map((e) => eventText(e ?? {})).join("; ") || "no disruption", overrides.length ? "with recovery response" : "no recovery response"].join(" · "),
+        source: "comparison",
+      });
+    });
+    const h = weeks(ns.horizon_days);
+    if (h !== null) rows.push({ table: "scenarios", entity: scenarioName, field: "simulated length", value: `${h} weeks`, source });
+  } else if (ns) {
     const events = Array.isArray(ns.disruption_schedule) ? (ns.disruption_schedule as Array<Record<string, unknown>>) : [];
     if (events.length === 0) {
       rows.push({ table: "scenarios", entity: scenarioName, field: "disruption", value: "none", source });
@@ -94,7 +111,11 @@ export function experimentSpecRows(payload: Record<string, unknown> | undefined)
     });
   }
   if (payload.replications != null) {
-    rows.push({ table: "simulation_runs", entity: "—", field: "replications", value: String(payload.replications), source: "spec" });
+    const n = Number(payload.replications);
+    const value = arms && payload.experiment_type === "comparison"
+      ? `${n} per arm × ${arms.length} arms = ${n * arms.length} (same random numbers in every arm)`
+      : String(payload.replications);
+    rows.push({ table: "simulation_runs", entity: "—", field: "replications", value, source: "spec" });
   }
   return rows;
 }

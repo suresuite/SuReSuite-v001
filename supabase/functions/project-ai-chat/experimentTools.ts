@@ -89,6 +89,62 @@ export const DISRUPTION_EVENTS_MAX = 5;
  * default was the validated card's recommendation: 161 on the owner's project). */
 export const AGENT_REPLICATIONS_DEFAULT_CAP = 5;
 
+/** §26 M.2: a comparison spec runs 2-6 arms (one card, owner decision 4). */
+export const COMPARISON_ARMS_MIN = 2;
+export const COMPARISON_ARMS_MAX = 6;
+
+export interface ComparisonArm {
+  label: string;
+  disruption_schedule?: Array<Record<string, unknown>>;
+  recovery_overrides?: Record<string, unknown>;
+  recovery_playbook_id?: string;
+}
+
+/** Deterministic §5.4-style validation of the arms list. */
+export function validateArms(raw: unknown): { ok: true; value: ComparisonArm[] } | { ok: false; reason: string } {
+  if (!Array.isArray(raw)) return { ok: false, reason: "arms must be an array" };
+  if (raw.length < COMPARISON_ARMS_MIN || raw.length > COMPARISON_ARMS_MAX) {
+    return { ok: false, reason: `a comparison runs ${COMPARISON_ARMS_MIN}-${COMPARISON_ARMS_MAX} arms (got ${raw.length})` };
+  }
+  const out: ComparisonArm[] = [];
+  const labels = new Set<string>();
+  for (const a of raw) {
+    if (!a || typeof a !== "object" || Array.isArray(a)) return { ok: false, reason: "each arm must be an object" };
+    const o = a as Record<string, unknown>;
+    for (const k of Object.keys(o)) {
+      if (!["label", "disruption_schedule", "recovery_overrides", "recovery_playbook_id"].includes(k)) {
+        return { ok: false, reason: `unknown arm field "${k}"` };
+      }
+    }
+    const label = typeof o.label === "string" ? o.label.trim() : "";
+    if (!label || label.length > 60) return { ok: false, reason: "each arm needs a label (max 60 chars)" };
+    if (labels.has(label.toLowerCase())) return { ok: false, reason: `duplicate arm label "${label}"` };
+    labels.add(label.toLowerCase());
+    const arm: ComparisonArm = { label };
+    if (o.disruption_schedule !== undefined) {
+      if (!Array.isArray(o.disruption_schedule) || o.disruption_schedule.length > DISRUPTION_EVENTS_MAX ||
+        o.disruption_schedule.some((e) => !e || typeof e !== "object" || Array.isArray(e))) {
+        return { ok: false, reason: `arm "${label}": disruption_schedule must be ≤ ${DISRUPTION_EVENTS_MAX} event objects` };
+      }
+      arm.disruption_schedule = o.disruption_schedule as Array<Record<string, unknown>>;
+    }
+    if (o.recovery_overrides !== undefined) {
+      if (!o.recovery_overrides || typeof o.recovery_overrides !== "object" || Array.isArray(o.recovery_overrides)) {
+        return { ok: false, reason: `arm "${label}": recovery_overrides must be an object` };
+      }
+      arm.recovery_overrides = o.recovery_overrides as Record<string, unknown>;
+    }
+    if (o.recovery_playbook_id !== undefined) {
+      if (typeof o.recovery_playbook_id !== "string" || !uuidRe.test(o.recovery_playbook_id)) {
+        return { ok: false, reason: `arm "${label}": recovery_playbook_id must be a uuid` };
+      }
+      arm.recovery_playbook_id = o.recovery_playbook_id;
+    }
+    out.push(arm);
+  }
+  return { ok: true, value: out };
+}
+
 /** A replication count the user stated in their own words ("with 30
  * replications", "50 reps"), or null. Only the user's message counts —
  * never the model's arguments. */
@@ -190,6 +246,17 @@ export const draftExperimentSpecDeclaration: ToolDeclaration = {
       },
       title: { type: "string", description: "Card title (max 140 chars)." },
       question: { type: "string", description: "The decision question this run answers (max 500 chars)." },
+      experiment_type: {
+        type: "string",
+        description:
+          "'single' (default) or 'comparison' (ai-agents.md §26 M.2): ONE card whose 2-6 arms run on the same seed and replications, compared pairwise. A comparison needs new_scenario as the shared base.",
+      },
+      arms: {
+        type: "array",
+        description:
+          "comparison only, 2-6 arms: {label, disruption_schedule?, recovery_overrides?, recovery_playbook_id?}. An arm's schedule/overrides replace the base scenario's. The FIRST arm is the reference every other arm is compared against.",
+        items: { type: "object" },
+      },
     },
     required: ["policy_version_id", "replications"],
   },
@@ -820,6 +887,8 @@ export async function experimentIdempotencyKey(core: {
   new_scenario?: NormalizedNewScenario;
   policy_version_id: string;
   replications: number;
+  experiment_type?: string;
+  arms?: ComparisonArm[];
 }): Promise<string> {
   return await sha256Hex(
     `${EXPERIMENT_AGENT_ID} ${EXPERIMENT_ARTIFACT_TYPE} ${canonicalJson({ schema_version: 1, ...core })}`,
@@ -895,7 +964,7 @@ async function draftExperimentSpec(
 
   // §5.4 schema, enforced deterministically (additionalProperties: false).
   for (const k of Object.keys(args)) {
-    if (!["scenario_id", "new_scenario", "policy_version_id", "replications", "acknowledge_warnings", "title", "question"].includes(k)) {
+    if (!["scenario_id", "new_scenario", "policy_version_id", "replications", "acknowledge_warnings", "title", "question", "experiment_type", "arms"].includes(k)) {
       return failureEnvelope(tool, "invalid_params", `unknown parameter "${k}"`);
     }
   }
@@ -926,6 +995,33 @@ async function draftExperimentSpec(
     const v = validateNewScenario(args.new_scenario);
     if (!v.ok) return failureEnvelope(tool, "invalid_params", v.reason);
     newScenario = v.value;
+  }
+
+  // §26 M.2: the comparison type — ONE card, 2-6 arms on one seed.
+  const experimentType = args.experiment_type === undefined || args.experiment_type === null ||
+      args.experiment_type === ""
+    ? "single"
+    : String(args.experiment_type);
+  if (experimentType !== "single" && experimentType !== "comparison") {
+    return failureEnvelope(tool, "invalid_params", `experiment_type must be "single" or "comparison"`);
+  }
+  let arms: ComparisonArm[] | null = null;
+  if (experimentType === "comparison") {
+    if (!experimentTypesEnabled().includes("comparison")) {
+      return failureEnvelope(
+        tool,
+        "agent_disabled",
+        "Comparison experiments are not enabled in this deployment (AGENT_EXPERIMENT_TYPES lacks \"comparison\").",
+      );
+    }
+    if (!newScenario) {
+      return failureEnvelope(tool, "invalid_params", "a comparison needs new_scenario as the shared base of its arms");
+    }
+    const av = validateArms(args.arms);
+    if (!av.ok) return failureEnvelope(tool, "invalid_params", av.reason);
+    arms = av.value;
+  } else if (args.arms !== undefined) {
+    return failureEnvelope(tool, "invalid_params", "arms are only valid with experiment_type \"comparison\"");
   }
 
   const db = ctx.supabase as unknown as Db;
@@ -1028,16 +1124,29 @@ async function draftExperimentSpec(
     const snapshot = (version.snapshot ?? {}) as Record<string, unknown>;
     const snapshotDefaults = ("defaults" in snapshot ? snapshot.defaults : snapshot) as Record<string, unknown>;
     const dataset = await loadGateDataset(ctx.supabase, ctx.projectId);
-    const gate = runValidationGate({
-      dataset,
-      snapshotDefaults: snapshotDefaults ?? {},
-      disruptionSchedule,
-      acknowledgeWarnings: false,
-    });
-    if (gate) {
-      gateStatus = gate.status;
-      findingsPreview = gate.findings.slice(0, 200);
+    // A comparison is checked once per distinct arm schedule; findings merge
+    // (deduped by field + message) and the worst status wins.
+    const schedules = arms
+      ? arms.map((a) => a.disruption_schedule ?? disruptionSchedule)
+      : [disruptionSchedule];
+    const seen = new Set<string>();
+    for (const sched of schedules) {
+      const gate = runValidationGate({
+        dataset,
+        snapshotDefaults: snapshotDefaults ?? {},
+        disruptionSchedule: sched,
+        acknowledgeWarnings: false,
+      });
+      if (!gate) continue;
+      if (gateStatus !== "blocked") gateStatus = gate.status;
+      for (const f of gate.findings) {
+        const key = `${f.field}|${f.message}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        findingsPreview.push(f);
+      }
     }
+    findingsPreview = findingsPreview.slice(0, 200);
   } catch {
     gateStatus = "preview_unavailable"; // preview only — apply re-runs the authoritative gate
   }
@@ -1070,9 +1179,14 @@ async function draftExperimentSpec(
     ...(newScenario ? { new_scenario: newScenario } : {}),
     policy_version_id: policyVersionId,
     replications,
+    // Only a comparison adds keys, so a single spec's idempotency key — and
+    // every card already filed — is unchanged.
+    ...(arms ? { experiment_type: "comparison", arms } : {}),
   };
   const title = (typeof args.title === "string" && args.title.trim()
     ? args.title.trim()
+    : arms
+    ? `Compare ${arms.length}: ${newScenario!.name} (${arms.length} arms × ${replications} reps)`
     : `Run: ${scenario ? scenario.name : newScenario!.name} × ${version.label ?? policyVersionId.slice(0, 8)} (${replications} reps)`)
     .slice(0, 140);
   const question = typeof args.question === "string" ? args.question.slice(0, 500) : null;
@@ -1118,6 +1232,7 @@ async function draftExperimentSpec(
     ? "gate pre-check unavailable (apply re-runs it)"
     : `gate pre-check: ${gateStatus} (${blockCount} block / ${warnCount} warn)`;
   const summary =
+    (arms ? `comparison of ${arms.length} arms (${arms.map((a) => a.label).join(" / ")}) · ${arms.length * replications} replications in all · ` : "") +
     `scenario "${scenario ? scenario.name : newScenario!.name}"${newScenario ? " (new)" : ""} · ` +
     `policy version ${version.label ?? policyVersionId.slice(0, 8)} (${policyHash.slice(0, 12)}) · ` +
     `${replications} replications · ${gateNote}`;

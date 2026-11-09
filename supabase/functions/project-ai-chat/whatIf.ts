@@ -86,9 +86,11 @@ const TIME_TOKEN = /^(?:w|wk|wks|week|weeks|d|day|days|q|m|mo|month|months|h|hr|
 /** Read one disruption what-if out of a message, or null when it is not one.
  * Deliberately conservative: it needs a disruption word AND a question/run
  * word AND a target; anything else goes to the router as before. */
-export function parseWhatIf(message: string): WhatIfAsk | null {
+export function parseWhatIf(message: string, opts?: { requireQuestion?: boolean }): WhatIfAsk | null {
   const text = String(message ?? "").slice(0, 2000);
-  if (!DISRUPTION_WORDS.test(text) || !QUESTION_WORDS.test(text)) return null;
+  // §26 M2/M5 read a disruption out of an EARLIER message ("how do I
+  // mitigate it?"), which need not be phrased as a question.
+  if (!DISRUPTION_WORDS.test(text) || (opts?.requireQuestion !== false && !QUESTION_WORDS.test(text))) return null;
 
   // --- targets: "the plant", "supplier X", or id-shaped tokens (S001, S-104)
   const targets: string[] = [];
@@ -272,13 +274,14 @@ export interface WhatIfOptions {
 // deno-lint-ignore no-explicit-any
 type Db = { from(table: string): any; rpc(fn: string, args?: Record<string, unknown>): any };
 
-interface ScenarioRow {
+export interface ScenarioRow {
   id: string;
   name?: string;
   horizon_days?: number;
   warmup_days?: number;
   replications?: number;
   disruption_schedule?: Array<Record<string, unknown>>;
+  recovery_overrides?: Record<string, unknown>;
   created_at?: unknown;
 }
 
@@ -415,12 +418,31 @@ function orderKpis(keys: string[]): string[] {
 
 /** The loop. Every branch ends in a WhatIfOutcome; nothing here throws past
  * the caller (a failed read degrades to the honest branch it implies). */
-export async function runWhatIfLoop(
+/** Everything the disruption skills (§20.8 what-if, §26 M2 mitigation, M5
+ * sensitivity) share before they diverge: targets resolved by the engine's
+ * rule, defaults named, the schedule built, scenarios loaded, the saved
+ * policy version and the replication count chosen. A refusal comes back as
+ * the outcome to answer with; nothing here reads a run or files a card. */
+export interface PreparedWhatIf {
+  events: ResolvedEvent[];
+  schedule: Array<Record<string, unknown>>;
+  askedKey: string | null;
+  defaults: string[];
+  scenarios: ScenarioRow[];
+  supplierIds: Set<string>;
+  base: ScenarioRow | null;
+  isBaseline: (s: ScenarioRow) => boolean;
+  versionId: string;
+  replications: number;
+  durationWeeks: number;
+  magnitude: number;
+}
+
+export async function prepareWhatIf(
   ctx: ToolContext,
   ask: WhatIfAsk,
-  opts: WhatIfOptions,
-): Promise<WhatIfRun> {
-  const run: WhatIfRun = { outcome: null as unknown as WhatIfOutcome, calls: [], parts: [] };
+): Promise<{ ok: true; prep: PreparedWhatIf } | { ok: false; outcome: WhatIfOutcome }> {
+  const run = { outcome: null as unknown as WhatIfOutcome };
   const db = ctx.supabase as unknown as Db;
 
   // --- resolve targets against THIS project's suppliers (the engine's rule)
@@ -437,7 +459,7 @@ export async function runWhatIfLoop(
         message: `"${raw}" matches more than one supplier — which did you mean?`,
         candidates: r.candidates,
       };
-      return run;
+      return { ok: false, outcome: run.outcome };
     }
     if (!resolved.some((x) => x.target === r.target)) resolved.push(r);
   }
@@ -451,7 +473,7 @@ export async function runWhatIfLoop(
         : "Which supplier (or the plant) should be disrupted?",
       candidates: suppliers.slice(0, 5).map((s) => s.name ? `${s.id} (${s.name})` : s.id),
     };
-    return run;
+    return { ok: false, outcome: run.outcome };
   }
   if (resolved.length > DISRUPTION_EVENTS_MAX) {
     run.outcome = {
@@ -459,7 +481,7 @@ export async function runWhatIfLoop(
       ask,
       message: `That's ${resolved.length} disrupted nodes; the engine runs at most ${DISRUPTION_EVENTS_MAX} events per scenario.`,
     };
-    return run;
+    return { ok: false, outcome: run.outcome };
   }
 
   // --- scenarios (base settings + the content-addressed cache)
@@ -491,7 +513,7 @@ export async function runWhatIfLoop(
   }
   if (startWeek < WHATIF_RULE.start_week_min) {
     run.outcome = { kind: "invalid", ask, message: `A disruption can start at week ${WHATIF_RULE.start_week_min} at the earliest.` };
-    return run;
+    return { ok: false, outcome: run.outcome };
   }
   if (durationWeeks < WHATIF_RULE.duration_weeks_min || durationWeeks > WHATIF_RULE.duration_weeks_max) {
     run.outcome = {
@@ -499,7 +521,7 @@ export async function runWhatIfLoop(
       ask,
       message: `The engine runs a disruption of ${WHATIF_RULE.duration_weeks_min}–${WHATIF_RULE.duration_weeks_max} weeks; ${durationWeeks} weeks is outside that.`,
     };
-    return run;
+    return { ok: false, outcome: run.outcome };
   }
   const events: ResolvedEvent[] = resolved.map((r) => ({
     target: r.target,
@@ -533,7 +555,7 @@ export async function runWhatIfLoop(
       message:
         "This project has no saved policy version yet, and every run binds one. Save a version on /policies, then ask again.",
     };
-    return run;
+    return { ok: false, outcome: run.outcome };
   }
   // §10 entry 38(ad): 5 replications unless the user stated a count. The
   // draft handler enforces the same rule; this keeps the card and the
@@ -542,6 +564,30 @@ export async function runWhatIfLoop(
     REPLICATIONS_MIN,
     Math.min(REPLICATIONS_MAX, Math.floor(ask.replications ?? AGENT_REPLICATIONS_DEFAULT_CAP)),
   );
+
+  return {
+    ok: true,
+    prep: {
+      events, schedule, askedKey, defaults, scenarios, supplierIds, base, isBaseline,
+      versionId, replications, durationWeeks: durationWeeks!, magnitude: magnitude!,
+    },
+  };
+}
+
+export async function runWhatIfLoop(
+  ctx: ToolContext,
+  ask: WhatIfAsk,
+  opts: WhatIfOptions,
+): Promise<WhatIfRun> {
+  const run: WhatIfRun = { outcome: null as unknown as WhatIfOutcome, calls: [], parts: [] };
+  const db = ctx.supabase as unknown as Db;
+  const p = await prepareWhatIf(ctx, ask);
+  if (!p.ok) {
+    run.outcome = p.outcome;
+    return run;
+  }
+  const { events, schedule, askedKey, defaults, scenarios, supplierIds, base, isBaseline, versionId, replications, durationWeeks } = p.prep;
+  void base;
 
   // --- CACHE, by content: scenarios whose schedule runs identically, each
   // checked with the unchanged §20.2 identity (find_completed_run).

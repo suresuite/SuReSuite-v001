@@ -150,7 +150,9 @@ jobs:
       #   AGENT_ROUTER_ENABLED      §6 intent router (Stage 1+)
       #   AGENT_ENABLED_IDS         deployment-wide per-agent kill switch
       #                             (§9.2; explainer stays out — Stage 5 gate)
-      #   AGENT_EXPERIMENT_TYPES    §9.5 spec vocabulary (single until Phase C)
+      #   AGENT_EXPERIMENT_TYPES    §9.5 spec vocabulary: single + comparison
+      #                             (§26 M.2 — one card, 2-6 arms on one seed;
+      #                             owner decision 4, ai-agents.md 38(ae))
       #   CHAT_STORE_ENABLED        §14.7 M0 server chat store
       #   CHAT_SUMMARY_ENABLED      §14.7 M1 rolling summaries
       #   PROJECT_MEMORY_ENABLED    §14.7 M2 project memory
@@ -174,7 +176,7 @@ jobs:
             AGENT_TELEMETRY_ENABLED=true \
             AGENT_ROUTER_ENABLED=true \
             AGENT_ENABLED_IDS=vv-analyst,experiment-designer \
-            AGENT_EXPERIMENT_TYPES=single \
+            AGENT_EXPERIMENT_TYPES=single,comparison \
             CHAT_STORE_ENABLED=true \
             CHAT_SUMMARY_ENABLED=true \
             PROJECT_MEMORY_ENABLED=true \
