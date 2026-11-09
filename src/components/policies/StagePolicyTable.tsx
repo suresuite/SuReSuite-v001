@@ -1,3 +1,4 @@
+import { rowWindow, scrollTopFor } from "@/lib/policies/rowWindow";
 import { Fragment, startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { MemoRow } from "./memoRow";
 import { useLatestCallback } from "./rowMemo";
@@ -217,6 +218,8 @@ function treeKeyWidthFor(winWidth: number): number {
 
 /** Per-project tree presentation prefs, beside `policy.table.collapsed.<stage>`. */
 const TREE_PREFS_KEY = "policy.table.bomTree.supplier";
+/** Every BOM-tree row is this tall (the "where used" panel excepted). */
+const TREE_ROW_H = 30;
 type TreePrefs = { layout: TreeLayout; repeat: boolean; level: number | "all" };
 const TREE_PREFS_DEFAULT: TreePrefs = { layout: "compact", repeat: false, level: 2 };
 function readTreePrefs(projectId: string | null | undefined): TreePrefs {
@@ -1230,7 +1233,15 @@ export function StagePolicyTable({
   useEffect(() => {
     if (!jumpTarget) return;
     const el = scrollRef.current?.querySelector(`[data-occ="${CSS.escape(jumpTarget)}"]`);
-    if (el && "scrollIntoView" in el) (el as HTMLElement).scrollIntoView({ block: "center" });
+    if (el && "scrollIntoView" in el) {
+      (el as HTMLElement).scrollIntoView({ block: "center" });
+      return;
+    }
+    // The tree is windowed, so the row may not be mounted yet: scroll to where it will be.
+    const host = scrollRef.current;
+    const at = treeVisible.rows.findIndex((v) => (v.t === "node" || v.t === "lane") && v.occ?.key === jumpTarget);
+    if (host && at >= 0) host.scrollTop = scrollTopFor(treeRowHeights, at, host.clientHeight);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run when the target or the open set moves
   }, [jumpTarget, treeOpen]);
 
   const treeReveal = useMemo(
@@ -1248,6 +1259,12 @@ export function StagePolicyTable({
     const rows = v.rows.filter((r) => r.t !== "lane" || keep.has(String(r.row.key)));
     return { rows, shownLines: v.shownLines - (v.rows.length - rows.length) };
   }, [treeModel, treeOpen, treeReveal, treeLayout, whereOpen, filtered, dataRows.length]);
+  // Row heights for the tree's windowing: every row is TREE_ROW_H tall except the "where used"
+  // panel, whose height depends on its parents — estimated, since it only skews the spacers.
+  const treeRowHeights = useMemo(
+    () => treeVisible.rows.map((v) => (v.t === "where" ? 132 : TREE_ROW_H)),
+    [treeVisible],
+  );
 
   // Facts per material from the WHOLE flat set (never the filtered view):
   // how many suppliers, whether any line lacks one, and how many lines carry
@@ -2414,7 +2431,6 @@ export function StagePolicyTable({
   // "Qty / assy"); the Supplier column and every value column render through
   // `renderRow` exactly as in the flat view. Every number shown is the derived
   // lane's (`bomTreeView.ts`); the only arithmetic is the model's one division.
-  const TREE_ROW_H = 30;
   const treeFactsFor = (occ: BomOcc, open: boolean): string => {
     const M = treeModel!;
     const stale = M.stale ? " · stale" : "";
@@ -2628,7 +2644,19 @@ export function StagePolicyTable({
     const valueSpan = Math.max(1, visible.length);
     const supDef = keyDefs[keyDefs.length - 1];
     const out: React.ReactNode[] = [];
-    for (const [idx, v] of treeVisible.rows.entries()) {
+    // Only the rows in (or near) the viewport are built and mounted; a project whose open tree
+    // runs to thousands of rows otherwise mounts thousands of rows of a dozen cells each.
+    const all = treeVisible.rows;
+    const tw = all.length < WINDOW_MIN_ROWS ? null : rowWindow(treeRowHeights, win.top, win.h, OVERSCAN);
+    if (tw && tw.before > 0) {
+      out.push(
+        <tr key="__tree_top" aria-hidden>
+          <td colSpan={colCount} style={{ height: tw.before, padding: 0, border: 0 }} />
+        </tr>,
+      );
+    }
+    for (let idx = tw ? tw.first : 0; idx < (tw ? tw.last : all.length); idx++) {
+      const v = all[idx];
       if (v.t === "node") {
         const occ = v.occ;
         const bg = treeRowBg(occ);
@@ -2780,6 +2808,13 @@ export function StagePolicyTable({
             </span>
           </td>
           <td colSpan={valueSpan} className="border-b border-[--hair-divider]" style={{ background: "#fafafa" }} />
+        </tr>,
+      );
+    }
+    if (tw && tw.after > 0) {
+      out.push(
+        <tr key="__tree_bot" aria-hidden>
+          <td colSpan={colCount} style={{ height: tw.after, padding: 0, border: 0 }} />
         </tr>,
       );
     }

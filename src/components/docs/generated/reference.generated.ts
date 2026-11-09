@@ -27314,7 +27314,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProjectPolicies.tsx",
         "via": "rpc assign_material_supplier",
-        "evidence": "src/components/policies/StagePolicyTable.tsx:410"
+        "evidence": "src/components/policies/StagePolicyTable.tsx:413"
       },
       {
         "page": "SimulationLab.tsx",

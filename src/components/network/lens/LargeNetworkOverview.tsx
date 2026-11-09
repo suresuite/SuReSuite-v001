@@ -129,7 +129,7 @@ export function LargeNetworkOverview({
         {stat('One connection only', fmt(single), nodes.length ? `${Math.round((single / nodes.length) * 100)}% of nodes` : undefined)}
       </div>
 
-      <div className={cn('mb-4 grid gap-4', secondaryTitle ? 'lg:grid-cols-3' : 'lg:grid-cols-2')}>
+      <div className={cn('mb-4 grid gap-4', secondaryTitle ? 'md:grid-cols-3' : 'md:grid-cols-2')}>
         <LensCard title="By class" subtitle="Nodes in each class">
           <BarRows rows={byGroup} />
         </LensCard>
