@@ -81,6 +81,23 @@ export const REPLICATIONS_MIN = 1;
 export const REPLICATIONS_MAX = 200;
 export const DISRUPTION_EVENTS_MAX = 5;
 
+/** OWNER DECISION 2026-11-09 (ai-agents.md §10 entry 38(ad)): a run proposed
+ * from the chat uses at most this many replications unless the user's own
+ * message states a count — then that count is used (still ≤ the 200 clamp).
+ * Enforced in the draft handler, so neither the §20.8 loop nor the
+ * model-driven B4 turn can exceed it on its own judgement (before this, the
+ * default was the validated card's recommendation: 161 on the owner's project). */
+export const AGENT_REPLICATIONS_DEFAULT_CAP = 5;
+
+/** A replication count the user stated in their own words ("with 30
+ * replications", "50 reps"), or null. Only the user's message counts —
+ * never the model's arguments. */
+export function statedReplications(utterance: string | null | undefined): number | null {
+  const m = String(utterance ?? "").match(/\b(\d{1,3})\s*(?:replications?|reps?)\b/i);
+  const n = m ? Number(m[1]) : NaN;
+  return Number.isFinite(n) && n >= 1 ? n : null;
+}
+
 const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** §9.5 experiment-type flag: `AGENT_EXPERIMENT_TYPES=single` grows to
@@ -138,7 +155,7 @@ export const DRAFT_EXPERIMENT_SPEC_SCHEMA = {
 export const draftExperimentSpecDeclaration: ToolDeclaration = {
   name: "draft_experiment_spec",
   description:
-    "File ONE reviewable experiment-specification proposal: a single scenario run bound to a SAVED policy version (never live tables). Provide EITHER scenario_id (an existing scenario from CONTEXT) OR new_scenario (name + horizon_days, optional disruption_schedule of at most 5 events). Replications 1-200 — default to the active validated card's recommendation when one exists. The platform pre-checks the dispatch gate and attaches the findings; you cannot acknowledge warnings — only the approving reviewer can. Call this once per design ask.",
+    "File ONE reviewable experiment-specification proposal: a single scenario run bound to a SAVED policy version (never live tables). Provide EITHER scenario_id (an existing scenario from CONTEXT) OR new_scenario (name + horizon_days, optional disruption_schedule of at most 5 events). Replications: use 5 unless the user's message states a count, then use that count (1-200); the platform caps an unstated count at 5. The platform pre-checks the dispatch gate and attaches the findings; you cannot acknowledge warnings — only the approving reviewer can. Call this once per design ask.",
   parameters: {
     type: "object",
     properties: {
@@ -253,8 +270,8 @@ CONTEXT
 TASK
 - The user asked: "${args.utterance}"
 - Design asks: choose or define the scenario, bind a SAVED policy version
-  (never live tables), set replications (1-200; default to the validated
-  card's recommendation when one is active), and call draft_experiment_spec
+  (never live tables), set replications (5, unless the user stated a
+  count — then that count, 1-200), and call draft_experiment_spec
   ONCE.
 - Do NOT draft, and do not reshape the ask into one you can draft:
   If the ask needs an experiment type the platform has not shipped
@@ -897,7 +914,12 @@ async function draftExperimentSpec(
     return failureEnvelope(tool, "invalid_params", "replications must be a number (1-200)");
   }
   // §5.4 hard gate: the dispatch.ts clamp restated at draft time.
-  const replications = Math.max(REPLICATIONS_MIN, Math.min(REPLICATIONS_MAX, Math.floor(rawReps)));
+  // §10 entry 38(ad): an unstated count is capped at the owner's default.
+  const stated = statedReplications(ctx.draft.utterance);
+  const replications = Math.max(
+    REPLICATIONS_MIN,
+    Math.min(stated === null ? AGENT_REPLICATIONS_DEFAULT_CAP : REPLICATIONS_MAX, Math.floor(rawReps)),
+  );
 
   let newScenario: NormalizedNewScenario | null = null;
   if (hasNewScenario) {

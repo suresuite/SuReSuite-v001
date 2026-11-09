@@ -1066,8 +1066,8 @@ CONTEXT
 TASK
 - The user asked: "{{utterance}}"
 - Design asks: choose or define the scenario, bind a SAVED policy version
-  (never live tables), set replications (1-200; default to the validated
-  card's recommendation when one is active), and call draft_experiment_spec
+  (never live tables), set replications (5, unless the user stated a
+  count — then that count, 1-200), and call draft_experiment_spec
   ONCE.
 - Do NOT draft, and do not reshape the ask into one you can draft:
   If the ask needs an experiment type the platform has not shipped
@@ -1926,6 +1926,14 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     (ab) **[OWNER DECISION, 2026-11-08] `experiment-designer` is re-enabled in production (`AGENT_ENABLED_IDS=vv-analyst,experiment-designer`, `supabase-functions.yml`) WITHOUT a green live run.** This overrides, rather than satisfies, the 2026-11-06 narrowing rule, under which agents return one at a time, each on a passing live eval. **Why:** the §20.8 what-if loop files its experiment card in code (parse, resolve, content cache, the unchanged §5.4 handler), and it can do that only when the Designer is routable. Without it, a missed what-if is answered with Lab instructions. **What else it opens:** every ask the router assigns to `experiment-designer` (run briefs, other run questions) now takes the model-driven B4 turn. Its live suite has been unmeasured since 38(z) (`ed-04` sharpened, never re-run). Its safety does not depend on the model: §5.4's hard gates, the forced `acknowledge_warnings: false`, and a human Approve before any dispatch. **Revert:** drop the id from that line and re-run the workflow. **Shipped with:** the CLI `--yes` fix that unblocked every function deploy since #426 (runs 106–111 failed at `secrets set`, so production had run the 2026-10-27 build). Without that fix, this flag and all of #432 would never have reached production.
 
     (ac) **[v1.6, 2026-11-08] The experiment card could not dispatch any run that had a pre-run warning.** This was the first production what-if after (ab). The §20.8 loop filed the card correctly, the owner approved it, and the apply failed with `gate_blocked … (ack_required)` on one warning (`products.demand_cv` missing, fallback 0.30). §5.4's contract has three halves. The draft stores `findings_preview` (implemented). `agent-apply` honors the reviewer's `acknowledgeWarnings` only when the card DISPLAYED those warnings (implemented in `experimentSpecApply.ts`). **The card shows them and lets the reviewer acknowledge: never built.** `ProposalCard.tsx` called `approve(id)` and `retryApply(id)` with no options and rendered `payload.rows`, which a spec does not have. So the table was empty, the warnings were invisible, and Approve and Retry failed identically on every spec with any warning. Fixed: `src/lib/chat/experimentSpecCard.ts` reads the stored payload. The card (desktop and the mobile proposal screen) now shows the spec (disruption, simulated length, bound version, replications) and the pre-run findings. When there are warnings and no block, Approve and Retry stay disabled until the reviewer ticks "run anyway", and the acknowledgment travels with the apply request. A block cannot be acknowledged. Tests: `experimentSpecCard.test.ts` (5). The full vitest suite (2053) passes; typecheck, `audit:ui` and `check:docs` pass; eslint holds at its pre-existing 284 errors.
+
+    (ad) **[OWNER DECISIONS, 2026-11-09] Phase M's four decisions (§26.5).**
+    - (1) **Evaluation:** offline, judged against what is known of GPT-5, with no paid live runs. This continues 38(z) and replaces M.7's live gate.
+    - (2) **Replications:** at most 5 per run unless the user's own message states a count; then that count runs (≤ 200). Shipped with this entry: `AGENT_REPLICATIONS_DEFAULT_CAP` and `statedReplications` in `experimentTools.ts`, enforced in the draft handler, so it binds the §20.8 loop, the model-driven B4 turn and B9's linked spec alike. Only the USER's message counts, never the model's arguments. The §5.4 prompt and tool description now say the same. Before this, the default was the validated card's recommendation, 161 on the owner's project, so a what-if cost 161 replications nobody asked for. **Accepted cost:** 5 replications give wide intervals. The answer states the count, and the user asks for more when they need them.
+    - (3) `PLAN_TOOL_ENABLED` and `CLOSED_LOOP_ENABLED` are on in production.
+    - (4) One card per study.
+
+    Tests: ed-01's expectation moved from the card's 30 to the cap of 5; new tests for a stated count (30 honored; 500 clamps to 200) and for wi-02b. Deterministic tier: 322 passed; removing the cap turns a test red.
 
 ---
 
@@ -3368,7 +3376,7 @@ The audit ran on TRON ver2 (1:1 single-sourced, 60×560). Nothing in this sectio
 | 1 Understand | `parseWhatIf` (pure) | Needs a disruption word, a question/run word and a target. Otherwise `null`, and the message goes to the router exactly as before. "week 22" (unit before the number) is the start; "4 weeks" (number before the unit) is the duration; ranges, days, months, "40% capacity cut", the plant, "N replications" and "re-run" are read too. A parsed what-if is routed by the parse (`whatIfRouteDecision`, `short_circuit: "whatif_parser"`), so the classifier call is not spent. |
 | — Resolve | `runWhatIfLoop` | Targets resolve against this project's `suppliers` by the engine's own rule (`engineTargetOf`): exact id, exact name, then a unique fragment. Ambiguity lists the candidates (§19.5); an unknown name lists real suppliers. Nothing is guessed. A missing start, duration or effect takes the Lab's own default (four weeks after the warm-up; 4 weeks; full outage), and **every default is named in the reply** (T2). |
 | 2 Cache check | `scheduleKey` → the unchanged `find_completed_run` | Each scenario's schedule is reduced to what the ENGINE runs: target kept by the mapper, start and duration in the weeks it rounds to (Python half-even rounding), and the effect (≥ `full_outage_pct` is one effect). Scenarios whose key equals the ask's are then checked with §20.2's identity, unchanged, so read-hit and apply-hit still cannot disagree. |
-| 3 Propose on a miss | the unchanged `draft_experiment_spec` handler | A matching scenario is re-run (no duplicate scenario). Otherwise a `new_scenario` carries the event, with `horizon_days` = max(base scenario, event end + max(8 weeks, duration)) so recovery has a window to be measured in. Replications: what the user stated, else the active validated card's recommendation, else the base scenario's. Every §5.4 gate, kill switch and capability check applies as before, and the card still needs a human's Approve. |
+| 3 Propose on a miss | the unchanged `draft_experiment_spec` handler | A matching scenario is re-run (no duplicate scenario). Otherwise a `new_scenario` carries the event, with `horizon_days` = max(base scenario, event end + max(8 weeks, duration)) so recovery has a window to be measured in. Replications: what the user stated, else 5 (38(ad)). Every §5.4 gate, kill switch and capability check applies as before, and the card still needs a human's Approve. |
 | 4 Read | `get_run_results` + the run row | A hit also looks up the no-disruption baseline scenario's matching run, and the KPI table shows *With disruption / ± CI / Baseline / Difference*. Differences are labelled descriptive: no paired test is stored (§5.4). |
 | 5 Answer | `whatIfReply` (deterministic) + one optional model call | Every branch has a deterministic answer. On a hit only, one tool-free call (`WHATIF_INTERPRETER_SYSTEM`) adds 1–3 sentences of interpretation from the listed numbers. With `VERIFIER_ENABLED` that prose is verified (§22.3) and **dropped, not substituted**, on failure, so the deterministic answer always ships. |
 
@@ -3879,12 +3887,12 @@ The LLM's jobs shrink to language, choosing among skills when the parse cannot, 
 
 **Order:** M.0 → M.1 (with M3, M4, M6, which need only existing reads) → M.2 (M2, then M5) → M.3 → M.4 (M7) → M.5 / M.6 → M.7 per skill. Measure first; then the cheap wins on existing reads; then the study type, which is the one piece of new platform capability; then continuity, which makes every skill feel finished.
 
-### 26.5 Owner decisions this plan needs (not readable from the repository)
+### 26.5 Owner decisions (DECIDED 2026-11-09, §10 entry 38(ad))
 
-1. **Live-eval budget** for M.7 (38(z) paused all spend). Without it every skill ships "verified offline, live-unmeasured", which is honest but unmeasured.
-2. **Study compute quota:** arms × replications per study and per month. A 5-arm study at 161 reps is 966 replications.
-3. **Plan harness in production** (`CHAT_STORE_ENABLED` is on; `PLAN_TOOL_ENABLED`, `CLOSED_LOOP_ENABLED` are needed for M.3).
-4. **One card per study** (recommended), not one per arm: one approval, one compute charge, one comparable result.
+1. **Evaluation: offline, judged against what is known of OpenAI GPT-5 — no paid live runs.** M.7's gate is the M.0 benchmark in the deterministic tier plus a reviewed judgement of how `gpt-5`/`gpt-5-mini` behave on each skill's one model-facing step (choosing a skill when the parse cannot, the interpretation call). Each skill ships as "verified offline; live-unmeasured by owner decision", and the skills-not-prompts design is what makes that defensible: the steps a weaker live result would break are the ones taken out of the model's hands.
+2. **Replications: 5 per run unless the user states a count.** If they ask for more, the stated count runs (≤ 200). Enforced in the `draft_experiment_spec` handler, so it binds every drafting path (§20.8, the B4 turn, B9's linked spec). A study's budget is therefore arms × 5 by default (a 5-arm study is 30 replications with S0).
+3. **Plan harness in production: yes.** `PLAN_TOOL_ENABLED` and `CLOSED_LOOP_ENABLED` are set in `supabase-functions.yml`.
+4. **One card per study: yes.** One approval, one compute charge, one comparable result.
 
 ### 26.6 What Phase M keeps (laws)
 

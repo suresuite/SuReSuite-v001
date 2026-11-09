@@ -33,7 +33,12 @@
 
 import { executeTool, type ToolContext, type ToolEnvelope } from "./tools.ts";
 import type { ProposalPartData } from "./draftTools.ts";
-import { DISRUPTION_EVENTS_MAX, REPLICATIONS_MAX, REPLICATIONS_MIN } from "./experimentTools.ts";
+import {
+  AGENT_REPLICATIONS_DEFAULT_CAP,
+  DISRUPTION_EVENTS_MAX,
+  REPLICATIONS_MAX,
+  REPLICATIONS_MIN,
+} from "./experimentTools.ts";
 import registry from "../_shared/registry.generated.json" with { type: "json" };
 import { engineTargetOf, type DisruptionRule } from "../_shared/disruptionRules.ts";
 import type { RoutedDecision } from "./router.ts";
@@ -516,7 +521,6 @@ export async function runWhatIfLoop(
 
   // --- the saved policy version every run binds (newest, §20.2's default)
   let versionId = "";
-  let recommendedReps: number | null = null;
   try {
     const { data } = await db.rpc("list_policy_versions", { p_project_id: ctx.projectId });
     versionId = String((Array.isArray(data) ? data : [])[0]?.id ?? "");
@@ -531,17 +535,12 @@ export async function runWhatIfLoop(
     };
     return run;
   }
-  try {
-    const { data } = await db.rpc("list_model_validations", { p_project_id: ctx.projectId });
-    const card = (Array.isArray(data) ? data : []).find(
-      (c: Record<string, unknown>) => c.status === "active" && String(c.policy_version_id ?? "") === versionId,
-    );
-    const n = Number(card?.recommended_replications);
-    if (Number.isFinite(n) && n > 0) recommendedReps = n;
-  } catch { /* the base scenario's count is the fallback */ }
+  // §10 entry 38(ad): 5 replications unless the user stated a count. The
+  // draft handler enforces the same rule; this keeps the card and the
+  // cache lookup on the same number.
   const replications = Math.max(
     REPLICATIONS_MIN,
-    Math.min(REPLICATIONS_MAX, Math.floor(ask.replications ?? recommendedReps ?? (Number(base?.replications) || 10))),
+    Math.min(REPLICATIONS_MAX, Math.floor(ask.replications ?? AGENT_REPLICATIONS_DEFAULT_CAP)),
   );
 
   // --- CACHE, by content: scenarios whose schedule runs identically, each
