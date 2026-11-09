@@ -403,3 +403,24 @@ Deno.test("38(ah) Retry rebind: a failed first apply, then a successful Retry â‡
     assert(!(again.plan?.steps ?? []).some((st) => st.id === "run-retry2"), "one rebind per run");
   }));
 
+Deno.test("38(ai) a plan waiting on a run the worker never started says so â€” not \"nothing is hung\"", () =>
+  withEnv({ ...DESIGNER, CHAT_STORE_ENABLED: "true", PLAN_TOOL_ENABLED: "true" }, async () => {
+    const h = await harness();
+    const { turn } = await run("what if disruption with S1 at week 22 and duration of 4 weeks", h);
+    const plan = h.tables.chat_plans[0] as Record<string, unknown>;
+    const QUEUED = "99999999-9999-4999-8999-999999999966";
+    h.tables.simulation_runs.push({
+      ...structuredClone(h.tables.simulation_runs[0]), id: QUEUED, status: "queued", rep_count_done: 0, rep_count_target: 5,
+      created_at: new Date(Date.now() - 25 * 60_000).toISOString(), started_at: null,
+    });
+    const card = h.tables.proposals.find((p) => String(p.id) === turn.result.proposal!.proposal_id)!;
+    card.status = "applied";
+    card.applied_result = { run_id: QUEUED };
+    const out = await runResumePreStep(h.db, { planId: String(plan.id), userId: USER });
+    assertEquals(out.kind, "progress");
+    if (out.kind !== "progress") return;
+    assertStringIncludes(out.reply, "queued for 25 minutes");
+    assertStringIncludes(out.reply, "hasn't started it");
+    assert(!out.reply.includes("nothing is hung"), out.reply);
+  }));
+

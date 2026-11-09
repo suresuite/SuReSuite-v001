@@ -17,6 +17,7 @@
 // closed loop caps itself to single-turn shapes and files no plan). Both
 // default off ⇒ byte-identical pre-H3 behavior (golden-transcript pinned).
 
+import { runWaitReply } from "../_shared/runLiveness.ts";
 import {
   registerToolHandler,
   type ToolContext,
@@ -586,7 +587,7 @@ export function progressLine(done: number, target: number): string {
 }
 
 export function progressReply(done: number, target: number): string {
-  return `Still working: ${progressLine(done, target)}. The thread resumes automatically when the run completes — waiting is a plan state, nothing is hung.`;
+  return `Still working: ${progressLine(done, target)}. The thread continues automatically when the run completes.`;
 }
 
 /** The deterministic resume instruction (§21.4: the resumed agent turn's
@@ -752,7 +753,7 @@ export async function runResumePreStep(
   try {
     const { data } = await db
       .from("simulation_runs")
-      .select("id,status,rep_count_done,rep_count_target,error_message")
+      .select("id,status,rep_count_done,rep_count_target,error_message,created_at,started_at")
       .eq("id", runId)
       .maybeSingle();
     run = (data as Record<string, unknown> | null) ?? null;
@@ -766,7 +767,9 @@ export async function runResumePreStep(
     // §21.4: zero LLM calls — a poll costs nothing.
     return {
       kind: "progress",
-      reply: progressReply(Number(run.rep_count_done ?? 0), Number(run.rep_count_target ?? 0)),
+      // 38(ai): what the run row says — a run the worker never started is
+      // reported as such, not as "nothing is hung".
+      reply: runWaitReply(run as unknown as Parameters<typeof runWaitReply>[0], Date.now()),
       plan,
     };
   }

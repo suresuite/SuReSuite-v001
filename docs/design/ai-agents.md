@@ -1953,6 +1953,12 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
 
     Test: `modeler_skills_test.ts` replays the exact sequence (fail, Retry, resume): steps `check:done, run:failed, run-retry:active, answer:pending`, closing to `run-retry:done, answer:done`, with one rebind per run. It is red with the append skipped. Plans stranded before this deploy, like the owner's first card, are not rebound retroactively; asking the question again answers from the finished run.
 
+    (ai) **[2026-11-09] A waiting plan now says what the run row says, and the card no longer misses a finished run.** On the owner's S002 what-if, the run FINISHED on the worker (asking again answered from it: fill rate 0.9823, 5 replications). The plan card stayed at "run dispatched — 0/5 replications", and every resume replied "Still working … nothing is hung". There were two defects:
+    - (1) **The card relied only on the realtime UPDATE** for the run's transition. It read the row once, received no update, and so never posted the resume. `PlanCard.tsx` now also re-reads the row every minute, and a done or failed row posts the resume (de-duplicated per run, as the realtime path is).
+    - (2) **"Nothing is hung" was a claim nobody checked.** `_shared/runLiveness.ts` is one rule, read by both the resume reply (`planTools.ts`) and the card's live line. A run queued ≥ 10 minutes is reported as not started by the worker, with the minutes and what to check. A run running ≥ 30 minutes with no finished replication is reported too. Otherwise the progress line stays as it was, and the sentence "nothing is hung" is gone. A row with no timestamp is never called stale.
+
+    Tests: `runLiveness.test.ts` (5) and `modeler_skills_test.ts` 38(ai) (a run queued 25 minutes gets the honest reply). Deno 346, vitest 2062, `contract:check` 0, typecheck and `audit:ui` clean. Not covered: WHY a run is not picked up, which needs the worker's own logs. The rule reports what is observable and says so.
+
 ---
 
 ## 11. Traceability appendix
