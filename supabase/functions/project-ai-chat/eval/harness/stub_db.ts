@@ -48,6 +48,20 @@ class QueryBuilder implements PromiseLike<QueryResult> {
   in(col: string, value: unknown[]) { this.filters.push({ kind: "in", col, value }); return this; }
   gte(col: string, value: unknown) { this.filters.push({ kind: "gte", col, value }); return this; }
   lte(col: string, value: unknown) { this.filters.push({ kind: "lte", col, value }); return this; }
+  /** PostgREST .or("a.eq.x,b.eq.y") — eq conditions only, which is all the
+   * callers use (recovery_playbooks: project_id.eq.<id>,is_system.eq.true). */
+  or(expr: string) {
+    const conds = expr.split(",").map((c) => {
+      const [col, op, ...rest] = c.split(".");
+      return { col, op, value: rest.join(".") };
+    });
+    this.orConds.push(conds);
+    return this;
+  }
+  private orConds: Array<Array<{ col: string; op: string; value: string }>> = [];
+  private orOk(r: Row): boolean {
+    return this.orConds.every((group) => group.some((c) => c.op === "eq" && String(r[c.col]) === c.value));
+  }
   order(col: string, opts?: { ascending?: boolean }) {
     this.orderCol = col;
     this.orderAsc = opts?.ascending !== false;
@@ -86,7 +100,7 @@ class QueryBuilder implements PromiseLike<QueryResult> {
       for (const r of touched) Object.assign(r, this.updatePatch ?? {});
       return { data: structuredClone(touched), error: null };
     }
-    let out = this.rows.filter((r) =>
+    let out = this.rows.filter((r) => this.orOk(r) &&
       this.filters.every((f) => {
         const v = r[f.col];
         switch (f.kind) {

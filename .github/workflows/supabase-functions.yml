@@ -150,7 +150,9 @@ jobs:
       #   AGENT_ROUTER_ENABLED      §6 intent router (Stage 1+)
       #   AGENT_ENABLED_IDS         deployment-wide per-agent kill switch
       #                             (§9.2; explainer stays out — Stage 5 gate)
-      #   AGENT_EXPERIMENT_TYPES    §9.5 spec vocabulary (single until Phase C)
+      #   AGENT_EXPERIMENT_TYPES    §9.5 spec vocabulary: single + comparison
+      #                             (§26 M.2 — one card, 2-6 arms on one seed;
+      #                             owner decision 4, ai-agents.md 38(ae))
       #   CHAT_STORE_ENABLED        §14.7 M0 server chat store
       #   CHAT_SUMMARY_ENABLED      §14.7 M1 rolling summaries
       #   PROJECT_MEMORY_ENABLED    §14.7 M2 project memory
@@ -158,6 +160,12 @@ jobs:
       #   SUGGESTED_ACTIONS_ENABLED §17.3 suggestion engine
       #   FILE_WORKSPACE_ENABLED    §16.2 file workspace + report-render
       #   COVERAGE_TOOLS_ENABLED    §19.3 grounded relation/detail read tools
+      #   PLAN_TOOL_ENABLED         §21 plan harness: task plans, the resume
+      #                             turn after approval and run completion
+      #                             (needs CHAT_STORE_ENABLED). Owner decision
+      #                             2026-11-09, ai-agents.md §10 entry 38(ad)
+      #   CLOSED_LOOP_ENABLED       §20 closed loop: the B4 cache-first loop
+      #                             prompt + find_completed_run. Same decision
       #   VERIFIER_ENABLED          §22.3 pre-send verifier + the §22.2 v2
       #                             system prompt (providers.ts selects v2 on
       #                             this flag — off ⇒ the v1 prompt, which
@@ -168,7 +176,7 @@ jobs:
             AGENT_TELEMETRY_ENABLED=true \
             AGENT_ROUTER_ENABLED=true \
             AGENT_ENABLED_IDS=vv-analyst,experiment-designer \
-            AGENT_EXPERIMENT_TYPES=single \
+            AGENT_EXPERIMENT_TYPES=single,comparison \
             CHAT_STORE_ENABLED=true \
             CHAT_SUMMARY_ENABLED=true \
             PROJECT_MEMORY_ENABLED=true \
@@ -176,7 +184,9 @@ jobs:
             SUGGESTED_ACTIONS_ENABLED=true \
             FILE_WORKSPACE_ENABLED=true \
             COVERAGE_TOOLS_ENABLED=true \
-            VERIFIER_ENABLED=true
+            VERIFIER_ENABLED=true \
+            PLAN_TOOL_ENABLED=true \
+            CLOSED_LOOP_ENABLED=true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

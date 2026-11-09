@@ -186,12 +186,22 @@ Deno.test("wi-02 the motivating ask (week 22, 4 weeks): miss ⇒ ONE experiment 
     }]);
     assertEquals(ns.horizon_days, (22 + 4 + 8) * 7, "the event's end plus an 8-week recovery window (> the base 182 days)");
     assertEquals(payload.acknowledge_warnings, false, "§5.4: only the reviewer can acknowledge");
-    assertEquals(payload.replications, 30, "the active validated card's recommendation");
+    assertEquals(payload.replications, 5, "38(ad): 5 unless the user states a count (the card recommends 30)");
     const reply = whatIfReply(wi.outcome);
     assertStringIncludes(reply, "weeks 22–25");
     assertStringIncludes(reply, "a full outage", "the defaulted effect is NAMED (T2)");
     assertStringIncludes(reply, "approve");
     assertEquals(wi.calls.map((c) => c.name), ["draft_experiment_spec"], "no scenario matched, so no cache lookup was wasted");
+  });
+});
+
+Deno.test("wi-02b a stated replication count is honored (38(ad))", async () => {
+  await withDesigner(async () => {
+    const utterance = "what if S1 has an outage at week 22 for 4 weeks, with 40 replications";
+    const { ctx, tables } = await harness({ utterance });
+    const wi = await runWhatIfLoop(ctx, parseWhatIf(utterance)!, { canDraft: true });
+    assertEquals(wi.outcome.kind, "proposed");
+    assertEquals((tables.proposals[0].payload as Record<string, unknown>).replications, 40);
   });
 });
 

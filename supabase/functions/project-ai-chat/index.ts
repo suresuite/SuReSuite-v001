@@ -42,15 +42,12 @@ import {
 // §20.8 (v1.6): the deterministic what-if loop — a disruption what-if is
 // parsed, resolved, cache-checked BY CONTENT and proposed in code; the model
 // only interprets a hit. Kill switch WHATIF_LOOP_ENABLED (default on).
-import {
-  parseWhatIf,
-  runWhatIfLoop,
-  whatIfInterpretationMessage,
-  WHATIF_INTERPRETER_SYSTEM,
-  whatIfLoopEnabled,
-  whatIfReply,
-  whatIfRouteDecision,
-} from "./whatIf.ts";
+import { whatIfRouteDecision } from "./whatIf.ts";
+// §26 Phase M (v1.7): the modeler skills — fixed procedures in code for the
+// modeler's tasks (what-if, mitigation study, sensitivity, results, readiness,
+// setup, how-to, explain, capabilities). Kill switch MODELER_SKILLS.
+import { matchSkill, skillById } from "./skills/index.ts";
+import { closeSkillPlan, parseSkillNote, runSkillTurn } from "./skills/runner.ts";
 // Importing agentTurn.ts registers the staged draft tools (draftTools.ts,
 // configuratorTools.ts, vvTools.ts, memory.ts) into the shared executeTool
 // registry (ai-agents.md §9.2–§9.4, §14.7).
@@ -575,6 +572,57 @@ serve(async (req) => {
           });
         }
 
+        // --- §26 M.3: a skill-filed plan resumes through ITS SKILL, not the
+        // model-driven agent turn: the skill re-runs on the stored question
+        // (now a cache hit — the run it waited on is done), answers in code,
+        // and closes the plan. One model call at most (the interpretation).
+        const skillStep = outcome.plan.steps.find((st) => st.id === 'answer' && parseSkillNote(st.note));
+        const skillRef = skillStep ? parseSkillNote(skillStep.note) : null;
+        const resumeSkill = skillRef ? skillById(skillRef.skillId) : null;
+        if (resumeSkill && skillRef) {
+          const skillCtx: ToolContext = {
+            ...(ctx as ToolContext),
+            draft: {
+              userEmail: userEmail ?? null,
+              threadId: outcome.plan.thread_id,
+              modelCode: resolvedModel.id,
+              providerCode: resolvedModel.provider,
+              canProposals: capFeatures['agent_proposals'] === true,
+              utterance: skillRef.utterance,
+              mode: 'review',
+              agentId: planAgentId,
+            },
+          };
+          const input = { utterance: skillRef.utterance, history: [] };
+          const match = resumeSkill.recognize(input);
+          const turn = match === null || match === undefined
+            ? null
+            : await runSkillTurn({
+              skill: resumeSkill,
+              match,
+              input,
+              // A resume answers; it never files another card.
+              opts: { canDraft: false, draftBlockedReason: 'this is the answer to the run you approved', enabledAgents },
+              ctx: skillCtx,
+              modelId: model,
+              personaId: agentId ?? null,
+              budget,
+              verifierOn: verifierEnabled(),
+              projectId: projectId as string,
+              resuming: true,
+            });
+          const answered = !!turn && ['hit', 'answered'].includes(turn.result.outcome);
+          const planPartNow = await closeSkillPlan(skillCtx, outcome.plan as unknown as { id: string; steps: Array<Record<string, unknown>> }, answered);
+          return await finishResume({
+            reply: turn?.reply ?? `The run finished, but I couldn't re-read the question "${skillRef.utterance}" — ask it again and I'll answer from the run.`,
+            parts: [...(turn?.parts ?? []), ...(planPartNow ? [planPartNow] : [])],
+            toolCalls: (turn?.result.calls ?? []).map((c) => ({
+              name: c.name, args: c.args, ok: c.envelope.meta.note !== 'error', row_count: c.envelope.meta.row_count,
+            })),
+            model: resolvedModel.label,
+          });
+        }
+
         const verifierOn = verifierEnabled();
         const agentCtx: ToolContext = {
           ...ctx,
@@ -741,11 +789,20 @@ serve(async (req) => {
         return baseClassifier(prompt);
       }
       : null;
-    // §20.8: a message that parses as a disruption what-if is routed by the
-    // parse, not by a classifier call — the ask is already understood.
-    const whatIfAsk = ctx && whatIfLoopEnabled() ? parseWhatIf(routedUtterance) : null;
-    const rawDecision = whatIfAsk
-      ? whatIfRouteDecision(routerEnabled() && enabledAgents.includes('experiment-designer'))
+    // §20.8 / §26 M.1: a message a modeler skill claims is routed by the
+    // skill, not by a classifier call — the ask is already understood. A
+    // drafting skill routes to the Experiment Designer when routable (so the
+    // mode gate applies); a read-only skill is advisory.
+    const skillHit = ctx
+      ? matchSkill({ utterance: routedUtterance, history: history as Array<{ role: string; content: string }> })
+      : null;
+    const rawDecision = skillHit
+      ? {
+        ...whatIfRouteDecision(
+          skillHit.skill.drafts && routerEnabled() && enabledAgents.includes('experiment-designer'),
+        ),
+        short_circuit: `skill:${skillHit.skill.id}`,
+      }
       : await decideRoute(routedUtterance, {
         personaId: agentId ?? null,
         hasProject: Boolean(projectId),
@@ -890,7 +947,7 @@ serve(async (req) => {
       // §20.8: a parsed what-if never takes the model-driven agent turn (nor
       // the matrix gate that guards it — no model capability is exercised).
       const routedAgentId =
-        !whatIfAsk &&
+        !skillHit &&
         (routeDecision.route === 'artifact' || routeDecision.route === 'mixed') && ctx !== null &&
         routeDecision.agent_id !== null && AGENT_TURNS[routeDecision.agent_id]
           ? routeDecision.agent_id
@@ -966,14 +1023,13 @@ serve(async (req) => {
         }
       }
 
-      if (whatIfAsk && ctx) {
-        // --- §20.8 the deterministic what-if loop. Understand → resolve →
-        // cache (by disruption content, then the unchanged §20.2 identity) →
-        // read on a hit / draft on a miss. Code decides every step; the one
-        // optional model call interprets a hit, tools withdrawn, and its
-        // prose is verified (§22.3) or dropped — the deterministic answer
-        // always ships, so a rate-limited provider cannot take this path down.
-        const canDraft = routeDecision.agent_id === 'experiment-designer';
+      if (skillHit && ctx) {
+        // --- §26 the modeler skill turn (§20.8 generalized). Code decides
+        // every step; the one optional model call interprets, tools
+        // withdrawn, verified or dropped. A drafting skill files ONE card
+        // and, with the plan harness on, a plan that brings the answer back
+        // after approval and run completion (M.3).
+        const canDraft = skillHit.skill.drafts && routeDecision.agent_id === 'experiment-designer';
         const draftBlockedReason = modeBlocked
           ? 'this thread is in Ask mode, which never files proposals'
           : !routerEnabled()
@@ -981,7 +1037,7 @@ serve(async (req) => {
           : !enabledAgents.includes('experiment-designer')
           ? "the Experiment Designer agent isn't enabled for your account"
           : undefined;
-        const wiCtx: ToolContext = {
+        const skillCtx: ToolContext = {
           ...ctx,
           draft: {
             userEmail: userEmail ?? null,
@@ -994,56 +1050,42 @@ serve(async (req) => {
             agentId: 'experiment-designer',
           },
         };
-        const wi = await runWhatIfLoop(wiCtx, whatIfAsk, { canDraft, draftBlockedReason });
-        const wiToolCalls = wi.calls.map((c) => ({
+        const turn = await runSkillTurn({
+          skill: skillHit.skill,
+          match: skillHit.match,
+          input: { utterance: routedUtterance, history: history as Array<{ role: string; content: string }> },
+          opts: { canDraft, draftBlockedReason, enabledAgents },
+          ctx: skillCtx,
+          modelId: model,
+          personaId: agentId ?? null,
+          budget,
+          verifierOn,
+          projectId: projectId as string,
+        });
+        if (turn.planId) ctx.planTouchedId = turn.planId;
+        const skillToolCalls = turn.result.calls.map((c) => ({
           name: c.name,
           args: c.args,
           ok: c.envelope.meta.note !== 'error',
           row_count: c.envelope.meta.row_count,
         }));
-        telemetryToolCalls = wiToolCalls;
-        let reply = whatIfReply(wi.outcome);
-        const interpretation = whatIfInterpretationMessage(promptText, wi.outcome);
-        if (interpretation) {
-          try {
-            const interp = await runChat(model, interpretation, [], null, agentId, {
-              system: WHATIF_INTERPRETER_SYSTEM,
-              budget,
-            });
-            let prose = interp.blocked ? '' : (interp.reply ?? '').trim();
-            if (prose && verifierOn) {
-              const v = await verifyWithRetry<VerifiedTurn>({
-                projectId: projectId as string,
-                db: ctx.supabase,
-                userMessage: promptText,
-                contextText: interpretation,
-                attempt: { reply: prose, calls: wi.calls, result: interp },
-                retry: null,
-                nearestAction: null,
-              });
-              if (v.fallback) prose = '';
-              else verdict = { ...v, reply: prose };
-            }
-            if (prose) reply = `${reply}\n\n${prose}`;
-          } catch (e) {
-            // The deterministic answer stands on its own (e.g. a provider 429).
-            console.warn('[what-if] interpretation skipped:', e instanceof Error ? e.message : e);
-          }
-        }
-        if (wi.outcome.kind === 'proposed') {
-          proposalId = wi.outcome.proposal.proposal_id;
-          if (!wi.outcome.proposal.duplicate) {
+        telemetryToolCalls = skillToolCalls;
+        if (turn.verdict) verdict = turn.verdict;
+        const proposal = turn.result.proposal;
+        if (proposal) {
+          proposalId = proposal.proposal_id;
+          if (!proposal.duplicate) {
             makeTelemetry(supabaseAdmin, { ...telemetryBase, agent_id: 'experiment-designer' })
               .emit('proposal.created', {
-                artifact_type: wi.outcome.proposal.artifact_type,
-                provenance: wi.outcome.proposal.provenance,
+                artifact_type: proposal.artifact_type,
+                provenance: proposal.provenance,
               }, { proposal_id: proposalId });
           }
         }
         result = {
-          reply,
-          parts: wi.parts,
-          toolCalls: wiToolCalls,
+          reply: turn.reply,
+          parts: turn.parts,
+          toolCalls: skillToolCalls,
           model: resolvedModel.label,
         };
       } else if (routedAgentId) {

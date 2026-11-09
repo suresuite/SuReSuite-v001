@@ -1,0 +1,60 @@
+{"id": "mt-01", "utterance": "what if disruption with S1 at week 22 and duration of 4 weeks", "expect_skill": "whatif", "expect_outcome": "proposed", "note": "the owner's own ask, 2026-11-08"}
+{"id": "mt-02", "utterance": "what if S1 goes down at week 4 for 6 weeks?", "expect_skill": "whatif", "expect_outcome": "hit"}
+{"id": "mt-03", "utterance": "What happens if supplier Acme shuts down for 6 weeks starting week 4?", "expect_skill": "whatif", "expect_outcome": "hit"}
+{"id": "mt-04", "utterance": "simulate a 40% capacity cut at S1 in weeks 10-13", "expect_skill": "whatif", "expect_outcome": "proposed"}
+{"id": "mt-05", "utterance": "what if the plant goes offline from week 30 for 2 months", "expect_skill": "whatif", "expect_outcome": "proposed"}
+{"id": "mt-06", "utterance": "what if S999 has an outage at week 5 for 2 weeks", "expect_skill": "whatif", "expect_outcome": "needs_target"}
+{"id": "mt-07", "utterance": "what if S1 fails at week 3 for 60 weeks", "expect_skill": "whatif", "expect_outcome": "invalid"}
+{"id": "mt-08", "utterance": "what would a 3 week outage of S1 at week 20 do, with 30 replications", "expect_skill": "whatif", "expect_outcome": "proposed"}
+{"id": "mt-09", "utterance": "how do I mitigate an S1 outage in weeks 22-25?", "expect_skill": "mitigation", "expect_outcome": "proposed"}
+{"id": "mt-10", "utterance": "What about propose an approach to mitigate the impact?", "expect_skill": "mitigation", "expect_outcome": "proposed", "history": [{"role": "user", "content": "what if disruption with S1 at week 22 and duration of 4 weeks"}, {"role": "assistant", "content": "(card)"}], "note": "the owner's follow-up, 2026-11-09"}
+{"id": "mt-11", "utterance": "which playbook is best for that outage?", "expect_skill": "mitigation", "expect_outcome": "proposed", "history": [{"role": "user", "content": "what if disruption with S1 at week 22 and duration of 4 weeks"}, {"role": "assistant", "content": "(card)"}]}
+{"id": "mt-12", "utterance": "how should we respond to an S1 shutdown at week 22 for 4 weeks?", "expect_skill": "mitigation", "expect_outcome": "proposed"}
+{"id": "mt-13", "utterance": "what should we do about a 4 week S1 outage from week 22", "expect_skill": "mitigation", "expect_outcome": "proposed"}
+{"id": "mt-14", "utterance": "compare expedite shipments and activate backup supplier for an S1 outage at week 22 for 4 weeks", "expect_skill": "mitigation", "expect_outcome": "proposed"}
+{"id": "mt-15", "utterance": "how do I mitigate the impact?", "expect_skill": "mitigation", "expect_outcome": "needs_disruption"}
+{"id": "mt-16", "utterance": "how can we reduce the impact of an S1 outage at week 4 lasting 6 weeks", "expect_skill": "mitigation", "expect_outcome": "proposed"}
+{"id": "mt-17", "utterance": "how sensitive is fill rate to how long the S1 outage lasts?", "expect_skill": "sensitivity", "expect_outcome": "proposed", "history": [{"role": "user", "content": "what if disruption with S1 at week 22 and duration of 4 weeks"}, {"role": "assistant", "content": "(card)"}]}
+{"id": "mt-18", "utterance": "how sensitive is fill rate to the duration of an S1 outage at week 22 \u2014 try 2, 4 and 8 weeks", "expect_skill": "sensitivity", "expect_outcome": "proposed"}
+{"id": "mt-19", "utterance": "sensitivity of the KPIs to the severity of an S1 outage at week 22 for 4 weeks: 25/50/75%", "expect_skill": "sensitivity", "expect_outcome": "proposed"}
+{"id": "mt-20", "utterance": "how sensitive is fill rate to S1's lead time?", "expect_skill": "sensitivity", "expect_outcome": "unsupported_factor"}
+{"id": "mt-21", "utterance": "how sensitive are we to demand variability?", "expect_skill": "sensitivity", "expect_outcome": "unsupported_factor"}
+{"id": "mt-22", "utterance": "run a sensitivity on when the S1 outage starts, weeks 10, 14, 18", "expect_skill": "sensitivity", "expect_outcome": "proposed", "history": [{"role": "user", "content": "what if disruption with S1 at week 22 and duration of 4 weeks"}, {"role": "assistant", "content": "(card)"}]}
+{"id": "mt-23", "utterance": "why did fill rate drop at week 24?", "expect_skill": "explain", "expect_outcome": "placed"}
+{"id": "mt-24", "utterance": "why is backlog so high in the last run?", "expect_skill": "explain", "expect_outcome": "timeline"}
+{"id": "mt-25", "utterance": "why did fill rate fall at week 6?", "expect_skill": "explain", "expect_outcome": "placed"}
+{"id": "mt-26", "utterance": "why was service worse in run 99999999?", "expect_skill": "explain", "expect_outcome": "timeline"}
+{"id": "mt-27", "utterance": "can I run my model?", "expect_skill": "readiness"}
+{"id": "mt-28", "utterance": "what data is missing?", "expect_skill": "readiness"}
+{"id": "mt-29", "utterance": "is my model validated?", "expect_skill": "readiness"}
+{"id": "mt-30", "utterance": "what is blocking my run?", "expect_skill": "readiness"}
+{"id": "mt-31", "utterance": "am I ready to simulate?", "expect_skill": "readiness"}
+{"id": "mt-32", "utterance": "run the pre-run check", "expect_skill": "readiness"}
+{"id": "mt-33", "utterance": "how many replications do I need?", "expect_skill": "setup", "expect_outcome": "advised"}
+{"id": "mt-34", "utterance": "what warm-up should I use?", "expect_skill": "setup", "expect_outcome": "advised"}
+{"id": "mt-35", "utterance": "how long should I simulate?", "expect_skill": "setup", "expect_outcome": "advised"}
+{"id": "mt-36", "utterance": "is 5 replications enough?", "expect_skill": "setup", "expect_outcome": "advised"}
+{"id": "mt-37", "utterance": "what horizon should I choose for a stress test?", "expect_skill": "setup", "expect_outcome": "advised"}
+{"id": "mt-38", "utterance": "what did the last run show?", "expect_skill": "results", "expect_outcome": "brief"}
+{"id": "mt-39", "utterance": "summarize the latest simulation", "expect_skill": "results", "expect_outcome": "brief"}
+{"id": "mt-40", "utterance": "results of the last run", "expect_skill": "results", "expect_outcome": "brief"}
+{"id": "mt-41", "utterance": "compare the last two runs", "expect_skill": "results"}
+{"id": "mt-42", "utterance": "what did my last simulation find?", "expect_skill": "results", "expect_outcome": "brief"}
+{"id": "mt-43", "utterance": "what is TTR?", "expect_skill": "howto", "expect_outcome": "cited"}
+{"id": "mt-44", "utterance": "what does P-P.1 do?", "expect_skill": "howto", "expect_outcome": "cited"}
+{"id": "mt-45", "utterance": "how do I add a scenario?", "expect_skill": "howto", "expect_outcome": "cited"}
+{"id": "mt-46", "utterance": "what is warm-up?", "expect_skill": "howto", "expect_outcome": "cited"}
+{"id": "mt-47", "utterance": "explain fill rate", "expect_skill": "howto", "expect_outcome": "cited"}
+{"id": "mt-48", "utterance": "how does the validation gate work?", "expect_skill": "howto", "expect_outcome": "cited"}
+{"id": "mt-49", "utterance": "what can you do?", "expect_skill": "capabilities", "expect_outcome": "listed"}
+{"id": "mt-50", "utterance": "help", "expect_skill": "capabilities", "expect_outcome": "listed"}
+{"id": "mt-51", "utterance": "what can I ask you?", "expect_skill": "capabilities", "expect_outcome": "listed"}
+{"id": "mt-52", "utterance": "who are our suppliers?", "expect_skill": null}
+{"id": "mt-53", "utterance": "what is the lead time of M001?", "expect_skill": null}
+{"id": "mt-54", "utterance": "what is my fill rate?", "expect_skill": null, "note": "project data, not a definition; no run named"}
+{"id": "mt-55", "utterance": "hi", "expect_skill": null}
+{"id": "mt-56", "utterance": "fill missing products.demand_cv", "expect_skill": null, "note": "a Data Steward ask"}
+{"id": "mt-57", "utterance": "configure safety stock to 2 weeks for M001", "expect_skill": null, "note": "a Policy Configurator ask"}
+{"id": "mt-58", "utterance": "make a PDF report of the last run", "expect_skill": null, "note": "a Report Builder ask"}
+{"id": "mt-59", "utterance": "what is the capital of France?", "expect_skill": null}
+{"id": "mt-60", "utterance": "list materials supplied by S1", "expect_skill": null}

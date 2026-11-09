@@ -1066,8 +1066,8 @@ CONTEXT
 TASK
 - The user asked: "{{utterance}}"
 - Design asks: choose or define the scenario, bind a SAVED policy version
-  (never live tables), set replications (1-200; default to the validated
-  card's recommendation when one is active), and call draft_experiment_spec
+  (never live tables), set replications (5, unless the user stated a
+  count — then that count, 1-200), and call draft_experiment_spec
   ONCE.
 - Do NOT draft, and do not reshape the ask into one you can draft:
   If the ask needs an experiment type the platform has not shipped
@@ -1926,6 +1926,16 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
     (ab) **[OWNER DECISION, 2026-11-08] `experiment-designer` is re-enabled in production (`AGENT_ENABLED_IDS=vv-analyst,experiment-designer`, `supabase-functions.yml`) WITHOUT a green live run.** This overrides, rather than satisfies, the 2026-11-06 narrowing rule, under which agents return one at a time, each on a passing live eval. **Why:** the §20.8 what-if loop files its experiment card in code (parse, resolve, content cache, the unchanged §5.4 handler), and it can do that only when the Designer is routable. Without it, a missed what-if is answered with Lab instructions. **What else it opens:** every ask the router assigns to `experiment-designer` (run briefs, other run questions) now takes the model-driven B4 turn. Its live suite has been unmeasured since 38(z) (`ed-04` sharpened, never re-run). Its safety does not depend on the model: §5.4's hard gates, the forced `acknowledge_warnings: false`, and a human Approve before any dispatch. **Revert:** drop the id from that line and re-run the workflow. **Shipped with:** the CLI `--yes` fix that unblocked every function deploy since #426 (runs 106–111 failed at `secrets set`, so production had run the 2026-10-27 build). Without that fix, this flag and all of #432 would never have reached production.
 
     (ac) **[v1.6, 2026-11-08] The experiment card could not dispatch any run that had a pre-run warning.** This was the first production what-if after (ab). The §20.8 loop filed the card correctly, the owner approved it, and the apply failed with `gate_blocked … (ack_required)` on one warning (`products.demand_cv` missing, fallback 0.30). §5.4's contract has three halves. The draft stores `findings_preview` (implemented). `agent-apply` honors the reviewer's `acknowledgeWarnings` only when the card DISPLAYED those warnings (implemented in `experimentSpecApply.ts`). **The card shows them and lets the reviewer acknowledge: never built.** `ProposalCard.tsx` called `approve(id)` and `retryApply(id)` with no options and rendered `payload.rows`, which a spec does not have. So the table was empty, the warnings were invisible, and Approve and Retry failed identically on every spec with any warning. Fixed: `src/lib/chat/experimentSpecCard.ts` reads the stored payload. The card (desktop and the mobile proposal screen) now shows the spec (disruption, simulated length, bound version, replications) and the pre-run findings. When there are warnings and no block, Approve and Retry stay disabled until the reviewer ticks "run anyway", and the acknowledgment travels with the apply request. A block cannot be acknowledged. Tests: `experimentSpecCard.test.ts` (5). The full vitest suite (2053) passes; typecheck, `audit:ui` and `check:docs` pass; eslint holds at its pre-existing 284 errors.
+
+    (ad) **[OWNER DECISIONS, 2026-11-09] Phase M's four decisions (§26.5).**
+    - (1) **Evaluation:** offline, judged against what is known of GPT-5, with no paid live runs. This continues 38(z) and replaces M.7's live gate.
+    - (2) **Replications:** at most 5 per run unless the user's own message states a count; then that count runs (≤ 200). Shipped with this entry: `AGENT_REPLICATIONS_DEFAULT_CAP` and `statedReplications` in `experimentTools.ts`, enforced in the draft handler, so it binds the §20.8 loop, the model-driven B4 turn and B9's linked spec alike. Only the USER's message counts, never the model's arguments. The §5.4 prompt and tool description now say the same. Before this, the default was the validated card's recommendation, 161 on the owner's project, so a what-if cost 161 replications nobody asked for. **Accepted cost:** 5 replications give wide intervals. The answer states the count, and the user asks for more when they need them.
+    - (3) `PLAN_TOOL_ENABLED` and `CLOSED_LOOP_ENABLED` are on in production.
+    - (4) One card per study.
+
+    Tests: ed-01's expectation moved from the card's 30 to the cap of 5; new tests for a stated count (30 honored; 500 clamps to 200) and for wi-02b. Deterministic tier: 322 passed; removing the cap turns a test red.
+
+    (ae) **[v1.7, 2026-11-09] Phase M delivered (§26.7).** At the owner's direction ("work on all of them"), all eight work packages landed in one change: the skill framework and registry, eight skills plus the capabilities front door, the comparison experiment type end to end (draft → card → apply → plan), skill-shaped resume, the generated platform-knowledge index, finding → fix mapping, the persona front door, and the 60-task benchmark at 60/60. The production flag `AGENT_EXPERIMENT_TYPES` is now `single,comparison` (owner decision 4: one card per study). Four deviations from §26.3/§26.4 are recorded in §26.7. Verification: the deterministic tier passes 344 tests, vitest 2057; typecheck, `audit:ui` and `check:docs` pass; eslint is unchanged per file. Live-unmeasured by owner decision (38(ad) item 1).
 
 ---
 
@@ -3368,7 +3378,7 @@ The audit ran on TRON ver2 (1:1 single-sourced, 60×560). Nothing in this sectio
 | 1 Understand | `parseWhatIf` (pure) | Needs a disruption word, a question/run word and a target. Otherwise `null`, and the message goes to the router exactly as before. "week 22" (unit before the number) is the start; "4 weeks" (number before the unit) is the duration; ranges, days, months, "40% capacity cut", the plant, "N replications" and "re-run" are read too. A parsed what-if is routed by the parse (`whatIfRouteDecision`, `short_circuit: "whatif_parser"`), so the classifier call is not spent. |
 | — Resolve | `runWhatIfLoop` | Targets resolve against this project's `suppliers` by the engine's own rule (`engineTargetOf`): exact id, exact name, then a unique fragment. Ambiguity lists the candidates (§19.5); an unknown name lists real suppliers. Nothing is guessed. A missing start, duration or effect takes the Lab's own default (four weeks after the warm-up; 4 weeks; full outage), and **every default is named in the reply** (T2). |
 | 2 Cache check | `scheduleKey` → the unchanged `find_completed_run` | Each scenario's schedule is reduced to what the ENGINE runs: target kept by the mapper, start and duration in the weeks it rounds to (Python half-even rounding), and the effect (≥ `full_outage_pct` is one effect). Scenarios whose key equals the ask's are then checked with §20.2's identity, unchanged, so read-hit and apply-hit still cannot disagree. |
-| 3 Propose on a miss | the unchanged `draft_experiment_spec` handler | A matching scenario is re-run (no duplicate scenario). Otherwise a `new_scenario` carries the event, with `horizon_days` = max(base scenario, event end + max(8 weeks, duration)) so recovery has a window to be measured in. Replications: what the user stated, else the active validated card's recommendation, else the base scenario's. Every §5.4 gate, kill switch and capability check applies as before, and the card still needs a human's Approve. |
+| 3 Propose on a miss | the unchanged `draft_experiment_spec` handler | A matching scenario is re-run (no duplicate scenario). Otherwise a `new_scenario` carries the event, with `horizon_days` = max(base scenario, event end + max(8 weeks, duration)) so recovery has a window to be measured in. Replications: what the user stated, else 5 (38(ad)). Every §5.4 gate, kill switch and capability check applies as before, and the card still needs a human's Approve. |
 | 4 Read | `get_run_results` + the run row | A hit also looks up the no-disruption baseline scenario's matching run, and the KPI table shows *With disruption / ± CI / Baseline / Difference*. Differences are labelled descriptive: no paired test is stored (§5.4). |
 | 5 Answer | `whatIfReply` (deterministic) + one optional model call | Every branch has a deterministic answer. On a hit only, one tool-free call (`WHATIF_INTERPRETER_SYSTEM`) adds 1–3 sentences of interpretation from the listed numbers. With `VERIFIER_ENABLED` that prose is verified (§22.3) and **dropped, not substituted**, on failure, so the deterministic answer always ships. |
 
@@ -3821,3 +3831,92 @@ Phase Q is done when one live run on `eval-results` reports **`overall: PASS` fo
 | Q2 | **Met on `gpt-5`, five runs in a row** (steward and configurator schema validity 1.0, gate-violation attempts 0). `gpt-5-mini` is scored at Q4 | 38(h), 38(l), 38(n), 38(r) |
 | Q3 | **Agent tier green on `gpt-5`** (runs `c28b0554`, `32fb484a`) except `pc-06` (narrow fix merged, 38(x)) and `ed-04` (sharpened); both **live-unmeasured**. Live steps are PAUSED by owner directive: no provider spend (38(z)) | 38(s)–(z) |
 | Q4–Q5 | Not started. **Paused**: both are defined by live runs, which only the owner may now pay for (38(z)) | 38(z) |
+
+---
+
+## 26. v1.7 plan — Phase M, *Modeler*: an agent that can do a simulation modeler's job *(added v1.7, 2026-11-09)*
+
+The capability this section delivers: a modeler asks, in their own words, the questions their job is made of — what does this disruption do, which mitigation is worth it, how sensitive is the result to this input, is my model valid, what does this setting mean, why did this happen — and the assistant answers each one correctly from the engine and the project's own data. Where it needs a new run, it proposes one card that, once approved, completes the answer without the user asking twice. Flag per skill (`MODELER_SKILLS`, comma list; §9 conventions). Traceability: ai-agents.md §20 (closed loop), §21 (harness), §20.8 (the first skill); blueprint §9.2 (experiments), G10/G17.
+
+### 26.1 Diagnosis — why the agent is not smart today (each cause is a fact, not a taste)
+
+| # | Cause | Evidence |
+|---|---|---|
+| D1 | **"Simulation Modeler" is a persona, i.e. one prompt sentence with no tools of its own.** The capability lives in routed agents, and production enables two (`vv-analyst`, `experiment-designer`). | `agents.ts::SERVER_AGENTS`; `supabase-functions.yml` (38(ab)) |
+| D2 | **The model sequences known procedures itself, and loses.** A what-if spent seven tool hops on background reads and timed out. Only that one family now has a fixed procedure (§20.8). | §20.8 "What failed" |
+| D3 | **The experiment vocabulary is one run.** The engine has CRN portfolio studies with paired bootstrap deltas (`scsim/core/engine.py::run_portfolio_study`), synergy decomposition (`scsim/synergy/decompose.py`) and stress batteries (`scsim/stress/`). The worker accepts only `experiment.run`, so neither the Lab nor the chat can reach any of them. "Which mitigation is best" has no honest answer. | `sim-worker/sim_worker/worker.py` command switch |
+| D4 | **No continuity.** One request is one step. The plan harness and resume (§21) are off in production, so a result needs a second question, and a two-agent task (fill data → run) cannot be carried. | flags absent from `supabase-functions.yml` |
+| D5 | **No platform knowledge.** "What is warm-up / how do I set a scenario / what does P-P.1 do" is answered from the model's general training. The /docs bodies, the generated engine reference and the policy registry are not retrievable. | §19.2 I12 "persona prose" |
+| D6 | **Dead ends instead of next steps.** A gate warning or a data gap ends the turn. The finding names the owning field (e.g. `products.demand_cv`), but nothing turns it into the Steward or Estimator card that fixes it. | 38(ac) |
+| D7 | **No measure of "smart".** Live evals are paused (38(z)), and no metric counts *tasks completed*, only routing and schema validity. | §25.6 |
+
+### 26.2 The design principle: skills, not prompts
+
+A **skill** is a fixed procedure for one modeler task, written in code like §20.8. Each skill has:
+- **recognizer:** a conservative parse, with the classifier as tie-break; if unsure, it falls through to today's path;
+- **resolver:** entities resolved against the project by the engine's own rules, with ambiguity asked and defaults named;
+- **procedure:** reads and drafts through the registered handlers only, so every gate and meter still applies;
+- **answer:** deterministic, with at most one verified interpretation call;
+- **next step:** the one card or follow-up that moves the user's task forward.
+
+The LLM's jobs shrink to language, choosing among skills when the parse cannot, and interpretation; it never sequences a known procedure. The free tool loop stays as the fallback for everything no skill covers, with the §21.5 wrap-up reserve. Every skill ships with its own deterministic suite and a row in the M.0 benchmark. **Law kept:** a skill never gets a capability the Lab lacks. The agent drives the same pipeline a person does (§20.1 law "the gate is entered, never bypassed").
+
+### 26.3 The skill catalog (by the modeler's task)
+
+| Skill | The ask | Procedure (all existing interfaces unless marked NEW) | Answer / next step |
+|---|---|---|---|
+| **M1 Disruption what-if** | "what if S001 is down weeks 22–25" | **Shipped** (§20.8) | KPIs vs baseline, or one card |
+| **M2 Mitigation study** | "how do I mitigate it?", "which playbook is best for that outage?" | resolve the disruption (M1's parser); candidate arms = the project's recovery playbooks (`recommend_disruption_strategy`'s source) or the ones the user names; cache by content; on a miss, **one `study_spec` card** (NEW, WP M.2) running S0 + each arm under CRN | ranked table: Δ fill rate, Δ lost revenue, Δ resilience cost, each with a paired bootstrap CI, plus "cheapest arm meeting the service target". Differences whose CI spans 0 are said to be unresolved, not ranked. |
+| **M3 Results brief and compare** | "what did the last run show?", "compare run A and B" | `get_run_results`; comparability by `src/lib/sim/comparability.ts`'s rule (ported to `_shared/`, one source) | paired CI when the runs are CRN-comparable; otherwise "descriptive, not like-for-like" with the reason |
+| **M4 Readiness and model check** | "can I run?", "what's missing?", "is my model valid?" | `runValidationGate` + `get_validation_status` + `get_data_completeness` | one line per blocker or warning, each mapped to its fixing card (WP M.5) |
+| **M5 Sensitivity** | "how sensitive is fill rate to S001's lead time / demand CV?" | one-factor sweep as a `study_spec` (3–5 levels) | KPI-vs-level table with CIs; where the curve bends |
+| **M6 Model-setup advice** | "how many replications / what warm-up / how long a horizon?" | the V&V statistics already computed (`vvTools.ts`: MSER warm-up, per-KPI adequacy n*) | the number, its basis, and the adopt card |
+| **M7 Technical how-to** | "what is TTR?", "what does P-P.1 do?", "how do I add a scenario?" | `search_platform_knowledge` (NEW, WP M.4) over /docs bodies, the generated engine reference and `registry_export` | cited passages; refusal when no passage covers it |
+| **M8 Explain a result** | "why did fill rate drop at week 24?" | KPI series + the event timeline now; decision traces when B5 ships (§18, facet 11) | the timeline-grounded explanation, labelled as such until traces exist |
+
+### 26.4 Work packages
+
+| WP | Delivers | Size | Exit test |
+|---|---|---|---|
+| **M.0 Measure first** | `eval/modeler-tasks.jsonl`: 60 real modeler tasks (≥ 6 per skill + 10 fallback), each with the expected outcome (skill id, card type and args, every number traceable to the stub, or the refusal). Deterministic tier against stubs; live tier owner-funded. Metrics: **task success**, steps, latency, cards approved → applied. | S | baseline recorded; the benchmark gates every later WP |
+| **M.1 Skill registry** | `project-ai-chat/skills/`: §20.8 refactored into the first entry; recognizers run before the classifier, which also returns a `skill_id`; one telemetry kind `skill.outcome` (CHECK migration) | M | M1 unchanged (§20.8 suite green); fallback byte-identical |
+| **M.2 Study experiment type** *(the biggest lever)* | engine → worker → dispatch → card → Lab: worker command `experiment.study` wrapping `run_portfolio_study` (CRN, bootstrap, clean reference); a `study_spec` §4.4 row (schema, hard gates: ≤ 6 arms, arms × reps within quota, one disruption schedule); results persisted per arm with a study id and RunKey; the card shows arms, total compute and findings (38(ac)'s acknowledgment); **a Lab "Compare mitigations" surface on the same command**. Sensitivity arms need per-arm parameter overrides; the engine hook is scoped in M.2b. | L | a study is reproducible from its record (A5); paired deltas equal the engine's own; the cl-style suite for `study_spec` |
+| **M.3 Continuity** | turn on the §21 plan harness for skills; each skill files its plan (`awaiting_approval` → `awaiting_run` → answer); the client's existing run subscription posts the resume; the answer arrives with no second question | M | approve → run → cited answer in one conversation, in the deterministic tier |
+| **M.4 Platform knowledge** | build-time index (`scripts/` generator, committed like the contract artifacts) of `src/components/docs/bodies`, `scsim/docs`, `registry_export`; tool `search_platform_knowledge`; the verifier accepts doc citations | M | M7's suite: every answer cites a page; uncovered asks refuse |
+| **M.5 Next-step chaining** | finding → owning agent map, generated from the gate's `field`/`policy`, never hand-kept; every refusal or warning ends with the card or skill that fixes it | S | 38(ac)'s case ends in a Steward/Estimator card offer |
+| **M.6 One front door** | the "Simulation Modeler" persona becomes the modeler surface: it biases recognizers to M-skills and states what it can and cannot do; the persona/agent confusion is removed from the picker | S | UI + router fixtures |
+| **M.7 Qualify and roll out** | per-skill flag flips on an owner-funded live run of M.0's benchmark; §23 capability-matrix rows per skill | per skill | task success ≥ 0.85 per skill on every enabled model |
+
+**Order:** M.0 → M.1 (with M3, M4, M6, which need only existing reads) → M.2 (M2, then M5) → M.3 → M.4 (M7) → M.5 / M.6 → M.7 per skill. Measure first; then the cheap wins on existing reads; then the study type, which is the one piece of new platform capability; then continuity, which makes every skill feel finished.
+
+### 26.5 Owner decisions (DECIDED 2026-11-09, §10 entry 38(ad))
+
+1. **Evaluation: offline, judged against what is known of OpenAI GPT-5 — no paid live runs.** M.7's gate is the M.0 benchmark in the deterministic tier plus a reviewed judgement of how `gpt-5`/`gpt-5-mini` behave on each skill's one model-facing step (choosing a skill when the parse cannot, the interpretation call). Each skill ships as "verified offline; live-unmeasured by owner decision", and the skills-not-prompts design is what makes that defensible: the steps a weaker live result would break are the ones taken out of the model's hands.
+2. **Replications: 5 per run unless the user states a count.** If they ask for more, the stated count runs (≤ 200). Enforced in the `draft_experiment_spec` handler, so it binds every drafting path (§20.8, the B4 turn, B9's linked spec). A study's budget is therefore arms × 5 by default (a 5-arm study is 30 replications with S0).
+3. **Plan harness in production: yes.** `PLAN_TOOL_ENABLED` and `CLOSED_LOOP_ENABLED` are set in `supabase-functions.yml`.
+4. **One card per study: yes.** One approval, one compute charge, one comparable result.
+
+### 26.7 Progress *(2026-11-09, all eight packages landed in one change; §10 entry 38(ae))*
+
+| WP | State | What shipped | Verified by |
+|---|---|---|---|
+| **M.0** | **Done** | `eval/fixtures/modeler/modeler-tasks.jsonl`: 60 tasks, including the owner's own asks, each labelled with the owning skill (or *fall through*) and, for 48, the outcome on the stub project. `modeler_benchmark_test.ts` scores **task success = right skill AND right outcome** per skill. | **60/60**; gate is 100% (regression floor). Mutation: moving what-if ahead of mitigation in the precedence order → 59/60, red. |
+| **M.1** | **Done** | `project-ai-chat/skills/`: the `Skill` contract (`common.ts`), the registry with precedence (`index.ts`), the turn runner (`runner.ts`). A claimed message is routed by its skill (`short_circuit: "skill:<id>"`) with no classifier call; drafting skills route to the Designer when routable, so the mode gate still applies. Kill switch `MODELER_SKILLS` (unset = all; `off`; or a list). §20.8 is now skill M1, unchanged. | `modeler_skills_test.ts` (21) + the §20.8 suite (17). |
+| **M.2** | **Done (shape changed, see below)** | `experiment_type: "comparison"` on `draft_experiment_spec`: ONE card with 2–6 arms (`validateArms`), each arm's schedule/overrides layered on a shared `new_scenario`. The gate is previewed per distinct arm schedule, findings merged. `agent-apply` applies a comparison as one single-run apply per arm (same scenario write path, same `dispatchExperimentRun`, shared default seed ⇒ CRN), records `arms[]`, and binds the plan to the last arm. Quota: arms count against the DAILY cap, but the card counts once against the concurrent cap (decision 4). The card UI lists arms, reference first. Flag: `AGENT_EXPERIMENT_TYPES=single,comparison`. | arms validation; apply dispatches 3 runs for 3 arms on one seed with `recovery_playbook_id` recorded; `experimentSpecCard.test.ts` (6). |
+| **M.3** | **Done** | A drafting skill files a 3-step plan (check → run `awaiting_approval` bound to the card → answer, whose note carries `skill:<id>\|<question>`). The client advances it on apply (existing). At `run_done`, the §21.4 resume re-runs **that skill** on the stored question (now a cache hit) instead of the model-driven B4 turn, then closes the plan. | plan filed with statuses `done / awaiting_approval / pending`; note round-trip. |
+| **M.4** | **Done** | `knowledge.generated.json` (647 entries: every live /docs section rendered, the engine's KPI definitions and prose reference, the policy catalog), generated by `platformKnowledge.test.tsx` (`npm run knowledge:generate`; the test fails when stale). `skills/knowledge.ts`: BM25 search, title-weighted. | vitest freshness + coverage gates. |
+| **M.5** | **Done** | `fixFor(finding)`: the finding's table decides who fixes it (item-master → Data Steward / Cost Estimator / Project Manager; policy → Configurator / /policies; scenario → Lab), offering only routable agents. Used by M4 on every finding. | M4 test. |
+| **M.6** | **Done** | "what can you do?" (skill `capabilities`) lists every enabled skill with an example and states what it cannot do. The Simulation Modeler persona preamble now says it is the front door and what the skills cover (golden transcripts re-recorded; the only diff is that preamble). | M.6 test; golden suite. |
+| **M.7** | **Done, offline** (decision 1) | Each skill's model-facing step is at most one interpretation call, verified and dropped on failure. Every routing, resolution, cache, draft and statistics decision is code, measured by M.0. | 344 deterministic tests; live-unmeasured by owner decision. |
+
+**Skills shipped** (precedence order): capabilities · M2 mitigation · M5 sensitivity · M8 explain · M1 what-if · M4 readiness · M6 setup · M3 results · M7 how-to.
+
+**Deviations from §26.3/§26.4, recorded:**
+1. **M.2 does not wrap `run_portfolio_study`.** A comparison is N single runs on one seed, dispatched by one approval, so it needs no worker command, schema change or second results store. Every arm is a normal run: gated, stamped, reusable, visible in the Lab. Pairing is per replication index on the shared seed, the CRN contract the engine's seed tree gives separate runs. What is not available this way is the engine's in-process synergy decomposition (`synergy/decompose.py`), which needs a `PortfolioStudy`. That stays a candidate for a worker command when a combination-of-playbooks question is asked.
+2. **M5 sweeps only what a scenario carries:** duration, severity, start week. A data factor (lead time, demand variability, safety stock) is refused with the reason. **WP M.2b**, per-arm data overrides in the engine, is not built.
+3. **M8 explains from the run's timeline, not from decision traces.** Traces are B5's (§18, facet 11). The answer says so.
+4. **M3's pairing rule is the CRN conditions** (same seed, same replication count, same policy version), not the full `comparability.ts` four-component rule. A pair that fails is still compared, labelled descriptive with the reason, as that rule's posture requires.
+
+### 26.6 What Phase M keeps (laws)
+
+Proposals, not applies; every number from a run or a named default (T1/T2); CRN pairing stated and descriptive differences labelled; no silent model substitution (§23.4); one source per fact: the policy registry for policy semantics, the engine for statistics, the gate for findings. Phase M adds procedures and one experiment type; it adds no way around a gate.

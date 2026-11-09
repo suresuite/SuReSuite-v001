@@ -59,6 +59,11 @@ export interface ExperimentSpecApplyResult {
   /** true when dispatch answered "identical completed results exist" (G17)
    * and the stored run was surfaced instead of recomputed. */
   reused?: boolean;
+  /** §26 M.2 comparison: one entry per arm, in the spec's order (the first
+   * is the reference). `run_id` above is the LAST arm's run — the one the
+   * chat plan binds to, because arms are enqueued in order. */
+  experiment_type?: "comparison";
+  arms?: Array<{ label: string; scenario_id: string; run_id: string; reused?: boolean }>;
 }
 
 // deno-lint-ignore no-explicit-any
@@ -130,6 +135,56 @@ async function readRunStamps(
  * rides the proposal (index.ts returns the stored applied_result for an
  * already-applied proposal without calling this).
  */
+/** §26 M.2: a comparison card applies as one single-run apply per arm —
+ * the SAME scenario write path and the SAME dispatchExperimentRun, so every
+ * arm is gated, stamped and reusable exactly like a Lab run. Arms share the
+ * Lab's default seed, which is what makes them CRN-paired. An arm that fails
+ * stops the loop: the arms already dispatched keep running (they are real
+ * runs, visible in the Lab), and the failure names how many were dispatched. */
+async function applyComparison(
+  db: Db,
+  deps: ExperimentApplyDeps,
+  args: Parameters<typeof applyExperimentSpec>[2],
+): Promise<ExperimentSpecApplyResult> {
+  const payload = args.payload ?? {};
+  const base = (payload.new_scenario ?? null) as Record<string, unknown> | null;
+  const arms = Array.isArray(payload.arms) ? (payload.arms as Array<Record<string, unknown>>) : [];
+  if (!base || arms.length < 2 || arms.length > 6) {
+    throw new ApplyFailure("rpc_error", "stored payload failed validation: a comparison needs new_scenario and 2-6 arms");
+  }
+  const done: NonNullable<ExperimentSpecApplyResult["arms"]> = [];
+  let last: ExperimentSpecApplyResult | null = null;
+  for (const arm of arms) {
+    const label = String(arm.label ?? "").trim().slice(0, 60);
+    const armPayload: Record<string, unknown> = {
+      ...payload,
+      experiment_type: undefined,
+      arms: undefined,
+      new_scenario: {
+        name: `${String(base.name ?? "Comparison").slice(0, 57)} · ${label}`.slice(0, 120),
+        horizon_days: base.horizon_days,
+        disruption_schedule: Array.isArray(arm.disruption_schedule) ? arm.disruption_schedule : base.disruption_schedule,
+        recovery_overrides: (arm.recovery_overrides as Record<string, unknown> | undefined) ?? base.recovery_overrides ?? {},
+        ...(typeof arm.recovery_playbook_id === "string" ? { recovery_playbook_id: arm.recovery_playbook_id } : {}),
+      },
+    };
+    try {
+      last = await applyExperimentSpec(db, deps, { ...args, payload: armPayload });
+    } catch (e) {
+      if (e instanceof ApplyFailure && done.length > 0) {
+        throw new ApplyFailure(
+          e.code,
+          `${e.message} — arm "${label}" failed after ${done.length} of ${arms.length} arms were dispatched ` +
+            `(${done.map((d) => d.label).join(", ")}); those runs continue in the Lab.`,
+        );
+      }
+      throw e;
+    }
+    done.push({ label, scenario_id: last.scenario_id, run_id: last.run_id, ...(last.reused ? { reused: true } : {}) });
+  }
+  return { ...last!, experiment_type: "comparison", arms: done };
+}
+
 export async function applyExperimentSpec(
   db: Db,
   deps: ExperimentApplyDeps,
@@ -143,6 +198,7 @@ export async function applyExperimentSpec(
   },
 ): Promise<ExperimentSpecApplyResult> {
   const payload = args.payload ?? {};
+  if (payload.experiment_type === "comparison") return await applyComparison(db, deps, args);
 
   // (0) Re-validate the stored payload — a manually forged row must never
   // reach the dispatcher (same posture as the other apply modules).
@@ -220,6 +276,11 @@ export async function applyExperimentSpec(
       replications,
       disruption_schedule: schedule,
       recovery_overrides: (newScenario!.recovery_overrides as Record<string, unknown>) ?? {},
+      // §26 M.2: a comparison arm records the playbook it runs, as the Lab's
+      // design-of-experiments rows do (playbookFactor.ts).
+      ...(typeof newScenario!.recovery_playbook_id === "string"
+        ? { recovery_playbook_id: newScenario!.recovery_playbook_id }
+        : {}),
     };
     // Reuse-or-create on (project, name): a retry after a failed dispatch
     // must not litter the Lab with duplicate scenarios (§4.4 idempotency).
