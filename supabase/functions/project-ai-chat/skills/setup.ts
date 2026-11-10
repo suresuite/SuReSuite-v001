@@ -8,7 +8,7 @@
 import registry from "../../_shared/registry.generated.json" with { type: "json" };
 import { buildComputedBlock } from "../../_shared/vvEvidence.ts";
 import { loadEvidenceRun } from "../vvTools.ts";
-import { AGENT_REPLICATIONS_DEFAULT_CAP } from "../experimentTools.ts";
+import { AGENT_REPLICATIONS_DEFAULT_CAP, AGENT_REPLICATIONS_HARD_CAP } from "../experimentTools.ts";
 import { callTool, dbOf, fmt, type Skill, type SkillInput, type SkillResult } from "./common.ts";
 
 const RUN_WINDOW = (registry as unknown as { run_window?: { analysis_window_weeks?: number; days_per_tick?: number } }).run_window ?? {};
@@ -47,7 +47,7 @@ export const setupSkill: Skill = {
       `Replications: **${computed.recommended_replications}** reach ±${fmt(computed.replication_basis.target_precision * 100)}% precision at ${fmt(computed.replication_basis.confidence * 100)}% confidence on the focal KPIs` +
         (computed.adequacy_met ? " — this run already meets it." : " — this run does not yet."),
       `Horizon: at least **${warmWeeks + window} weeks** (warm-up + the engine's ${window}-week analysis window), plus the disruption and its recovery for a stress scenario.`,
-      `Note: runs I propose in chat use ${AGENT_REPLICATIONS_DEFAULT_CAP} replications unless you ask for more — say "with ${computed.recommended_replications} replications" when precision matters.`,
+      `Note: runs I propose in chat use at most ${AGENT_REPLICATIONS_HARD_CAP} replications (${AGENT_REPLICATIONS_DEFAULT_CAP} for an exploratory run) unless you ask for more — say "with ${computed.recommended_replications} replications" when precision matters.`,
       opts.enabledAgents.includes("vv-analyst")
         ? `To lock these in, say "adopt the recommended settings" and the V&V Analyst drafts a validation card.`
         : "",

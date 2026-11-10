@@ -83,13 +83,18 @@ export function experimentSpecRows(payload: Record<string, unknown> | undefined)
       if (parts.length) rows.push({ table: "model", entity: modelName ?? "—", field: "protocol", value: parts.join(" · "), source: "validated" });
     }
     const devs = Array.isArray(payload.deviations) ? (payload.deviations as Array<Record<string, unknown>>) : [];
+    // ai-agents.md §10 38(al): a replications deviation the chat's hard cap
+    // made is labelled as the cap, with how to run the full protocol.
+    const cap = payload.replications_cap != null ? Number(payload.replications_cap) : null;
     for (const d of devs) {
+      const capped = cap !== null && d.key === "replications";
       rows.push({
         table: "model",
         entity: String(d.label ?? d.key ?? ""),
         field: "DEVIATION",
-        value: `model ${String(d.model)} → this run ${String(d.run)}`,
-        source: "your request",
+        value: `model ${String(d.model)} → this run ${String(d.run)}` +
+          (capped ? ` (chat runs use at most ${cap}; say "with ${String(d.model)} replications" to run the full protocol)` : ""),
+        source: capped ? "chat limit" : "your request",
       });
     }
   } else if (payload.run_mode === "exploratory") {

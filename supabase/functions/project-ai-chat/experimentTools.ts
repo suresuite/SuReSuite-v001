@@ -96,6 +96,22 @@ export const DISRUPTION_EVENTS_MAX = 5;
  * default was the validated card's recommendation: 161 on the owner's project). */
 export const AGENT_REPLICATIONS_DEFAULT_CAP = 5;
 
+/** OWNER DECISION 2026-11-10 (ai-agents.md §10 entry 38(al)): a HARD limit on
+ * the replications of any run proposed from the chat — per arm, and for a run
+ * that follows a Validated Model as much as an exploratory one. A model whose
+ * protocol asks for more (161 on the owner's project, ×6 arms = 966) is run at
+ * this count and the card shows the protocol's count as a deviation. Only a
+ * count the user states in their own message goes above it (still ≤ 200). */
+export const AGENT_REPLICATIONS_HARD_CAP = 30;
+
+/** The most replications a chat-proposed run may use. Unstated: the 5 default
+ * for an exploratory run, the 30 hard cap for a model-following one. Stated:
+ * the user's count when it is larger (never above REPLICATIONS_MAX). */
+export function agentReplicationsLimit(stated: number | null, followsModel: boolean): number {
+  const unstated = followsModel ? AGENT_REPLICATIONS_HARD_CAP : AGENT_REPLICATIONS_DEFAULT_CAP;
+  return stated === null ? unstated : Math.min(REPLICATIONS_MAX, Math.max(unstated, stated));
+}
+
 /** §26 M.2: a comparison spec runs 2-6 arms (one card, owner decision 4). */
 export const COMPARISON_ARMS_MIN = 2;
 export const COMPARISON_ARMS_MAX = 6;
@@ -357,7 +373,8 @@ CONTEXT
 TASK
 - The user asked: "${args.utterance}"
 - Design asks: choose or define the scenario, bind a SAVED policy version
-  (never live tables), set replications (5, unless the user stated a
+  (never live tables), set replications (5, or the model's protocol count
+  up to 30 for a run that follows a Validated Model, unless the user stated a
   count — then that count, 1-200), and call draft_experiment_spec
   ONCE.
 - Do NOT draft, and do not reshape the ask into one you can draft:
@@ -1022,13 +1039,15 @@ async function draftExperimentSpec(
     return failureEnvelope(tool, "invalid_params", "replications must be a number (1-200)");
   }
   // §5.4 hard gate: the dispatch.ts clamp restated at draft time.
-  // §10 entry 38(ad): an unstated count is capped at the owner's default —
-  // for a run that follows NO model. A run that follows a Validated Model
-  // takes its protocol's count (§27.3 decision 1), so the cap does not apply.
+  // §10 entry 38(ad): an unstated count is capped at the owner's default (5)
+  // for a run that follows NO model. §10 entry 38(al): a run that follows a
+  // Validated Model takes its protocol's count (§27.3 decision 1) but never
+  // more than the 30 hard cap — the difference is shown as a deviation. Only
+  // a count the USER states goes higher; never the model's own argument.
   const stated = statedReplications(ctx.draft.utterance);
   const replications = Math.max(
     REPLICATIONS_MIN,
-    Math.min(stated === null && modelIdArg === null ? AGENT_REPLICATIONS_DEFAULT_CAP : REPLICATIONS_MAX, Math.floor(rawReps)),
+    Math.min(agentReplicationsLimit(stated, modelIdArg !== null), Math.floor(rawReps)),
   );
 
   let newScenario: NormalizedNewScenario | null = null;
@@ -1288,6 +1307,12 @@ async function draftExperimentSpec(
       });
     }
   }
+  // §10 entry 38(al): say so on the card when the hard cap cut the protocol.
+  const protocolReps = Number(protocol?.replications ?? NaN);
+  const cappedProtocolReps = stated === null && Number.isFinite(protocolReps) && protocolReps > replications &&
+      replications === AGENT_REPLICATIONS_HARD_CAP
+    ? protocolReps
+    : null;
   const runModeLabel = modelCard
     ? `follows Validated Model "${modelDisplayName(modelCard)}"${deviations.length ? ` with ${deviations.length} deviation${deviations.length === 1 ? "" : "s"}` : ""}`
     : args.exploratory === true
@@ -1322,6 +1347,9 @@ async function draftExperimentSpec(
     ...(modelCard
       ? { model_name: modelDisplayName(modelCard), protocol, deviations }
       : {}),
+    // §10 38(al): the replications deviation came from the chat's hard cap,
+    // not from the user — the card says so (display only; apply recomputes).
+    ...(cappedProtocolReps !== null ? { replications_cap: AGENT_REPLICATIONS_HARD_CAP } : {}),
   };
   if (canonicalJson(payload).length > MAX_PAYLOAD_BYTES) {
     return failureEnvelope(tool, "too_large", "The spec payload exceeds the 256 KB limit — narrow the disruption schedule.");
@@ -1350,7 +1378,11 @@ async function draftExperimentSpec(
     (arms ? `comparison of ${arms.length} arms (${arms.map((a) => a.label).join(" / ")}) · ${arms.length * replications} replications in all · ` : "") +
     `scenario "${scenario ? scenario.name : newScenario!.name}"${newScenario ? " (new)" : ""} · ` +
     `policy version ${version.label ?? policyVersionId.slice(0, 8)} (${policyHash.slice(0, 12)}) · ` +
-    `${replications} replications · ${gateNote}`;
+    `${replications} replications · ${gateNote}` +
+    (cappedProtocolReps !== null
+      ? ` · the model's protocol asks for ${cappedProtocolReps} replications; chat runs are capped at ${AGENT_REPLICATIONS_HARD_CAP} — ` +
+        `say "with ${cappedProtocolReps} replications" to run the full protocol`
+      : "");
 
   const idemKey = await experimentIdempotencyKey(specCore);
   try {

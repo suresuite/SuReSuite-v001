@@ -98,6 +98,22 @@ describe("experiment_spec card (§5.4 / §20.8)", () => {
     expect(rows[2]).toMatchObject({ entity: "Replications", field: "DEVIATION", value: "model 30 → this run 10" });
   });
 
+  it("§10 38(al): a replications deviation the chat's 30 cap made is labelled as the cap, with how to run the protocol", () => {
+    const rows = experimentSpecRows({
+      validated_model_id: "88888888-8888-4888-8888-888888888802",
+      model_name: "Q4 baseline",
+      protocol: { replications: 161 },
+      deviations: [{ key: "replications", label: "Replications", model: 161, run: 30 }],
+      replications_cap: 30,
+      replications: 30,
+    });
+    expect(rows[2]).toMatchObject({
+      field: "DEVIATION",
+      source: "chat limit",
+      value: 'model 161 → this run 30 (chat runs use at most 30; say "with 161 replications" to run the full protocol)',
+    });
+  });
+
   it("§27: an exploratory card is labelled as not a validated result", () => {
     const rows = experimentSpecRows({ run_mode: "exploratory", new_scenario: payload.new_scenario, replications: 5 });
     expect(rows[0]).toMatchObject({ field: "EXPLORATORY" });

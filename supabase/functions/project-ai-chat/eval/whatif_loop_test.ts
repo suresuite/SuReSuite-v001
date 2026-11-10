@@ -20,6 +20,7 @@ import { BASE_RUN, BASE_SCEN, MODEL, validatedProject, VER } from "./harness/mod
 // Importing agentTurn registers find_completed_run / get_run_results /
 // draft_experiment_spec into the shared registry, as index.ts does.
 import "../agentTurn.ts";
+import { agentReplicationsLimit } from "../experimentTools.ts";
 import {
   eventKey,
   parseWhatIf,
@@ -196,6 +197,48 @@ Deno.test("V row 6: a stated replication count is used and SHOWN as a deviation 
     assertEquals(payload.replications, 10);
     assertEquals((payload.deviations as Array<Record<string, unknown>>).map((d) => [d.key, d.model, d.run]), [["replications", 3, 10]]);
   });
+});
+
+/** The owner's production model: a protocol of 161 replications (§10 38(al)). */
+const protocol161 = (t: Record<string, Row[]>) => {
+  validatedProject(t);
+  const card = t.model_validations.find((c) => String(c.id) === MODEL)!;
+  card.recommended_replications = 161;
+  (card.protocol as Record<string, unknown>).replications = 161;
+};
+
+Deno.test("38(al): a model-following run is capped at 30 replications — the cut protocol is a deviation, and the card says how to run it", async () => {
+  await withDesigner(async () => {
+    const utterance = "what if S1 has an outage at week 22 for 4 weeks";
+    const { ctx, tables } = await harness({ utterance, patch: protocol161 });
+    const wi = await runWhatIfLoop(ctx, parseWhatIf(utterance)!, { canDraft: true });
+    assertEquals(wi.outcome.kind, "proposed", whatIfReply(wi.outcome));
+    const payload = tables.proposals[0].payload as Record<string, unknown>;
+    assertEquals(payload.replications, 30, "the hard cap, not the protocol's 161");
+    assertEquals((payload.deviations as Array<Record<string, unknown>>).map((d) => [d.key, d.model, d.run]), [["replications", 161, 30]]);
+    assertEquals(payload.replications_cap, 30, "the card labels the deviation as the chat's limit, not the user's request");
+  });
+});
+
+Deno.test("38(al): only a count the USER states goes above 30", async () => {
+  await withDesigner(async () => {
+    const utterance = "what if S1 has an outage at week 22 for 4 weeks, with 50 replications";
+    const { ctx, tables } = await harness({ utterance, patch: protocol161 });
+    await runWhatIfLoop(ctx, parseWhatIf(utterance)!, { canDraft: true });
+    const payload = tables.proposals[0].payload as Record<string, unknown>;
+    assertEquals(payload.replications, 50);
+    assertEquals(payload.replications_cap, undefined, "the user's own count — no cap note");
+    assertEquals((payload.deviations as Array<Record<string, unknown>>).map((d) => [d.key, d.model, d.run]), [["replications", 161, 50]]);
+  });
+});
+
+Deno.test("38(al): agentReplicationsLimit — 5 exploratory, 30 model-following, a stated count above either, never past 200", () => {
+  assertEquals(agentReplicationsLimit(null, false), 5);
+  assertEquals(agentReplicationsLimit(null, true), 30);
+  assertEquals(agentReplicationsLimit(10, true), 30, "a smaller stated count does not lower the ceiling the arguments meet");
+  assertEquals(agentReplicationsLimit(50, true), 50);
+  assertEquals(agentReplicationsLimit(50, false), 50);
+  assertEquals(agentReplicationsLimit(999, true), 200);
 });
 
 Deno.test("V row 8: no usable baseline run of the model ⇒ the card runs the baseline too (one approval, paired)", async () => {

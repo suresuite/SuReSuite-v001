@@ -99,7 +99,7 @@ import {
 } from "./cartographerTools.ts";
 // Importing experimentTools registers draft_experiment_spec into the shared
 // executeTool registry — the ONLY route the linked spec is drafted through.
-import "./experimentTools.ts";
+import { AGENT_REPLICATIONS_HARD_CAP } from "./experimentTools.ts";
 
 export const SENTINEL_AGENT_ID = "disruption-sentinel";
 export const SENTINEL_ARTIFACT_TYPE = "risk_alert";
@@ -903,7 +903,8 @@ async function draftRiskAlert(
       const active = (Array.isArray(cards) ? cards : []).find(
         (c: Record<string, unknown>) => c.status === "active" && Number(c.recommended_replications) > 0,
       );
-      if (active) replications = Math.max(1, Math.min(200, Number(active.recommended_replications)));
+      // §10 entry 38(al): a card's recommendation never exceeds the chat's hard cap.
+      if (active) replications = Math.max(1, Math.min(AGENT_REPLICATIONS_HARD_CAP, Number(active.recommended_replications)));
     } catch { /* DEFAULT stands */ }
   }
 
