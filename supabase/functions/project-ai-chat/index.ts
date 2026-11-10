@@ -1050,7 +1050,9 @@ serve(async (req) => {
             modelCode: resolvedModel.id,
             providerCode: resolvedModel.provider,
             canProposals: capFeatures['agent_proposals'] === true,
-            utterance: routedUtterance,
+            // The skill's own input: for a follow-up choice this is the
+            // earlier question joined with the choice (§27).
+            utterance: skillHit.input.utterance,
             mode: chatMode,
             agentId: 'experiment-designer',
           },
@@ -1058,7 +1060,7 @@ serve(async (req) => {
         const turn = await runSkillTurn({
           skill: skillHit.skill,
           match: skillHit.match,
-          input: { utterance: routedUtterance, history: history as Array<{ role: string; content: string }> },
+          input: skillHit.input,
           opts: { canDraft, draftBlockedReason, enabledAgents },
           ctx: skillCtx,
           modelId: model,

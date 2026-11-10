@@ -15,6 +15,7 @@ import { describeEvents, prepareWhatIf, whatIfReply } from "../whatIf.ts";
 import { COMPARISON_ARMS_MAX, experimentTypesEnabled } from "../experimentTools.ts";
 import { dbOf, fmt, orderKpis, signed, type Skill, type SkillInput, type SkillOptions, type SkillResult } from "./common.ts";
 import { disruptionSubject } from "./disruptionSubject.ts";
+import { parseRunChoice } from "../modelContext.ts";
 import {
   compareOnKpi,
   draftStudy,
@@ -76,7 +77,7 @@ export const mitigationSkill: Skill = {
         parts: [], calls, outcome: "needs_disruption",
       };
     }
-    const p = await prepareWhatIf(ctx, subject.ask);
+    const p = await prepareWhatIf(ctx, subject.ask, parseRunChoice(input.utterance));
     if (!p.ok) return { reply: whatIfReply(p.outcome), parts: [], calls, outcome: p.outcome.kind };
     const prep = p.prep;
 
@@ -103,7 +104,10 @@ export const mitigationSkill: Skill = {
       })),
     ];
     const what = describeEvents(prep.events);
-    const assumed = prep.defaults.length ? ` I assumed ${prep.defaults.join(", ")}.` : "";
+    const how = prep.mode === "model"
+      ? ` Every arm follows Validated Model "${prep.model.name}".${prep.modeNote ? ` ${prep.modeNote}` : ""}`
+      : ` ${prep.modeNote ?? "Exploratory — not a validated result."}`;
+    const assumed = how + (prep.defaults.length ? ` I assumed ${prep.defaults.join(", ")}.` : "");
 
     const states = await locateArms(ctx, calls, prep, arms);
     if (states.every((s) => s.state === "done")) {

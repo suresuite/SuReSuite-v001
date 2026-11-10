@@ -33,8 +33,10 @@
 
 import { executeTool, type ToolContext, type ToolEnvelope } from "./tools.ts";
 import type { ProposalPartData } from "./draftTools.ts";
+import { loadRepKpis, pairedDelta } from "./skills/common.ts";
 import {
   AGENT_REPLICATIONS_DEFAULT_CAP,
+  experimentTypesEnabled,
   DISRUPTION_EVENTS_MAX,
   REPLICATIONS_MAX,
   REPLICATIONS_MIN,
@@ -42,6 +44,14 @@ import {
 import registry from "../_shared/registry.generated.json" with { type: "json" };
 import { engineTargetOf, type DisruptionRule } from "../_shared/disruptionRules.ts";
 import type { RoutedDecision } from "./router.ts";
+import {
+  decideRun,
+  parseRunChoice,
+  resolveModelContext,
+  type ModelContext,
+  type RunChoice,
+  type RunMode,
+} from "./modelContext.ts";
 
 /** The engine's event rule, exported by scsim (`registry_export.disruption_rule`). */
 export const WHATIF_RULE = (registry as unknown as { disruption: DisruptionRule }).disruption;
@@ -228,6 +238,11 @@ export type WhatIfOutcome =
     reps: number;
     kpis: KpiRow[];
     baselineRunId: string | null;
+    /** §27: "follows Validated Model …" or "EXPLORATORY — …". */
+    followLabel?: string;
+    modeNote?: string | null;
+    /** true when the differences are paired per replication (same seed). */
+    paired?: boolean;
   }
   | {
     kind: "proposed";
@@ -237,6 +252,16 @@ export type WhatIfOutcome =
     proposal: ProposalPartData;
     staleNote: string | null;
     reusedScenario: string | null;
+    followLabel?: string;
+    modeNote?: string | null;
+    /** The card also runs the model's baseline (no usable one existed). */
+    withBaseline?: boolean;
+  }
+  // §27 guardrails: the loop stopped BEFORE drafting, and says what to do.
+  | {
+    kind: "no_model" | "needs_choice" | "model_blocked" | "needs_horizon";
+    ask: WhatIfAsk;
+    message: string;
   }
   | {
     kind: "not_proposed";
@@ -253,6 +278,8 @@ export interface KpiRow {
   value: number;
   ci: number | null;
   baseline: number | null;
+  /** Paired difference vs the baseline (per replication), when available. */
+  delta?: { mean: number; ci: number; n: number } | null;
 }
 
 export interface WhatIfRun {
@@ -436,11 +463,21 @@ export interface PreparedWhatIf {
   replications: number;
   durationWeeks: number;
   magnitude: number;
+  /** §27: "model" = the run follows the Validated Model; else exploratory. */
+  mode: RunMode;
+  model: ModelContext;
+  /** One sentence the reply carries about HOW this is run (or null). */
+  modeNote: string | null;
+  /** The scenario length a NEW scenario gets (the model's, unless extended). */
+  horizonDays: number;
+  /** The scenario whose world an exploratory scenario copies (or null). */
+  seedScenarioId: string | null;
 }
 
 export async function prepareWhatIf(
   ctx: ToolContext,
   ask: WhatIfAsk,
+  choice: RunChoice = { mode: null, extendHorizon: false },
 ): Promise<{ ok: true; prep: PreparedWhatIf } | { ok: false; outcome: WhatIfOutcome }> {
   const run = { outcome: null as unknown as WhatIfOutcome };
   const db = ctx.supabase as unknown as Db;
@@ -494,11 +531,26 @@ export async function prepareWhatIf(
   const isBaseline = (s: ScenarioRow) => scheduleKey(s.disruption_schedule, supplierIds) === "";
   const base = scenarios.find(isBaseline) ?? scenarios[0] ?? null;
 
+  // --- §27: the Validated Model, and the ONE decision about how to run.
+  const model = await resolveModelContext(ctx, ctx.draft?.utterance ?? "");
+  const decision = decideRun(model, choice);
+  if (decision.kind === "stop") {
+    run.outcome = { kind: decision.code, ask, message: decision.message };
+    return { ok: false, outcome: run.outcome };
+  }
+  const mode: RunMode = decision.kind === "follow" ? "model" : "exploratory";
+  const modeNote = decision.kind === "follow" ? decision.note : `Exploratory run (${decision.why}) — not a validated result.`;
+  // The world a new scenario starts in: the model's baseline, else the
+  // project's own baseline row — never generic defaults when either exists.
+  const seedScenario = model.evidenceScenario ?? base;
+  const warmupWeek = mode === "model" && model.protocol.warmup_week != null ? model.protocol.warmup_week : null;
+  const warmupDays = warmupWeek !== null ? warmupWeek * DAYS_PER_TICK : seedScenario?.warmup_days;
+
   // --- defaults, each one NAMED in the reply (T2: substitution is visible)
   const defaults: string[] = [];
   let startWeek = ask.startWeek;
   if (startWeek === null) {
-    startWeek = defaultStartWeek(base?.warmup_days);
+    startWeek = defaultStartWeek(warmupDays);
     defaults.push(`start week ${startWeek} (four weeks after the warm-up — the Lab's default)`);
   }
   let durationWeeks = ask.durationWeeks;
@@ -523,6 +575,45 @@ export async function prepareWhatIf(
     };
     return { ok: false, outcome: run.outcome };
   }
+  // --- §27 rows 7: the disruption against the model's measured window.
+  const endWeekIncl = startWeek + durationWeeks - 1;
+  let horizonDays: number;
+  if (mode === "model") {
+    if (warmupWeek !== null && startWeek <= warmupWeek) {
+      run.outcome = {
+        kind: "invalid",
+        ask,
+        message: `Week ${startWeek} is inside the model's warm-up (results are measured from week ${warmupWeek + 1}), so the engine could not measure this disruption. ` +
+          `Try a start at week ${warmupWeek + 4} or later — for example "…at week ${warmupWeek + 4}".`,
+      };
+      return { ok: false, outcome: run.outcome };
+    }
+    const modelWeeks = model.horizonDays ? Math.ceil(model.horizonDays / DAYS_PER_TICK) : null;
+    if (modelWeeks !== null && endWeekIncl > modelWeeks) {
+      const needed = endWeekIncl + Math.max(RECOVERY_TAIL_WEEKS, durationWeeks);
+      if (!choice.extendHorizon) {
+        // Owner decision 2: a longer run changes the validated setup — ask first.
+        run.outcome = {
+          kind: "needs_horizon",
+          ask,
+          message: `"${model.name}" simulates ${modelWeeks} weeks, and this disruption runs to week ${endWeekIncl}. ` +
+            `Choose one: an earlier start (so it ends by week ${modelWeeks}), or say "extend the horizon" and I'll run ${needed} weeks — ` +
+            `shown on the card as a deviation from the validated model.`,
+        };
+        return { ok: false, outcome: run.outcome };
+      }
+      horizonDays = Math.min(3650, needed * DAYS_PER_TICK);
+    } else {
+      horizonDays = model.horizonDays ??
+        Math.max(Number(seedScenario?.horizon_days ?? 0) || 0, (endWeekIncl + Math.max(RECOVERY_TAIL_WEEKS, durationWeeks)) * DAYS_PER_TICK);
+    }
+  } else {
+    horizonDays = Math.min(
+      3650,
+      Math.max(Number(seedScenario?.horizon_days ?? 0) || 0, (endWeekIncl + 1 + Math.max(RECOVERY_TAIL_WEEKS, durationWeeks)) * DAYS_PER_TICK),
+    );
+  }
+
   const events: ResolvedEvent[] = resolved.map((r) => ({
     target: r.target,
     label: r.label,
@@ -541,12 +632,15 @@ export async function prepareWhatIf(
   }));
   const askedKey = scheduleKey(schedule, supplierIds);
 
-  // --- the saved policy version every run binds (newest, §20.2's default)
-  let versionId = "";
-  try {
-    const { data } = await db.rpc("list_policy_versions", { p_project_id: ctx.projectId });
-    versionId = String((Array.isArray(data) ? data : [])[0]?.id ?? "");
-  } catch { /* handled below */ }
+  // --- the saved policy version the run binds: the MODEL's when following it
+  // (§27), else the project's newest (§20.2's default).
+  let versionId = mode === "model" ? String(model.card?.policy_version_id ?? "") : "";
+  if (!versionId) {
+    try {
+      const { data } = await db.rpc("list_policy_versions", { p_project_id: ctx.projectId });
+      versionId = String((Array.isArray(data) ? data : [])[0]?.id ?? "");
+    } catch { /* handled below */ }
+  }
   if (!versionId) {
     run.outcome = {
       kind: "no_policy_version",
@@ -557,12 +651,13 @@ export async function prepareWhatIf(
     };
     return { ok: false, outcome: run.outcome };
   }
-  // §10 entry 38(ad): 5 replications unless the user stated a count. The
-  // draft handler enforces the same rule; this keeps the card and the
-  // cache lookup on the same number.
+  // §27.3 decision 1: a run that follows the model takes the PROTOCOL's
+  // replications; a count the user states is used and shown as a deviation.
+  // An exploratory run keeps 38(ad)'s 5-unless-stated.
+  const protocolReps = mode === "model" ? Number(model.protocol.replications) || null : null;
   const replications = Math.max(
     REPLICATIONS_MIN,
-    Math.min(REPLICATIONS_MAX, Math.floor(ask.replications ?? AGENT_REPLICATIONS_DEFAULT_CAP)),
+    Math.min(REPLICATIONS_MAX, Math.floor(ask.replications ?? protocolReps ?? AGENT_REPLICATIONS_DEFAULT_CAP)),
   );
 
   return {
@@ -570,8 +665,47 @@ export async function prepareWhatIf(
     prep: {
       events, schedule, askedKey, defaults, scenarios, supplierIds, base, isBaseline,
       versionId, replications, durationWeeks: durationWeeks!, magnitude: magnitude!,
+      mode, model, modeNote, horizonDays, seedScenarioId: seedScenario?.id ?? null,
     },
   };
+}
+
+/** A finished run of THIS model on one of the given scenarios (§27 WP V.5):
+ * the cache for a model-following ask only ever answers with a run that
+ * followed the same model — never an exploratory one. */
+async function findModelRun(
+  db: Db,
+  scenarioIds: string[],
+  cardId: string,
+  minReps: number,
+): Promise<Record<string, unknown> | null> {
+  if (scenarioIds.length === 0) return null;
+  try {
+    const { data } = await db.from("simulation_runs")
+      .select("id,scenario_id,status,rep_count_done,model_validation_id,exploratory,code_version,created_at")
+      .in("scenario_id", scenarioIds).eq("status", "done").order("created_at", { ascending: false }).limit(40);
+    return ((data ?? []) as Array<Record<string, unknown>>).find((r) =>
+      String(r.model_validation_id ?? "") === cardId && r.exploratory !== true && Number(r.rep_count_done ?? 0) >= minReps
+    ) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** The model's own baseline run: its evidence run when that simulated no
+ * disruption, else the newest finished no-disruption run that followed it. */
+async function modelBaselineRunId(db: Db, prep: PreparedWhatIf): Promise<string | null> {
+  const { model, scenarios, isBaseline, supplierIds } = prep;
+  if (!model.card) return null;
+  const ev = model.evidenceScenario;
+  if (model.evidenceRunId && ev && scheduleKey(ev.disruption_schedule, supplierIds) === "") {
+    try {
+      const { data } = await db.from("simulation_runs").select("id,status").eq("id", model.evidenceRunId).maybeSingle();
+      if (data && String((data as Record<string, unknown>).status) === "done") return model.evidenceRunId;
+    } catch { /* fall through */ }
+  }
+  const hit = await findModelRun(db, scenarios.filter(isBaseline).map((x) => String(x.id)), String(model.card.id), 1);
+  return hit ? String(hit.id) : null;
 }
 
 export async function runWhatIfLoop(
@@ -581,19 +715,109 @@ export async function runWhatIfLoop(
 ): Promise<WhatIfRun> {
   const run: WhatIfRun = { outcome: null as unknown as WhatIfOutcome, calls: [], parts: [] };
   const db = ctx.supabase as unknown as Db;
-  const p = await prepareWhatIf(ctx, ask);
+  const p = await prepareWhatIf(ctx, ask, parseRunChoice(ctx.draft?.utterance ?? ""));
   if (!p.ok) {
     run.outcome = p.outcome;
     return run;
   }
-  const { events, schedule, askedKey, defaults, scenarios, supplierIds, base, isBaseline, versionId, replications, durationWeeks } = p.prep;
-  void base;
+  const prep = p.prep;
+  const { events, schedule, askedKey, defaults, scenarios, supplierIds, isBaseline, versionId, replications, mode, model } = prep;
+  const matching = scenarios.filter((s) => scheduleKey(s.disruption_schedule, supplierIds) === askedKey).slice(0, 5);
+  const followLabel = mode === "model" ? `follows Validated Model "${model.name}"` : "EXPLORATORY — not a validated result";
 
-  // --- CACHE, by content: scenarios whose schedule runs identically, each
-  // checked with the unchanged §20.2 identity (find_completed_run).
-  const matching = scenarios.filter((s) => scheduleKey(s.disruption_schedule, supplierIds) === askedKey).slice(0, 3);
+  const answerFrom = async (runId: string, scenarioName: string, baselineRunId: string | null, paired: boolean) => {
+    const runRow = await loadRunRow(db, ctx.projectId, runId);
+    await call(run, ctx, "get_run_results", { run_id: runId });
+    const baselineRow = baselineRunId ? await loadRunRow(db, ctx.projectId, baselineRunId) : null;
+    const kp = readKpis(runRow);
+    const bk = readKpis(baselineRow);
+    const reps = paired && baselineRunId ? await loadRepKpis(db, runId) : new Map();
+    const breps = paired && baselineRunId ? await loadRepKpis(db, baselineRunId) : new Map();
+    const kpis: KpiRow[] = orderKpis([...kp.keys()]).map((k) => {
+      const d = reps.get(k) && breps.get(k) ? pairedDelta(reps.get(k)!, breps.get(k)!) : null;
+      return { kpi: k, value: kp.get(k)!.value, ci: kp.get(k)!.ci, baseline: bk.get(k)?.value ?? null, delta: d };
+    });
+    run.outcome = {
+      kind: "hit",
+      ask,
+      events,
+      defaults,
+      runId,
+      scenarioName,
+      engine: runRow?.code_version ? String(runRow.code_version) : null,
+      badge: null,
+      reps: Number(runRow?.rep_count_done ?? 0),
+      kpis,
+      baselineRunId,
+      followLabel,
+      modeNote: prep.modeNote,
+      paired: kpis.some((k) => k.delta),
+    };
+    if (kpis.length > 0) run.parts.push(kpiPart(kpis, baselineRunId !== null));
+  };
+
+  // ── FOLLOWING THE MODEL (§27) ─────────────────────────────────────────────
+  if (mode === "model") {
+    const cardId = String(model.card!.id);
+    const hit = ask.rerun ? null : await findModelRun(db, matching.map((x) => String(x.id)), cardId, ask.replications ?? 1);
+    const baselineRunId = await modelBaselineRunId(db, prep);
+    if (hit) {
+      const sc = matching.find((x) => String(x.id) === String(hit.scenario_id));
+      await answerFrom(String(hit.id), String(sc?.name ?? hit.scenario_id), baselineRunId, true);
+      return run;
+    }
+    const shortName = describeEvents(events).replace(/ \(\d+ wk\)/g, "");
+    const labSpec = `In the Simulation Lab, choose the model "${model.name}", add this disruption — ${shortName} — and run it with ${replications} replications.`;
+    if (!opts.canDraft) {
+      run.outcome = {
+        kind: "not_proposed", ask, events, defaults,
+        reason: opts.draftBlockedReason ?? "drafting a run proposal isn't available to you here",
+        staleNote: null, labSpec,
+      };
+      return run;
+    }
+    // No usable baseline run of this model ⇒ the card runs the baseline too
+    // (one approval, two runs, a paired comparison) when comparisons are on.
+    const withBaseline = baselineRunId === null && experimentTypesEnabled().includes("comparison");
+    const scenarioName = `What-if: ${shortName}`.slice(0, 120);
+    const args: Record<string, unknown> = {
+      new_scenario: { name: scenarioName, horizon_days: prep.horizonDays, disruption_schedule: schedule },
+      ...(withBaseline
+        ? {
+          experiment_type: "comparison",
+          arms: [
+            { label: "Baseline (no disruption)", disruption_schedule: [] },
+            { label: "With disruption", disruption_schedule: schedule },
+          ],
+        }
+        : {}),
+      validated_model_id: cardId,
+      policy_version_id: versionId,
+      replications,
+      title: `What-if: ${shortName}`.slice(0, 140),
+      ...(ctx.draft?.utterance ? { question: ctx.draft.utterance.slice(0, 500) } : {}),
+    };
+    const env = await call(run, ctx, "draft_experiment_spec", args);
+    if (env.kind === "proposal") {
+      const proposal = env.data as ProposalPartData;
+      run.parts.push({ kind: "proposal", data: proposal });
+      run.outcome = {
+        kind: "proposed", ask, events, defaults, proposal, staleNote: null, reusedScenario: null,
+        followLabel, modeNote: prep.modeNote, withBaseline,
+      };
+      return run;
+    }
+    run.outcome = {
+      kind: "not_proposed", ask, events, defaults,
+      reason: String(env.data ?? "the draft was refused"), staleNote: null, labSpec,
+    };
+    return run;
+  }
+
+  // ── EXPLORATORY (the user asked for it; §27.8 decision 1) ─────────────────
+  // The §20.2 identity on the project's CURRENT versions, as before.
   let staleNote: string | null = null;
-  for (const s of matching) {
+  for (const s of matching.slice(0, 3)) {
     const env = await call(run, ctx, "find_completed_run", {
       scenario: s.id,
       policy_version_id: versionId,
@@ -601,112 +825,63 @@ export async function runWhatIfLoop(
     });
     const note = String(env.meta.note ?? "");
     if (note.startsWith("cache_hit") && env.kind === "table" && !ask.rerun) {
-      const rows = ((env.data as { rows?: unknown[][] })?.rows ?? []);
-      const hit = rows[0] ?? [];
-      const runId = String(hit[0] ?? "");
-      const runRow = await loadRunRow(db, ctx.projectId, runId);
-      await call(run, ctx, "get_run_results", { run_id: runId });
-      // The baseline: a no-disruption scenario's matching run, for a
-      // descriptive difference (§5.4: differences are descriptive unless a
-      // paired statistic is persisted — the reply says so).
-      let baselineRow: Record<string, unknown> | null = null;
+      const runId = String(((env.data as { rows?: unknown[][] })?.rows ?? [])[0]?.[0] ?? "");
       let baselineRunId: string | null = null;
       const baseScenario = scenarios.find(isBaseline);
       if (baseScenario) {
         const b = await call(run, ctx, "find_completed_run", { scenario: baseScenario.id, policy_version_id: versionId });
         if (String(b.meta.note ?? "").startsWith("cache_hit") && b.kind === "table") {
           baselineRunId = String(((b.data as { rows?: unknown[][] })?.rows ?? [])[0]?.[0] ?? "") || null;
-          if (baselineRunId) baselineRow = await loadRunRow(db, ctx.projectId, baselineRunId);
         }
       }
-      const kp = readKpis(runRow);
-      const bk = readKpis(baselineRow);
-      const kpis: KpiRow[] = orderKpis([...kp.keys()]).map((k) => ({
-        kpi: k,
-        value: kp.get(k)!.value,
-        ci: kp.get(k)!.ci,
-        baseline: bk.get(k)?.value ?? null,
-      }));
-      run.outcome = {
-        kind: "hit",
-        ask,
-        events,
-        defaults,
-        runId,
-        scenarioName: String(s.name ?? s.id),
-        engine: (hit[4] as string | null) && hit[4] !== "-" ? String(hit[4]) : null,
-        badge: (hit[5] as string | null) ? String(hit[5]) : null,
-        reps: Number(hit[2] ?? 0),
-        kpis,
-        baselineRunId,
-      };
-      if (kpis.length > 0) run.parts.push(kpiPart(kpis, baselineRunId !== null));
+      await answerFrom(runId, String(s.name ?? s.id), baselineRunId, false);
       return run;
     }
     if (note === "cache_stale" && !staleNote) staleNote = String(env.data ?? "");
   }
 
-  // --- MISS (or stale): propose the run — through the unchanged §5.4 handler.
   const reuse = matching[0] ?? null;
   const labSpec = labInstructions(events, versionId, replications, reuse?.name ?? null);
   if (!opts.canDraft) {
     run.outcome = {
-      kind: "not_proposed",
-      ask,
-      events,
-      defaults,
+      kind: "not_proposed", ask, events, defaults,
       reason: opts.draftBlockedReason ?? "drafting a run proposal isn't available to you here",
-      staleNote,
-      labSpec,
+      staleNote, labSpec,
     };
     return run;
   }
-  const endWeek = events.reduce((m, e) => Math.max(m, e.startWeek + e.durationWeeks), 0);
-  const neededWeeks = endWeek + Math.max(RECOVERY_TAIL_WEEKS, durationWeeks);
-  const horizonDays = Math.min(
-    3650,
-    Math.max(Number(base?.horizon_days ?? 0) || 0, neededWeeks * DAYS_PER_TICK),
-  );
   const shortName = describeEvents(events).replace(/ \(\d+ wk\)/g, "");
   const args: Record<string, unknown> = reuse
     ? { scenario_id: reuse.id }
     : {
       new_scenario: {
         name: `What-if: ${shortName}`.slice(0, 120),
-        horizon_days: horizonDays,
+        horizon_days: prep.horizonDays,
         disruption_schedule: schedule,
       },
+      ...(prep.seedScenarioId ? { base_scenario_id: prep.seedScenarioId } : {}),
     };
   Object.assign(args, {
+    exploratory: true,
     policy_version_id: versionId,
     replications,
-    title: `What-if: ${shortName}`.slice(0, 140),
-    question: (ctx.draft?.utterance ?? "").slice(0, 500) || undefined,
+    title: `What-if (exploratory): ${shortName}`.slice(0, 140),
+    ...(ctx.draft?.utterance ? { question: ctx.draft.utterance.slice(0, 500) } : {}),
   });
-  if (args.question === undefined) delete args.question;
   const env = await call(run, ctx, "draft_experiment_spec", args);
   if (env.kind === "proposal") {
     const proposal = env.data as ProposalPartData;
     run.parts.push({ kind: "proposal", data: proposal });
     run.outcome = {
-      kind: "proposed",
-      ask,
-      events,
-      defaults,
-      proposal,
-      staleNote,
+      kind: "proposed", ask, events, defaults, proposal, staleNote,
       reusedScenario: reuse ? String(reuse.name ?? reuse.id) : null,
+      followLabel, modeNote: prep.modeNote, withBaseline: false,
     };
     return run;
   }
   run.outcome = {
-    kind: "not_proposed",
-    ask,
-    events,
-    defaults,
-    reason: String(env.data ?? "the draft was refused"),
-    staleNote,
-    labSpec,
+    kind: "not_proposed", ask, events, defaults,
+    reason: String(env.data ?? "the draft was refused"), staleNote, labSpec,
   };
   return run;
 }
@@ -731,11 +906,17 @@ function fmt(n: number): string {
 }
 
 function kpiPart(kpis: KpiRow[], withBaseline: boolean): { kind: string; data: unknown } {
-  const columns = withBaseline ? ["KPI", "With disruption", "± CI", "Baseline", "Difference"] : ["KPI", "With disruption", "± CI"];
+  const paired = kpis.some((k) => k.delta);
+  const columns = withBaseline
+    ? ["KPI", "With disruption", "± CI", "Baseline", paired ? "Difference (paired, 95% CI)" : "Difference"]
+    : ["KPI", "With disruption", "± CI"];
   const rows = kpis.map((k) => {
     const base = [k.kpi, fmt(k.value), k.ci === null ? "—" : fmt(k.ci)];
     if (!withBaseline) return base;
-    return [...base, k.baseline === null ? "—" : fmt(k.baseline), k.baseline === null ? "—" : fmt(k.value - k.baseline)];
+    const diff = k.delta
+      ? `${k.delta.mean >= 0 ? "+" : ""}${fmt(k.delta.mean)} ± ${fmt(k.delta.ci)}`
+      : k.baseline === null ? "—" : fmt(k.value - k.baseline);
+    return [...base, k.baseline === null ? "—" : fmt(k.baseline), diff];
   });
   return { kind: "table", data: { columns, rows } };
 }
@@ -766,18 +947,31 @@ export function whatIfReply(outcome: WhatIfOutcome): string {
         : outcome.message;
     case "invalid":
     case "no_policy_version":
+    case "no_model":
+    case "needs_choice":
+    case "model_blocked":
+    case "needs_horizon":
       return outcome.message;
     case "hit": {
       const headline = outcome.kpis[0];
+      const d = headline?.delta ?? null;
       const lead = headline
         ? ` ${headline.kpi} came out at ${fmt(headline.value)}` +
-          (headline.baseline !== null ? ` against ${fmt(headline.baseline)} with no disruption (run ${outcome.baselineRunId})` : "") + "."
+          (headline.baseline !== null
+            ? ` against ${fmt(headline.baseline)} with no disruption` +
+              (d ? ` (${d.mean >= 0 ? "+" : ""}${fmt(d.mean)} ± ${fmt(d.ci)}, paired over ${d.n} replications; baseline run ${outcome.baselineRunId})` : ` (run ${outcome.baselineRunId})`)
+            : "") + "."
         : "";
+      const compare = outcome.baselineRunId
+        ? (outcome.paired
+          ? " The difference is paired: both runs use the same random numbers, so it is the disruption's effect."
+          : " Differences are descriptive — the two runs are not paired.")
+        : " No baseline run exists to compare against yet.";
       return `A completed run already answers this: run ${outcome.runId} (scenario "${outcome.scenarioName}", ` +
-        `${outcome.reps} replications${outcome.badge ? `, ${outcome.badge}` : ""}` +
+        `${outcome.reps} replications${outcome.followLabel ? `, ${outcome.followLabel}` : ""}` +
         `${outcome.engine ? `, engine version ${outcome.engine}` : ""}) simulated ${describeEvents(outcome.events)}.` +
-        lead +
-        (outcome.baselineRunId ? " Differences are descriptive — no paired test is stored." : "") +
+        lead + compare +
+        (outcome.modeNote ? ` ${outcome.modeNote}` : "") +
         assumed;
     }
     case "proposed": {
@@ -787,9 +981,12 @@ export function whatIfReply(outcome: WhatIfOutcome): string {
         : "No completed run covers this yet. ";
       const where = outcome.reusedScenario
         ? `re-run the existing scenario "${outcome.reusedScenario}"`
+        : outcome.withBaseline
+        ? `run ${what} together with the model's no-disruption baseline (two runs on the same random numbers, so the difference is the disruption's effect)`
         : `run a new scenario with ${what}`;
       return `${why}I've drafted a proposal to ${where} — ${outcome.proposal.summary}. ` +
-        `Nothing runs until you approve the card below; once the run finishes, ask again and I'll answer from its results.` +
+        `Nothing runs until you approve the card below; the answer arrives here when the run finishes.` +
+        (outcome.modeNote ? ` ${outcome.modeNote}` : "") +
         assumed;
     }
     case "not_proposed": {
@@ -815,7 +1012,9 @@ export function whatIfInterpretationMessage(utterance: string, outcome: WhatIfOu
   if (outcome.kind !== "hit" || outcome.kpis.length === 0) return null;
   const rows = outcome.kpis.map((k) =>
     `${k.kpi}: ${fmt(k.value)}${k.ci !== null ? ` ±${fmt(k.ci)}` : ""}` +
-    (k.baseline !== null ? ` (baseline ${fmt(k.baseline)}, difference ${fmt(k.value - k.baseline)})` : "")
+    (k.baseline !== null
+      ? ` (baseline ${fmt(k.baseline)}, difference ${k.delta ? `${fmt(k.delta.mean)} ±${fmt(k.delta.ci)} paired` : fmt(k.value - k.baseline)})`
+      : "")
   ).join("\n");
   return `[internal handoff — this is not a user message]
 The user asked: "${utterance.slice(0, 1000)}"

@@ -13,6 +13,7 @@ import { describeEvents, prepareWhatIf, WHATIF_RULE, whatIfReply } from "../what
 import { COMPARISON_ARMS_MAX, experimentTypesEnabled } from "../experimentTools.ts";
 import { fmt, orderKpis, signed, type Skill, type SkillInput, type SkillResult } from "./common.ts";
 import { disruptionSubject } from "./disruptionSubject.ts";
+import { parseRunChoice } from "../modelContext.ts";
 import {
   compareOnKpi,
   draftStudy,
@@ -91,7 +92,7 @@ export const sensitivitySkill: Skill = {
       };
     }
     const f: Factor = factor ?? "duration";
-    const p = await prepareWhatIf(ctx, subject.ask);
+    const p = await prepareWhatIf(ctx, subject.ask, parseRunChoice(input.utterance));
     if (!p.ok) return { reply: whatIfReply(p.outcome), parts: [], calls, outcome: p.outcome.kind };
     const prep = p.prep;
     const startWeek = prep.events[0].startWeek;
@@ -148,6 +149,9 @@ export const sensitivitySkill: Skill = {
       reply: `I've drafted ONE sweep card: the ${factorWords} at ${arms.map((a) => a.label).join(", ")}, ` +
         `${arms.length} runs × ${prep.replications} replications on the same random numbers. Approve it to run; ` +
         `once it finishes I'll show how the KPIs move with paired intervals.` +
+        (prep.mode === "model"
+          ? ` Every arm follows Validated Model "${prep.model.name}".${prep.modeNote ? ` ${prep.modeNote}` : ""}`
+          : ` ${prep.modeNote ?? "Exploratory — not a validated result."}`) +
         (prep.defaults.length ? ` I assumed ${prep.defaults.join(", ")}.` : ""),
       parts: [{ kind: "proposal", data: proposal }], calls, proposal, outcome: "proposed",
     };

@@ -15,32 +15,24 @@
 //     exploratory run as the baseline side.
 import type { ModelValidationCard } from "@/hooks/useModelValidation";
 import { REPLICATION_SERIES_FACTS } from "@/components/docs/generated/policy.generated";
-import { driftReasons, type ValidatedModelProtocol } from "./validatedModel";
+import {
+  defaultModel,
+  modelChoices,
+  modelRunOffer,
+  overridesOf,
+  protocolDeviations,
+  type Deviation,
+  type ModelRunOffer,
+  type ScenarioRunSettings,
+} from "../../../supabase/functions/_shared/modelRules";
 import { modelCodeLine } from "@/lib/versions/versionLabels";
 
 // ── the model choice ─────────────────────────────────────────────────────────
 
-/** The models the Lab offers: active and validated, newest first. A superseded or
- *  revoked model is history — reachable by link (`?model=`), never offered. */
-export function modelChoices(cards: ModelValidationCard[]): ModelValidationCard[] {
-  return cards
-    .filter((c) => c.status === "active" && c.verdict === "validated")
-    .sort((a, b) => (a.validated_at < b.validated_at ? 1 : a.validated_at > b.validated_at ? -1 : 0));
-}
-
-/** The model chosen when the user has not chosen: the link's, if it names one this
- *  project has (any status — an old link still opens what it named), else the
- *  newest active model, else none (the Lab then runs exploratory only). */
-export function defaultModel(
-  allCards: ModelValidationCard[],
-  linked: string | null,
-): ModelValidationCard | null {
-  if (linked) {
-    const hit = allCards.find((c) => c.id === linked);
-    if (hit) return hit;
-  }
-  return modelChoices(allCards)[0] ?? null;
-}
+// `modelChoices` and `defaultModel` are stated once, in
+// `supabase/functions/_shared/modelRules.ts`, and read by the chat as well
+// (ai-agents.md §27 WP V.1).
+export { modelChoices, defaultModel };
 
 /** One line per model in the picker: its code, its data and policy codes when
  *  loaded, and its name — "2026Q3 - Data 20260915 - Policy 20261004 · Q4 baseline".
@@ -54,59 +46,9 @@ export function modelOptionLabel(
 
 // ── deviations from the protocol ─────────────────────────────────────────────
 
-/** The scenario fields a run actually uses for the protocol's keys. */
-export interface ScenarioRunSettings {
-  replications: number;
-  horizon_days: number;
-  seed: number;
-  crn: boolean;
-  warmup_mode?: string | null;
-  warmup_days?: number | null;
-  stopping_rule?: { kind?: string } | null;
-}
-
-export interface Deviation {
-  key: "replications" | "horizon_weeks" | "warmup_week" | "root_seed" | "crn" | "stopping_rule";
-  label: string;
-  model: string | number | boolean | null;
-  run: string | number | boolean | null;
-}
-
-/** What a run of `scenario` would deviate from `protocol`. Empty = faithful. A
- *  protocol key the model never recorded (a backfilled model's `unknown`) is not a
- *  deviation — there is nothing to deviate from — and is not invented here. */
-export function protocolDeviations(
-  protocol: Partial<ValidatedModelProtocol> | null | undefined,
-  scenario: ScenarioRunSettings,
-): Deviation[] {
-  if (!protocol) return [];
-  const out: Deviation[] = [];
-  const cmp = (key: Deviation["key"], label: string, model: unknown, run: unknown) => {
-    if (model === null || model === undefined) return;
-    if (model !== run) {
-      out.push({ key, label, model: model as Deviation["model"], run: (run ?? null) as Deviation["run"] });
-    }
-  };
-  cmp("replications", "Replications", protocol.replications, scenario.replications);
-  cmp("horizon_weeks", "Horizon (weeks)", protocol.horizon_weeks, Math.ceil(scenario.horizon_days / 7));
-  // An `auto` warm-up is detected per run; only a manual one states a week.
-  if (scenario.warmup_mode !== "auto") {
-    cmp("warmup_week", "Steady state from (week)", protocol.warmup_week,
-      Math.round(Number(scenario.warmup_days ?? 0) / 7));
-  } else if (protocol.warmup_week != null) {
-    out.push({ key: "warmup_week", label: "Steady state from (week)", model: protocol.warmup_week, run: "detected per run" });
-  }
-  cmp("root_seed", "Root seed", protocol.root_seed, scenario.seed);
-  cmp("crn", "Common random numbers", protocol.crn, scenario.crn);
-  cmp("stopping_rule", "Stopping rule", protocol.stopping_rule, scenario.stopping_rule?.kind ?? "fixed_horizon");
-  return out;
-}
-
-/** The deviations as the run row stores them (`protocol_overrides`): key → the
- *  value the run used. `{}` = faithful. */
-export function overridesOf(devs: Deviation[]): Record<string, unknown> {
-  return Object.fromEntries(devs.map((d) => [d.key, d.run]));
-}
+// The deviation rule is stated once, in `_shared/modelRules.ts` (§27 WP V.1).
+export { protocolDeviations, overridesOf };
+export type { ScenarioRunSettings, Deviation };
 
 // ── how big the run is ───────────────────────────────────────────────────────
 
@@ -293,37 +235,5 @@ export function capacityVerdict(
  * changed, or the model is no longer in force. A model recorded before models
  * named their dataset version cannot be replayed on moved data at all.
  */
-export type ModelRunOffer =
-  | { kind: "faithful" }
-  | { kind: "moved"; replayable: boolean; note: string }
-  | { kind: "blocked"; reason: string };
-
-export function modelRunOffer(
-  card: Pick<ModelValidationCard, "status" | "dataset_version_id">,
-  credibility: { state: string; drift?: string[] } | null,
-): ModelRunOffer {
-  if (card.status !== "active") {
-    return { kind: "blocked", reason: "This model is no longer in force — choose the one that is." };
-  }
-  const drift = credibility?.state === "stale" ? credibility.drift ?? [] : [];
-  if (drift.includes("scenario") || drift.includes("engine")) {
-    return {
-      kind: "blocked",
-      reason: `${driftReasons(drift.filter((d) => d !== "data")).join(" and ")} since this model was validated — re-validate it in Policies first.`.replace(/^./, (c) => c.toUpperCase()),
-    };
-  }
-  if (drift.includes("data")) {
-    return card.dataset_version_id
-      ? {
-          kind: "moved",
-          replayable: true,
-          note: "Your project's data changed since this model was validated. A run of the model replays the data it was validated on; run current data to see today's numbers as an exploratory run.",
-        }
-      : {
-          kind: "moved",
-          replayable: false,
-          note: "Your project's data changed since this model was validated, and this model does not name the data version it was validated on — it cannot be replayed. Run current data as exploratory, or re-validate.",
-        };
-  }
-  return { kind: "faithful" };
-}
+export { modelRunOffer };
+export type { ModelRunOffer };
