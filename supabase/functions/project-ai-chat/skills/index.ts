@@ -21,6 +21,10 @@ import { readinessSkill } from "./readiness.ts";
 import { setupSkill } from "./setup.ts";
 import { explainSkill } from "./explain.ts";
 import { howtoSkill } from "./howto.ts";
+import { modelSkill } from "./model.ts";
+import { criticalWhatIfSkill, stressSkill } from "./stress.ts";
+import { significanceSkill, statusSkill } from "./evidence.ts";
+import { optimizeSkill, outOfScopeSkill, predictSkill } from "./guards.ts";
 import { centralitySkill, criticalSkill, networkSkill } from "./network.ts";
 
 export type { Skill, SkillId, SkillInput, SkillOptions, SkillResult } from "./common.ts";
@@ -83,15 +87,32 @@ export const SKILLS: readonly Skill[] = [
   mitigationSkill,
   sensitivitySkill,
   explainSkill,
+  // §28 A.5 — "simulate losing my most critical supplier": the ranked phrase is
+  // resolved from the stored analysis BEFORE the what-if parser can read a
+  // word of it as a target.
+  criticalWhatIfSkill,
   whatIfSkill,
   // §28 A.1 — network reads. `network` first: "when were critical nodes last
   // computed?" asks about the analysis, not for the ranking.
   networkSkill,
   criticalSkill,
   centralitySkill,
+  // §28 A.2 — questions about the Validated Model itself; before readiness,
+  // which keeps "can I run?".
+  modelSkill,
   readinessSkill,
   setupSkill,
+  // §28 A.5 — the stored stress test; after setup, which owns "what horizon
+  // for a stress test?".
+  stressSkill,
+  // §28 A.4 — "is the difference real?" and "is my run done?"
+  significanceSkill,
+  statusSkill,
   resultsSkill,
+  // §28 A.3 — the honest limits, after every skill that can actually answer.
+  optimizeSkill,
+  predictSkill,
+  outOfScopeSkill,
   howtoSkill,
 ];
 

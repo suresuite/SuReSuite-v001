@@ -24,6 +24,14 @@ export type SkillId =
   | "critical"
   | "centrality"
   | "network"
+  | "model"
+  | "optimize"
+  | "predict"
+  | "outofscope"
+  | "significance"
+  | "stress"
+  | "criticalwhatif"
+  | "status"
   | "capabilities";
 
 export interface SkillInput {
@@ -282,6 +290,20 @@ export function scalarKpis(run: RunRow): Map<string, number> {
 export function runCi(run: RunRow, kpi: string): number | null {
   const n = Number(run.ci_half_widths?.[kpi]);
   return Number.isFinite(n) ? n : null;
+}
+
+/** Are two runs like-for-like (common random numbers pair them by replication)?
+ * ONE definition, read by the results comparison and the significance answer:
+ * same recorded seed, same finished replication count, same policy version. */
+export function pairingOf(a: RunRow, b: RunRow): { paired: boolean; why: string } {
+  const paired = a.seed !== null && a.seed === b.seed && a.rep_count_done === b.rep_count_done &&
+    a.policy_version_id === b.policy_version_id;
+  const why = paired ? "" : [
+    a.seed === null || b.seed === null ? "a run does not record its seed" : a.seed !== b.seed ? "different seeds" : "",
+    a.rep_count_done !== b.rep_count_done ? "different replication counts" : "",
+    a.policy_version_id !== b.policy_version_id ? "different policy versions" : "",
+  ].filter(Boolean).join(", ");
+  return { paired, why };
 }
 
 // ── WP M.5: finding → the surface that fixes it ─────────────────────────────

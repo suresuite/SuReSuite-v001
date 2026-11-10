@@ -34,7 +34,7 @@ type Any = any;
 // ── shared parsing ──────────────────────────────────────────────────────────
 
 /** A run or what-if ask is not a read — it belongs to the simulation skills. */
-const RUN_WORDS = /\b(what\s+if|what\s+happens\s+if|what\s+would\s+happen|simulate|stress[-\s]?test|run\s+(?:a|the)\s+(?:scenario|simulation))\b/i;
+const RUN_WORDS = /\b(what\s+if|what\s+happens\s+if|what\s+would\s+happen|simulate|simulated|in\s+(?:the\s+)?simulation|by\s+simulation|stress[-\s]?test|run\s+(?:a|the)\s+(?:scenario|simulation))\b/i;
 /** "what is betweenness?" with nothing of the project in it is a manual question. */
 const DEFINITION_ONLY = /^\s*(?:what\s+(?:is|are|does)|what's|define|explain)\b/i;
 const PROJECT_WORDS = /\b(my|our|we|us|this\s+project|which|who|top|most|rank\w*|biggest|largest|highest|lowest|list|show)\b/i;
