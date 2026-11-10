@@ -1963,6 +1963,7 @@ Numbered; each marked **[owner decision needed]** (blocks a stage entry until de
 
     (ak) **[2026-11-10] A follow-up study's answer no longer fails after the run.** In production, the owner asked "how could i mitigate the impact of the disruption?" after an S004 what-if. The 6-arm study ran (5/5). Then the plan's "Answer from the results" step FAILED, and the reply asked "Which disruption should I find mitigations for?". There were two defects. (1) The plan stored only the question. The resume re-ran the skill with no conversation, so "the disruption" had nothing to refer to. Now the note stores the earlier message that named the subject (`skillNote(id, question, subject)`, `" |re: "`, still ≤200 chars, the subject given room first), and the resume rebuilds the input from it (`resumeInput`). A plan filed before this falls back to the history the resume request already sends. (2) The plan binds the study's LAST arm. If that arm finished first, the skill found arms still running (`in_progress`), and the answer was marked failed. Now the skill names the unfinished runs (`pendingRunIds`), the run step waits on one of them (`waitSkillPlanOn`: active → awaiting_run, legal per §21.1 rule 3), the answer stays pending, and the reply says how many arms have finished. Test: `modeler_skills_test.ts` 38(ak) replays the production case through `runResumePreStep`. Mutation (note without its subject) is red.
     (al) **[2026-11-10] OWNER DECISION: a chat-proposed run uses at most 30 replications, a hard limit, unless the user states more.** In production, a 6-arm mitigation study that followed the Validated Model took the model's protocol count, 161 per arm, which is 966 replications for one card. The protocol's count came from the card's replication-adequacy rule: the max n* over the focal KPIs at ±10% relative precision and 95% confidence, set by `max_backlog`'s spread. Since Phase V (§27.3 decision 1), the 38(ad) cap had covered exploratory runs only. Now `AGENT_REPLICATIONS_HARD_CAP = 30` (`experimentTools.ts`) applies per arm to every run the chat proposes, through `agentReplicationsLimit(stated, followsModel)` in the draft handler, which every chat path reaches: what-if, study, sentinel and the model's own turn. Unstated counts: an exploratory run keeps 5; a model-following run takes its protocol's count up to 30, and a cut protocol shows as a `replications` deviation (protocol 161, run 30) plus a card note saying how to run the full protocol. Stated counts: only a count in the user's own message (`statedReplications`) goes above 30, still ≤ 200. The model's argument never does. `whatIf.ts` caps the protocol count it prepares, so its cache lookup matches, and the sentinel caps the card recommendation it defaults to. Tests: `whatif_loop_test.ts` 38(al) (protocol 161 → 30 with deviation and note; "with 50 replications" → 50) and `experimentTools` `agentReplicationsLimit` unit rows.
+    (am) **[v1.9, 2026-11-10] Phase A planned (§28): the question catalog and the gold answers. PLAN ONLY.** Owner goal: the assistant answers every realistic modeler or analyst question with this tool, never from general knowledge; no paid model is called (38(z)), so the gold answers are an expert reading of the code. §28 holds the capability inventory (31 capabilities with their files), 172 questions in 28 families, a gold-answer recipe per family, and a build order. State verified first: Phase V is merged (PR #439, with 38(al) as #440), so there was no PR to open. Three findings: (1) the chat reads no computed network metric — centralities, prominence, product-level metrics, process structure and the nexus-stress ranking are in the analysis store with provenance, and no chat tool reads them; (2) `get_supplier_risk` orders "most critical" by sole-source count before the platform's own demand-at-risk score; (3) questions about the Validated Model itself (which, protocol, why stale) reach no skill. Status by family: 7 handled, 10 partly, 10 not at all, plus the cannot-answer family, whose refusal is not deterministic today. Five owner decisions are open in §28.5. Nothing is built; no test changed.
 
 ---
 
@@ -4066,3 +4067,391 @@ Approval before any run; the pre-run gate; the plan/resume mechanics; the compar
 1. **Row 2 strictness:** with no Validated Model, should "run it anyway" be allowed (exploratory, labelled), or should the chat refuse until a model exists? *Plan assumes: allowed on explicit request.*
 2. **Row 7:** when the asked disruption needs a longer horizon than the model's, extend it as a shown deviation, or ask first? *Plan assumes: ask first — it changes the validated world.*
 3. **Default when policies drifted (row 4):** run the model as validated (plan's default), or stop and ask every time?
+
+---
+
+## 28. v1.9 plan — Phase A, *Answer everything*: the question catalog and the gold answers *(added v1.9, 2026-11-10; PLAN ONLY — nothing in this section is built)*
+
+**Goal (owner, 2026-11-10).** The assistant answers every realistic question a supply-chain modeler or network analyst asks, correctly, with THIS tool — the engine, the Validated Model workflow and the network-analysis features — and never from general knowledge. Where the tool cannot answer, it says so and names what it can do instead.
+
+**Method.** No paid model is called (§10 entry 38(z)). The "teacher" is an expert reading of the platform: for each family of questions, what a top simulation modeler or network analyst would do with this tool, step by step. That is written down here as a gold answer. Steps 4–6 of the owner's brief (skills, benchmark, the §27.9 gaps) turn these recipes into code and tests after review.
+
+**How to read the status column.** **Handled** = a deterministic skill answers it today. **Partly** = a tool or a rule exists, but the answer depends on the language model choosing it, or a part of the gold answer is missing. **Not at all** = no grounded path; today the reply is the model's general knowledge or a dead end.
+
+### 28.1 Inventory — what the tool can do today
+
+Each row is a capability that could answer a question, the file that provides it, and whether the chat can reach it. Verified by reading the code on `main` at `c119712` (Phase V merged as PR #439; 38(al) as PR #440).
+
+**Simulation and the Validated Model**
+
+| # | Capability | Provided by | Chat reach |
+|---|---|---|---|
+| C1 | Run one scenario (single run), replications, CRN seeds | `sim-command`, `_shared/dispatch.ts`, the worker and scsim | Card: `draft_experiment_spec` (`experimentTools.ts`) → `agent-apply/experimentSpecApply.ts` |
+| C2 | Comparison study: 2–6 arms on the same seed, paired differences | same, `experiment_type: "comparison"` | Card (mitigation, sensitivity skills) |
+| C3 | Disruption events: supplier outage, supplier capacity cut, plant outage; at most 5 events; 1–52 weeks | `_shared/disruptionRules.ts` (read from `registry.generated.json`) | What-if parser (`whatIf.ts`) |
+| C4 | Recovery playbooks (the project's own) and recovery overrides | `skills/mitigation.ts`, `recommend_disruption_strategy` (`tools.ts`) | Skill + tool |
+| C5 | Validated Model: which one is in force, its versions, protocol, baseline, drift | `_shared/modelRules.ts`, `modelContext.ts` | Used inside drafting skills; **no skill answers a question about it** |
+| C6 | Model credibility evidence: warm-up (MSER), replication adequacy, badge | `vvTools.ts` (`get_validation_status`), `_shared/vvEvidence.ts` | Tool; `skills/setup.ts`, `skills/readiness.ts` |
+| C7 | Pre-run gate: blockers and warnings with the owning field | `_shared/validationGate.ts`, `runReadiness.ts` | `skills/readiness.ts` |
+| C8 | Run results: KPIs with CIs, per-replication values, weekly series | `get_run_results` (`vvTools.ts`), `skills/common.ts` | `skills/results.ts`, `skills/explain.ts` |
+| C9 | Finished-run lookup by content (never simulate twice) | `find_completed_run` (`experimentTools.ts`) | What-if, mitigation, sensitivity |
+| C10 | Run liveness (queued too long, not picked up) | `_shared/runLiveness.ts` | Resume path only; **no skill for "is my run done?"** |
+| C11 | Plans and auto-resume after approval | `planTools.ts`, `skills/runner.ts` | Built |
+| C12 | Stress presets ST-1…ST-7 | `registry.generated.json` `stress_tests`, `StressTestCard.tsx` | **Lab only** |
+| C13 | Nexus stress battery: every supplier and material, 2–9 week delays, ranked by average lost sales (EUR), on an active Validated Model | migration `20261021000001_nexus_stress_store.sql` (`get_nexus_stress_results`), `src/lib/nexus/stressResults.ts` | **None** — a stored, simulated criticality ranking the chat cannot read |
+| C14 | DOE sweep (full factorial, LHS) | `src/lib/sim/doe.ts`, `ExperimentDesigner.tsx` | **None**; the component is imported by no page |
+| C15 | Reproducibility record of a run (nine bindings) | `reproducibilityRecord.ts` (run-results workbook) | **None** |
+| C16 | KPI definitions (12 KPIs), policy catalog, engine reference, /docs | `registry.generated.json`, `knowledge.generated.json` | `skills/howto.ts` |
+
+**Network analysis**
+
+| # | Capability | Provided by | Chat reach |
+|---|---|---|---|
+| C17 | Critical ("nexus") nodes: **demand at risk** — the share of finished-goods demand lost if one node alone is lost, with rank, products affected, sole-source list; nexus at ≥ 50% | `predict-critical-nodes`, `_shared/criticalNodes.ts`, `get_critical_node_stats` | **Partly** — only the flag and score, inside `get_supplier_risk` / `get_entity_detail`; no rank, no products affected, no method, no freshness |
+| C18 | Product-level metrics on the graph the page draws (supplier → material → product → customer): degree, weighted degree, eigenvector, betweenness, closeness | `_shared/productMetrics.ts`, `_shared/centrality.ts`, `get_product_level_metrics` | **None** |
+| C19 | Firm-level (deep-tier) centralities, with a declared fallback to the lane graph | `calculate-network-science-metrics`, `get_network_metrics_for_materials` | **None** |
+| C20 | Firm-level prominence (connections, revenue, balance, centrality blend, 0–1) | `calculate-node-prominence` | **None** |
+| C21 | Process-level structure (reachability on the multi-tier network) | analysis kind `process_structure`, `ProcessLevelNetwork.tsx` | **None** |
+| C22 | Network summary (node and edge counts by echelon) | `get_network_summary`, `node_list.echelon` | Counts only, through `list_project_entities` |
+| C23 | Analysis provenance: every stored result names its run, input hash, level (product / process / firm), graph version and code version; a page says "stored" or "fallback" | `_shared/analysisStore.ts`, `analysis_runs` / `analysis_results`, `NetworkAnalysisBadge.tsx` | **None** |
+| C24 | Supplier and material risk: sole-source count, lead time, spend | `get_supplier_risk`, `get_material_risk`, `get_procurement_spend` (`tools.ts`) | Tools (model-chosen) |
+| C25 | Relations: supplier ↔ materials, BOM, customer ↔ product; entity detail | `get_supplier_materials`, `get_material_suppliers`, `get_bom_relations`, `get_entity_detail` | Tools (model-chosen) |
+| C26 | External network evidence, deep-tier map changes | `cartographerTools.ts` (B8) | Built; **not enabled in production** |
+| C27 | Event assessment and risk alerts | `sentinelTools.ts` (B9) | Built; **not enabled in production**; does not follow §27 |
+
+**Data, policies, reports**
+
+| # | Capability | Provided by | Chat reach |
+|---|---|---|---|
+| C28 | Data completeness by field | `get_data_completeness` (`draftTools.ts`) | Tool + `skills/readiness.ts` |
+| C29 | Policy configuration and catalog (read) | `get_policy_config`, `get_policy_catalog` (`configuratorTools.ts`) | Tools (model-chosen) |
+| C30 | Data Trust Report (sources, substitutions, known limits) | `_shared/trustReport.ts`, `trustReportTool.ts` | **Not registered in the chat** |
+| C31 | Write cards: item master, policy bundle, parameter estimate, model card, decision report | B1, B2, B7, B3, B6 (`draftTools.ts`, `configuratorTools.ts`, `estimatorTools.ts`, `vvTools.ts`, `reportTools.ts`) | Production enables only `vv-analyst` and `experiment-designer` (`supabase-functions.yml`) |
+
+**The three findings that shape the plan**
+
+1. **The chat cannot read a single computed network metric.** Centralities, prominence, product-level metrics, process structure and the simulated nexus-stress ranking all exist in the store with full provenance, and no chat tool reads them. "Which node is most central?" is answered today from general knowledge or not at all.
+2. **"Most critical supplier" is answered by the wrong ordering.** `get_supplier_risk` sorts by sole-source count first, then the critical-node score. The platform's own definition of critical is demand at risk. A supplier that is the sole source of ten minor parts outranks one whose loss stops half of demand.
+3. **Questions *about* the model have no skill.** The model, its protocol and its drift are resolved inside every drafting skill and stated on cards, but "which model am I using?", "why is it stale?" or "what is the protocol?" reach no skill.
+
+### 28.2 The question catalog (172 questions, 28 families)
+
+Questions are in users' words, messy ones included. S = simulation, N = network analysis, D = data and policies, K = knowledge, X = cannot be answered.
+
+**S1 · Disruption what-if** — *Handled (`whatif`)*
+1. what if S001 down wk 22 for 4 weeks
+2. What happens if supplier Acme shuts down for 6 weeks starting week 4?
+3. simulate a 40% capacity cut at S1 in weeks 10-13
+4. what if the plant goes offline from week 30 for 2 months
+5. S004 strike in March, 3 weeks — what happens?
+6. how bad is it if we lose TTI for a quarter
+7. what if S001 and S002 both go down in week 20 for 2 weeks
+8. run it again with 50 replications
+9. what if S999 has an outage (unknown supplier)
+10. what if material M-100 becomes unavailable for 4 weeks
+11. what if S1 is down at week 2 for 3 weeks (inside the warm-up)
+12. what if S1 goes down at week 70 for 4 weeks (past the horizon)
+
+**S2 · Mitigation** — *Handled (`mitigation`)*
+13. how do I mitigate it?
+14. how could i mitigate the impact of the disruption?
+15. which playbook is best for an S1 outage in weeks 22–25?
+16. compare expediting vs backup supplier for that outage
+17. what's the cheapest response that keeps fill rate above 95%?
+18. would a safety buffer have helped?
+19. is dual sourcing worth it for S001?
+20. what should we do if S004 fails?
+
+**S3 · Sensitivity of a disruption** — *Handled for duration, severity, start (`sensitivity`); data factors refused*
+21. how sensitive is fill rate to how long the S1 outage lasts?
+22. sweep the outage 2, 4 and 8 weeks
+23. what if it lasts longer?
+24. does it matter when the outage starts?
+25. vary the capacity cut 20, 40, 60%
+26. how sensitive is fill rate to S001's lead time?
+27. how sensitive are we to demand variability?
+
+**S4 · Policy and parameter what-if** — *Not at all*
+28. what if I raise safety stock on M-100 to 4 weeks?
+29. what happens if we double the reorder point for all A items?
+30. what if we switch FG to make-to-order?
+31. effect of lowering MOQ for S001's materials
+32. what if I add a second supplier for M-100?
+33. what if lead time from S001 goes from 4 to 6 weeks permanently?
+34. would more plant capacity raise fill rate?
+35. compare my current policies with the previous policy version
+
+**S5 · Demand what-if** — *Not at all*
+36. what if demand goes up 20%?
+37. simulate a demand spike for product P1 in Q3
+38. what if customer C3 doubles its orders?
+39. what happens if we lose our biggest customer?
+40. what if demand is more volatile than we assume?
+
+**S6 · Results** — *Handled (`results`)*
+41. what did the last run show?
+42. summarize my latest simulation
+43. compare run 1a2b3c4d and 5e6f7a8b
+44. what was the fill rate in the S1 outage run?
+45. show lost sales for the last run
+46. which of my runs had the lowest backlog?
+47. how much did the disruption cost us?
+48. what's my baseline fill rate?
+49. how long did it take to recover?
+50. list my runs
+
+**S7 · Explain a result** — *Partly (`explain`: timeline only; no model label; no decision traces)*
+51. why did fill rate drop?
+52. why did fill rate drop at week 24?
+53. why is backlog so high in the last run?
+54. why didn't expediting help?
+55. why is cost of resilience higher with the backup supplier?
+56. why did it never recover?
+57. which material caused the stock-out?
+58. why are these two runs different, I changed nothing?
+
+**S8 · Is the difference real?** — *Partly (the paired CI is computed in `results`; no skill answers the question itself)*
+59. is that difference significant?
+60. how confident are you in that number?
+61. why is the interval so wide?
+62. is 0.91 vs 0.93 a real improvement?
+63. do I need more replications to tell them apart?
+64. can I trust a run with 5 replications?
+65. are these two runs comparable?
+
+**S9 · Model validity and the Validated Model** — *Partly (`readiness` claims "is my model valid"; nothing states the model, protocol or drift)*
+66. is my model valid?
+67. which validated model am I using?
+68. why does it say stale?
+69. what changed since I validated?
+70. what's the protocol of my model?
+71. do I need to re-validate?
+72. how do I validate my baseline?
+73. what does the credibility badge mean for my project?
+74. which runs followed the model and which were exploratory?
+75. use model VM-2 instead
+76. what is my baseline run?
+
+**S10 · Readiness and data gaps** — *Handled (`readiness`)*
+77. can I run?
+78. what's missing?
+79. what is blocking my simulation?
+80. is my data complete enough to simulate?
+81. which fields are using defaults?
+
+**S11 · Run setup** — *Handled (`setup`; does not label the run it reads)*
+82. how many replications do I need?
+83. what warm-up should I use?
+84. how long should I simulate?
+85. is 30 replications enough?
+86. why is the protocol 161 replications?
+87. what seed does my model use?
+
+**S12 · Run status** — *Partly (honest liveness in the resume path only)*
+88. is my run done?
+89. why is my run stuck in queued?
+90. how long will it take?
+91. cancel that run
+92. what's running right now?
+93. did the study finish?
+
+**S13 · Stress tests and simulated criticality** — *Not at all*
+94. stress test all my suppliers
+95. rank suppliers by simulated impact
+96. which supplier hurts most if it's delayed 4 weeks?
+97. what did the nexus stress test show?
+98. run ST-1
+99. which material delay costs the most lost sales?
+100. has the stress battery been run on the current model?
+
+**S14 · Optimize / find the best** — *Not at all*
+101. what's the optimal safety stock for M-100?
+102. find the best reorder point
+103. minimize cost while keeping 98% fill rate
+104. what policy should I use?
+105. tune my policies automatically
+
+**S15 · Predict / forecast** — *Partly (a persona sentence; not deterministic)*
+106. what will fill rate be next quarter?
+107. predict the impact without running
+108. roughly, what would happen? just estimate
+109. what's the probability S001 fails this year?
+110. forecast demand for P1
+
+**S16 · Reproducibility and provenance of a run** — *Not at all*
+111. which data version did that run use?
+112. which engine version produced this?
+113. can I reproduce run 1a2b3c4d?
+114. which policy version was in the baseline?
+115. were these two runs made on the same data?
+
+**S17 · Reports** — *Partly (Report Builder built; not enabled in production)*
+116. make a report of this study
+117. export the comparison for my boss
+118. give me a one-page summary of the S1 outage analysis
+
+**N1 · Most critical node** — *Partly (wrong ordering, no method, no provenance — finding 2)*
+119. which supplier is most critical?
+120. what are my critical nodes?
+121. top 5 critical suppliers
+122. is S001 critical?
+123. why is S004 a nexus node?
+124. how much demand is at risk if we lose TTI?
+125. which material is the most critical?
+126. how many nexus nodes do I have?
+127. what does critical mean here?
+
+**N2 · Centrality** — *Not at all*
+128. which node is most central?
+129. who's the biggest hub in my network?
+130. betweenness of S001
+131. top 10 by eigenvector centrality
+132. which material is the bottleneck?
+133. which supplier connects the most products?
+134. rank customers by weighted degree
+135. what's the closeness of the plant?
+
+**N3 · Prominence (firm level)** — *Not at all*
+136. most prominent firms in my network
+137. what is S001's prominence score?
+138. which tier-2 firms matter most?
+
+**N4 · Concentration and single-source exposure** — *Partly (tools exist; the model chooses them)*
+139. which materials are single-sourced?
+140. how concentrated is my spend?
+141. who's my biggest supplier by spend?
+142. how exposed am I to S001?
+143. which suppliers have the longest lead times?
+144. riskiest supplier?
+
+**N5 · Dependencies and impact tracing** — *Partly (relation tools; no "what is affected" read)*
+145. what does supplier 10 supply?
+146. who supplies M-100?
+147. which products are affected if S001 is lost?
+148. what's in P1's BOM?
+149. which customers depend on S004?
+150. trace M-100 downstream
+151. do S001 and S002 supply the same materials?
+
+**N6 · Network structure** — *Not at all (counts only)*
+152. how big is my network?
+153. how many tiers do I have?
+154. how many suppliers per material on average?
+155. is my network dense or sparse?
+156. are there isolated nodes?
+157. how deep is the BOM?
+
+**N7 · Is the analysis current?** — *Not at all*
+158. are the network metrics up to date?
+159. when were critical nodes last computed?
+160. I uploaded new data — do I need to re-run the analysis?
+161. which graph version are these centralities from?
+162. why does the page say fallback?
+
+**N8 · Network ↔ simulation** — *Not at all*
+163. simulate losing my most critical supplier
+164. is the most central supplier also the worst in simulation?
+165. does the stress test agree with the critical-node ranking?
+166. what if my top 3 critical suppliers all fail?
+
+**D1 · Entities, policies and data (read)** — *Partly (tools exist; the model chooses them)*
+167. list my suppliers / how many materials do we have?
+168. what's the lead time of S001? / what safety stock is set for M-100?
+169. where does this number come from? is it a default?
+
+**K1 · How-to and concepts** — *Handled (`howto`)*
+170. what is TTR? / what does P-P.1 do? / how do I add a scenario?
+
+**X1 · Cannot be answered with this tool** — *Refusal not deterministic today*
+171. what's a good fill rate for the electronics industry? / is there a port strike in Rotterdam right now? / what's TTI's credit rating?
+172. write me a Python script / what's the weather / what happened in another project?
+
+### 28.3 Gold-answer recipes
+
+Every recipe obeys the standing rules, so they are stated once here and not repeated:
+
+- **R-model.** An experiment follows the Validated Model or stops and says why (§27). No model: offer validation; exploratory only on explicit request, labelled. Drift: stop and ask, every time. Past the horizon: ask first.
+- **R-reps.** The model's protocol, at most 30 unless the user states more; a stated count is shown as a deviation. Exploratory: 5 unless stated.
+- **R-approve.** Nothing runs without approval on a card.
+- **R-source.** Every number carries its source: a run id (with "follows model X" or "EXPLORATORY") or a project table, or an analysis run with its level, graph version and date.
+- **R-no-predict.** No KPI is ever predicted. A static network score is never called a simulated impact.
+- **R-significance.** A difference is called real only when its paired interval excludes 0. Otherwise: "not resolved at this replication count". Runs that are not like-for-like get a descriptive difference, labelled so.
+- **R-plain.** Plain language. A decision is put as numbered options with a recommendation.
+
+**S1 · Disruption what-if — Handled.** Steps: parse target, start, duration, severity → resolve the supplier in the project (or the plant) → check the event against the engine's rule (`disruptionRules.ts`) → resolve the model (R-model) → look for a finished run of this model with this event → answer, or one card. *Example:* "Fill rate 0.91 vs 0.97 in the baseline (−0.06 ± 0.02, paired, 30 replications). Run `1a2b3c4d`, follows Validated Model *2026Q4 baseline*." *Refused:* an unknown supplier (names the closest ids); a material, lane or customer as target (the engine disrupts suppliers and the plant only — offers the suppliers of that material instead, from `get_material_suppliers`); inside the warm-up (first measurable week); more than 5 events. **Gap to close:** question 10 should offer the material's suppliers as numbered options, not only refuse.
+
+**S2 · Mitigation — Handled.** Steps: take the disruption from the message or the earlier turn → arms = no response + each project playbook (or the ones named) → one comparison card → ranked table of paired differences against the no-response arm. *Example:* "1. Backup supplier: fill rate +0.04 ± 0.01, resilience cost +€12k. 2. Expediting: +0.01 ± 0.02 — not resolved. Recommendation: backup supplier; it is the only arm whose gain is resolved." *Refused:* no playbooks in the project (points to where they are defined); "is dual sourcing worth it" when no playbook models it (says which playbooks exist).
+
+**S3 · Sensitivity — Handled for the disruption's own factors.** Steps: factor = duration, severity or start → 2–5 levels → one comparison card → table of KPI by level with intervals and where the curve bends. *Refused today, correctly:* a data factor (lead time, demand CV). The gold answer for those is S4's.
+
+**S4 · Policy and parameter what-if — Not at all.** What the expert does: a policy or parameter change is not an event; it is a **new policy version** (or a data change). The engine reads frozen versions only, so the honest procedure is: (1) say what the value is now, with its source (`get_policy_config` / `get_entity_detail`); (2) explain in one line that changing it makes a new policy version, which the Validated Model did not validate; (3) offer numbered options — **1.** save the change as a new policy version (on /policies, or a Policy Configurator card where enabled) and run it as EXPLORATORY against the model's baseline, same seed and replications (recommended for a quick look); **2.** make the change and re-validate, then compare the two models' baselines; **3.** do nothing. The answer, after the run: paired difference vs the model's baseline, labelled EXPLORATORY, with "this is not a validated result". *Refused:* running a changed policy without a saved version (runs never read live tables); calling the result validated. Question 35 (compare two policy versions) is the same recipe with both versions already saved. **Needs:** a `policy_version_id` per arm in the comparison card, and a skill that recognises the ask.
+
+**S5 · Demand what-if — Not at all.** The engine's events are supplier and plant events; demand is part of the scenario's world (the customer table and the scenario's demand model). The expert: (1) states current demand for the named product or customer, from the customer table, with source; (2) says a demand change alters the validated world, so the run is EXPLORATORY; (3) options — **1.** exploratory comparison: the model's baseline vs a copy with the changed demand (recommended); **2.** change the data and re-validate; **3.** nothing. *Refused:* a demand "event" in a model-following run; "lose a customer" as a disruption target (customer is an unsupported target kind). **Needs verification in step 4:** which demand fields a scenario may override without a data change; if none, option 1 is refused too and only option 2 is offered.
+
+**S6 · Results — Handled.** Steps: newest finished run (or the named ones) → headline KPIs in the fixed order with intervals → each run labelled "follows model X" or EXPLORATORY → for a comparison, paired when the runs share seed and protocol. *Gaps:* "list my runs", "which run had the lowest backlog" and "what's my baseline" need a run list and the model's baseline run stated; add to the skill.
+
+**S7 · Explain — Partly.** The expert reads the weekly series and the event timeline of the run: when the event started, when the KPI left its band, when stock ran out, when it recovered (`ttr_weeks`, censored or not). *Example:* "Fill rate fell from week 24, two weeks after the S1 outage began at week 22; that is when the on-hand stock of the outage's materials ran out. It recovered in week 31 (TTR 9 weeks). Run `1a2b3c4d`, follows model X. This reads the timeline; the engine's decision traces are not available yet." *Refused:* a causal claim the series cannot support ("which material caused it" without item series → say what is recorded and point to the Lab's item explorer); "I changed nothing" → compare the two runs' recorded versions and seeds (S16) rather than guess. **Needs:** the model/exploratory label; the two-run identity diff.
+
+**S8 · Is the difference real? — Partly.** Steps: find the two runs in the conversation or by id → comparable? (same model, seed, protocol — `comparability` rule) → paired interval. *Example:* "Yes: −0.06 ± 0.02 over 30 paired replications; the interval excludes 0." or "Not resolved: +0.01 ± 0.02. To resolve a difference this small you would need about N replications (from the spread of the paired differences); your protocol is 30." *Refused:* the word "significant" for a descriptive difference; a confidence statement for a single replication. **Needs:** a skill; the replication estimate from the paired spread (the same n* rule `vvTools.ts` already states).
+
+**S9 · Model validity — Partly.** The expert states, from `resolveModelContext`: the model in force (name, code, date), what it validated (policy and data versions), its protocol (replications, horizon, warm-up, seed), its badge, and whether the project has moved since — and what moved. *Example:* "Your model is *2026Q4 baseline* (VM-3, validated 2026-10-28). It is **stale**: policy version 7 was saved after it validated version 6. Options: 1. run what-ifs on the model as validated (recommended if the change is not yet decided); 2. re-validate with version 7; 3. run version 7 as exploratory." *Refused:* "valid" as a yes/no without the evidence; inventing what changed (only the version numbers and dates the rows carry). Question 74 lists runs with their label. **Needs:** a `model` skill; `readiness` keeps "can I run".
+
+**S10 · Readiness — Handled.** One line per blocker or warning, each with the page that fixes it. Question 81 (which fields use defaults) belongs to D1's trust read.
+
+**S11 · Setup — Handled.** The number, its basis (MSER warm-up; replication adequacy per KPI) and the 30 cap (38(al)) stated when the protocol exceeds it. **Needs:** the label of the run the evidence came from (§27.9 gap).
+
+**S12 · Run status — Partly.** Steps: the runs of this conversation's plan, else the project's active runs → state, progress, and the liveness rule when queued too long. *Example:* "3 of 6 arms finished; the others are running. I'll answer when they finish." *Refused:* a time estimate (nothing measures one); cancelling from the chat (says where: the Lab's run queue). **Needs:** a skill.
+
+**S13 · Stress tests — Not at all.** Two different things, kept apart. *Reading:* `get_nexus_stress_results` returns the stored battery: each supplier and material, lost sales (EUR) for 2–9 week delays, ranked by the average, with the model and versions it ran on. *Example:* "By simulation, the most damaging delay is S004: €412k average lost sales over 2–9 week delays (rank 1 of 60). Battery of 2026-11-02 on model *2026Q4 baseline*, 30 replications. The model has not changed since." If the model or data moved since the battery: say the ranking describes the earlier model. *Launching:* the battery is hundreds of runs; the chat does not start it. It names the Lab's stress card. A single preset ("run ST-1") is a what-if when it maps to one supplier event; otherwise the Lab. *Refused:* a ranking when no battery exists (offers N1's static ranking, labelled static, and the Lab step). **Needs:** a read tool and a skill.
+
+**S14 · Optimize — Not at all.** The tool simulates; it does not optimize. The expert says so in one sentence and offers what the tool can do: numbered options — **1.** a comparison of up to 6 candidate values the user names (S4's recipe); **2.** for a disruption response, the mitigation study, which does report "the cheapest arm meeting the target"; **3.** the safety-stock panel in the Lab where it applies. *Refused:* any "optimal" value; any recommendation of a policy value not backed by a run.
+
+**S15 · Predict — Partly.** One fixed reply: no estimate; the nearest finished run if one exists (cache), else the card that would answer it. Probability of a real-world failure and demand forecasts are not computed by the tool (the engine reads the forecast the customer table carries; it does not make one). **Needs:** a deterministic recogniser so this never reaches the model as an open question.
+
+**S16 · Provenance — Not at all.** The expert reads the run row: dataset version and hash, policy version and hash, the scenario's schedule and seed as stamped at dispatch, engine build (`code_version`), the model it followed, deviations. *Example:* "Run `1a2b3c4d`: data version D-12, policy version 6, engine scsim-2.4.1+ab12cd34ef56, seed 42, 30 replications, follows model VM-3, no deviations. Reproducible: yes — every required binding is present." For an older run, each missing binding is named with its reason. Two runs: a field-by-field diff. *Refused:* "reproducible" when a required binding is absent. **Needs:** `reproducibilityRecord`'s rule moved to `_shared/` (one definition), a read tool, a skill.
+
+**S17 · Reports — Partly.** Where the Report Builder is enabled: one report card from the runs already in the conversation. Where it is not (production today): say so and name the Lab's export (the run-results workbook carries the reproducibility sheet). No new rule.
+
+**N1 · Most critical node — Partly.** The platform's definition: a node's score is its **demand at risk** — the share of finished-goods demand that cannot be served if that node alone is lost and nothing is rerouted. Nexus = at least 50%. Steps: read the latest succeeded `critical_nodes` analysis for the project (store first; say "fallback" if only the column exists) → rank by score → state method, date, graph version, and whether the data has moved since. *Example:* "Your most critical supplier is S004 (TTI): 62% of finished-goods demand is at risk if it alone is lost; it is the only source of 14 materials and affects 9 of 12 products. Next: S001 at 38%. 2 nodes are nexus (≥ 50%). Source: critical-node analysis of 2026-11-03, process level, Graph v7 — current. This is a static estimate: no stock, no rerouting, no time. For the simulated impact, ask me to simulate the loss (options: 1. S004 down 4 weeks from week 22 — recommended; 2. read the stress battery if one exists)." *Refused:* a ranking when the analysis has never run (says where to run it: the Product-level page); a ranking silently read from a stale analysis (states it is stale and for which graph version); mixing sole-source count into "most critical" without saying so. "Why is S004 nexus" → its sole-source list and products affected, from the stored result. **Needs:** a read tool over the store (`get_critical_nodes`), a skill, and `get_supplier_risk`'s ordering either renamed ("exposure") or left for N4 only.
+
+**N2 · Centrality — Not at all.** Steps: decide the graph the user means — product level (supplier → material → product → customer, the default, `get_product_level_metrics`) or firm level (deep tier) → read the stored metrics → rank by the asked measure → say what the measure means in one plain line → provenance. *Example:* "By betweenness on the product-level graph, the node most paths run through is material M-100 (0.41), then P1 (0.33). Betweenness counts how often a node sits on the shortest route between two others — a bottleneck measure. Source: product metrics of 2026-11-03, Graph v7, current." "Hub" → degree; "bottleneck" → betweenness; "influential" → eigenvector; "close to everything" → closeness: the mapping is stated in the reply, never silent. *Refused:* a metric the platform does not compute (PageRank, clustering coefficient, modularity) — named as not computed, with the five that are; a ranking across levels mixed together; centrality presented as business impact (points to N1 and S13). **Needs:** `get_network_metrics` read tool (level, measure, top n, node) and a skill.
+
+**N3 · Prominence — Not at all.** As N2, firm level only: the 0–1 blend of connections, revenue, balance and centrality, read from the store with its date. If the project has no deep-tier network: says so, and that prominence exists only at firm level. Same tool as N2.
+
+**N4 · Concentration — Partly.** Steps: `get_material_risk` (single-source), `get_procurement_spend` (share by supplier), `get_supplier_risk`. *Example:* "187 of 560 materials have one supplier; S010 alone supplies all 187. S010 is also 31% of spend (inbound volume × unit price; 40 materials have no price and are excluded)." The exclusion is always stated. **Needs:** a deterministic skill so the tool choice is not left to the model; "riskiest supplier" replies with both orderings, named: exposure (sole-source count) and criticality (demand at risk, N1).
+
+**N5 · Dependencies — Partly.** Relations come from the relation tools, complete lists (the 187-material case, §19.6). "Which products are affected if S001 is lost" is N1's stored `products_affected` and sole-source list plus the BOM walk; it is structural ("depend on"), not "will stock out" — that is S1. **Needs:** a skill for the impact-trace question; the rest stays with the tools.
+
+**N6 · Structure — Not at all.** Node and edge counts by echelon (`node_list.echelon`, `get_network_summary`), suppliers per material (inbound lanes), BOM depth (`bom_depth`), isolated nodes (degree 0 in the stored metrics). *Refused:* density, diameter, clustering — not stored; said so, never computed in the reply. **Needs:** a small read tool and a skill.
+
+**N7 · Is the analysis current? — Not at all.** For each analysis kind: last succeeded run, its level, graph version and date, and whether the project's current hash for that level equals the run's input hash (`project_graph_state`). *Example:* "Critical nodes: 2026-11-03, current. Product metrics: 2026-10-20, **out of date** — the process-level data changed on 2026-11-01. Re-run it on the Product-level page." "Fallback" → the page read the value from the entity column because the store had no result; the reply says which. The chat does not start an analysis (no card type exists for it); it names the page. **Needs:** `get_analysis_status` read tool and a skill; every N-family answer reuses it for its provenance line.
+
+**N8 · Network ↔ simulation — Not at all.** A composition, not a new rule. "Simulate losing my most critical supplier": N1 names it (with provenance) → the user is shown what will be simulated and asked for the missing start and duration as numbered options (default: the nexus scenario's own start week and 4 weeks) → S1. "Does the stress test agree with the ranking": both lists side by side, top 10, with the overlap counted — no correlation statistic is invented. "Top 3 all fail": one what-if with three events (≤ 5 allowed). *Refused:* answering the simulation question from the static score.
+
+**D1 · Entities, policies, data — Partly.** The §19 tools, unchanged. "Where does this number come from / is it a default" is the Trust Report's read (C30), which is not registered in the chat: **needs** registration as a read tool. Write asks ("fill the missing costs", "set safety stock") go to the owning agent where enabled; where not, the reply names the page and says the assistant cannot change data here.
+
+**K1 · How-to — Handled.** Cited passages from the manual, the engine reference and the registry; refusal when no passage covers it.
+
+**X1 · Cannot be answered — refusal must be deterministic.** Industry benchmarks, live world events, company facts not in the project, other projects, general programming: one fixed reply — what the tool does not hold, and the nearest thing it does (e.g. for "good fill rate": the project's own baseline fill rate, with its run). Never general knowledge dressed as an answer.
+
+### 28.4 Build order proposed for step 4 (by how often the gap is hit)
+
+| # | Package | Closes | New code (reusing which rule) |
+|---|---|---|---|
+| A.1 | **Network reads + provenance** | N1, N2, N3, N6, N7 | Read tools `get_critical_nodes`, `get_network_metrics`, `get_analysis_status` over the existing store RPCs; skills `critical`, `centrality`, `network`. No metric is computed in the chat. |
+| A.2 | **Model skill** | S9; labels in S7, S11 (§27.9) | `skills/model.ts` over `resolveModelContext`; `setup`/`explain` label their run. |
+| A.3 | **Guard skills** | S14, S15, X1 | Deterministic recognisers with fixed replies and the next step. |
+| A.4 | **Significance and status** | S8, S12 | Skills over the existing paired statistics and `runLiveness`. |
+| A.5 | **Stress read and the bridge** | S13, N8 | Read tool over `get_nexus_stress_results`; N8 as composition of A.1 and the what-if. |
+| A.6 | **Provenance** | S16 | `reproducibilityRecord`'s rule to `_shared/`, read tool, skill. |
+| A.7 | **Policy and demand what-if** | S4, S5 | A policy version per arm; exploratory by rule. The largest package; needs the owner decision below. |
+| A.8 | **Concentration, impact trace, trust read** | N4, N5, D1 | Skills over existing tools; register the Trust Report read. |
+| A.9 | **Benchmark, mutations, §27.9** | step 5, step 6 | Every catalog question on four stub projects (validated, no model, drifted, network-heavy); the rehearsal if a PostgreSQL 16 is available; B9 under §27. |
+
+### 28.5 Owner decisions needed before step 4
+
+1. **"Most critical" (N1).** Recommended: **demand at risk** is the one meaning of "critical"; sole-source count is reported as "exposure" and never ranks first under the word "critical". The alternative is to keep today's ordering.
+2. **Policy what-if (S4).** Options: **1.** the chat may file a card that saves a new policy version AND runs it as exploratory (needs the Policy Configurator enabled in production); **2.** the chat only runs policy versions the user has already saved, and explains how to save one (recommended first step: no new write path); **3.** leave S4 as a refusal with instructions.
+3. **Starting a network analysis from the chat (N7).** Recommended: no — the chat names the page; analyses are free and one click there, and a new card type is not worth it. The alternative is an approval card for it.
+4. **Stale analysis (N1, N2).** Recommended: answer from the stale result with a clear "out of date" line and the fix, rather than refuse — unlike a simulation, nothing is run on the stale basis. The alternative is to refuse until re-run.
+5. **Build order.** A.1 first (the network families are the largest "not at all" block), or A.7 first if policy what-ifs are asked more often in practice.
