@@ -18,6 +18,7 @@ import { matchSkill } from "../skills/index.ts";
 import { runSkillTurn } from "../skills/runner.ts";
 import { makeRequestBudget } from "../budgets.ts";
 import { validatedProject } from "./harness/model_fixture.ts";
+import { networkProject } from "./harness/network_fixture.ts";
 
 interface Task {
   id: string;
@@ -27,7 +28,7 @@ interface Task {
   history?: Array<{ role: string; content: string }>;
   note?: string;
   /** §27: the project's state — default a validated project in force. */
-  project?: "no_model" | "drifted";
+  project?: "no_model" | "drifted" | "network" | "network_stale" | "network_none" | "network_firm";
 }
 
 const PROJECT = "11111111-1111-4111-8111-111111111111";
@@ -48,6 +49,11 @@ async function stubProject(variant?: Task["project"]): Promise<{ ctx: ToolContex
   ];
   const rpcs = makeAgentRpcs(tables, { graphHash: variant === "drifted" ? "graph-hash-2" : "graph-hash-1" });
   rpcs.current_policy_hash = () => "ph-run";
+  // §28: the network-heavy project — analysed and current, analysed and stale,
+  // never analysed, or with a deep-tier firm network as well.
+  if (variant?.startsWith("network")) {
+    networkProject(tables, rpcs, { analysed: variant !== "network_none", stale: variant === "network_stale", firm: variant === "network_firm" });
+  }
   const db = makeStubDb(tables, rpcs);
   return {
     tables,
@@ -60,8 +66,8 @@ async function stubProject(variant?: Task["project"]): Promise<{ ctx: ToolContex
   };
 }
 
-Deno.test("M.0 benchmark: 72 modeler tasks — right skill AND right outcome (gate: 100%)", async () => {
-  assert(tasks.length >= 72, `the benchmark holds ${tasks.length} tasks; §26.4 asks for 60`);
+Deno.test("M.0 benchmark: modeler and analyst tasks — right skill AND right outcome (gate: 100%)", async () => {
+  assert(tasks.length >= 114, `the benchmark holds ${tasks.length} tasks; §28 A.1 brought it to 114`);
   for (const k of ["AGENT_ENABLED_IDS", "AGENT_EXPERIMENT_TYPES", "CLOSED_LOOP_ENABLED"]) Deno.env.delete(k);
   Deno.env.set("AGENT_ENABLED_IDS", "experiment-designer");
   Deno.env.set("AGENT_EXPERIMENT_TYPES", "single,comparison");

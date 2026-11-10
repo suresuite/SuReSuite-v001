@@ -365,13 +365,16 @@ async function getSupplierRisk(args: Record<string, unknown>, ctx: ToolContext):
     });
 
     if (supplier) rows = rows.filter((r) => r.supplier.toLowerCase().includes(supplier));
-    // Rank: most sole-sourced exposure first, then criticality score, then spend.
+    // Rank by EXPOSURE: most sole-sourced first, then demand at risk, then
+    // spend. "Most critical" is get_critical_nodes' ranking (§28 decision 1);
+    // the declaration's wording is pinned by the flags-off golden transcripts,
+    // so the distinction is stated in the COLUMNS and in get_critical_nodes.
     rows.sort((x, y) => y.sole - x.sole || (y.score ?? 0) - (x.score ?? 0) || y.spend - x.spend);
     rows = rows.slice(0, topN);
     if (rows.length === 0) return empty("get_supplier_risk");
 
     return envelope("get_supplier_risk", "table", {
-      columns: ["Supplier", "Critical", "Score", "# Materials", "# Sole-sourced", "Avg Lead Time", "Spend"],
+      columns: ["Supplier", "Nexus", "Demand at risk", "# Materials", "# Sole-sourced", "Avg Lead Time", "Spend"],
       rows: rows.map((r) => [
         r.supplier,
         r.critical,

@@ -70,3 +70,45 @@
 {"id": "mt-70", "utterance": "how do I mitigate an S1 outage in weeks 22-25?", "expect_skill": "mitigation", "expect_outcome": "needs_choice", "project": "drifted", "note": "\u00a727 row 9"}
 {"id": "mt-71", "utterance": "how do I mitigate an S1 outage in weeks 22-25?", "expect_skill": "mitigation", "expect_outcome": "no_model", "project": "no_model"}
 {"id": "mt-72", "utterance": "what did the last run show?", "expect_skill": "results", "expect_outcome": "brief", "project": "no_model", "note": "\u00a727 row 13"}
+{"id": "mt-73", "utterance": "which supplier is most critical?", "expect_skill": "critical", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-74", "utterance": "what are my critical nodes?", "expect_skill": "critical", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-75", "utterance": "top 5 critical suppliers", "expect_skill": "critical", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-76", "utterance": "is S1 critical?", "expect_skill": "critical", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-77", "utterance": "why is S2 a nexus node?", "expect_skill": "critical", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-78", "utterance": "how much demand is at risk if we lose Borealis?", "expect_skill": "critical", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-79", "utterance": "which material is the most critical?", "expect_skill": "critical", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-80", "utterance": "how many nexus nodes do I have?", "expect_skill": "critical", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-81", "utterance": "what does critical mean here?", "expect_skill": "critical", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-82", "utterance": "is S999 critical?", "expect_skill": "critical", "expect_outcome": "node_not_found", "project": "network"}
+{"id": "mt-83", "utterance": "which supplier is most critical?", "expect_skill": "critical", "expect_outcome": "answered_stale", "project": "network_stale"}
+{"id": "mt-84", "utterance": "which supplier is most critical?", "expect_skill": "critical", "expect_outcome": "no_analysis", "project": "network_none"}
+{"id": "mt-85", "utterance": "is S1 critical?", "expect_skill": "critical", "expect_outcome": "no_analysis", "project": "network_none"}
+{"id": "mt-86", "utterance": "which node is most central?", "expect_skill": "centrality", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-87", "utterance": "who's the biggest hub in my network?", "expect_skill": "centrality", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-88", "utterance": "betweenness of S2", "expect_skill": "centrality", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-89", "utterance": "top 10 by eigenvector centrality", "expect_skill": "centrality", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-90", "utterance": "which material is the bottleneck?", "expect_skill": "centrality", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-91", "utterance": "which supplier connects the most products?", "expect_skill": "centrality", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-92", "utterance": "rank customers by weighted degree", "expect_skill": "centrality", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-93", "utterance": "what's the closeness of P1?", "expect_skill": "centrality", "expect_outcome": "answered", "project": "network"}
+{"id": "mt-94", "utterance": "most prominent firms in my network", "expect_skill": "centrality", "expect_outcome": "no_firm_network", "project": "network"}
+{"id": "mt-95", "utterance": "most prominent firms in my network", "expect_skill": "centrality", "expect_outcome": "answered", "project": "network_firm"}
+{"id": "mt-96", "utterance": "which tier-2 firms matter most by prominence?", "expect_skill": "centrality", "expect_outcome": "answered", "project": "network_firm"}
+{"id": "mt-97", "utterance": "who's the biggest hub in my network?", "expect_skill": "centrality", "expect_outcome": "answered_stale", "project": "network_stale"}
+{"id": "mt-98", "utterance": "who's the biggest hub in my network?", "expect_skill": "centrality", "expect_outcome": "no_analysis", "project": "network_none"}
+{"id": "mt-99", "utterance": "what's the pagerank of my nodes?", "expect_skill": "centrality", "expect_outcome": "unsupported_metric", "project": "network"}
+{"id": "mt-100", "utterance": "is my network dense or sparse?", "expect_skill": "centrality", "expect_outcome": "unsupported_metric", "project": "network"}
+{"id": "mt-101", "utterance": "what is the clustering coefficient of my supply chain network?", "expect_skill": "centrality", "expect_outcome": "unsupported_metric", "project": "network"}
+{"id": "mt-102", "utterance": "are the network metrics up to date?", "expect_skill": "network", "expect_outcome": "current", "project": "network"}
+{"id": "mt-103", "utterance": "when were critical nodes last computed?", "expect_skill": "network", "expect_outcome": "current", "project": "network"}
+{"id": "mt-104", "utterance": "I uploaded new data \u2014 do I need to re-run the analysis?", "expect_skill": "network", "expect_outcome": "stale", "project": "network_stale"}
+{"id": "mt-105", "utterance": "are the centralities stale?", "expect_skill": "network", "expect_outcome": "stale", "project": "network_stale"}
+{"id": "mt-106", "utterance": "are the network metrics up to date?", "expect_skill": "network", "expect_outcome": "never_run", "project": "network_none"}
+{"id": "mt-107", "utterance": "how big is my network?", "expect_skill": "network", "expect_outcome": "counted", "project": "network"}
+{"id": "mt-108", "utterance": "how many tiers do I have?", "expect_skill": "network", "expect_outcome": "counted", "project": "network"}
+{"id": "mt-109", "utterance": "how many suppliers per material on average?", "expect_skill": "network", "expect_outcome": "counted", "project": "network"}
+{"id": "mt-110", "utterance": "are there isolated nodes?", "expect_skill": "network", "expect_outcome": "counted", "project": "network"}
+{"id": "mt-111", "utterance": "what is betweenness centrality?", "expect_skill": "howto"}
+{"id": "mt-112", "utterance": "how many materials do we have?", "expect_skill": null}
+{"id": "mt-113", "utterance": "why does my model say stale?", "expect_skill": null}
+{"id": "mt-114", "utterance": "simulate losing my most critical supplier", "expect_skill": null, "note": "a run ask is never answered from the static score"}

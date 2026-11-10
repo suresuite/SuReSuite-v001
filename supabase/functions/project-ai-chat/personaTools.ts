@@ -26,6 +26,7 @@ import { getDataCompletenessDeclaration } from "./draftTools.ts";
 import { getPolicyCatalogDeclaration, getPolicyConfigDeclaration } from "./configuratorTools.ts";
 import { getRunResultsDeclaration, getValidationStatusDeclaration } from "./vvTools.ts";
 import { getProjectMemoryDeclaration, memoryEnabled } from "./memory.ts";
+import { networkToolDeclarations } from "./networkTools.ts";
 
 /** The complete persona read surface for this deployment's flag state. */
 export function personaToolDeclarations(): ReadonlyArray<ToolDeclaration> {
@@ -40,6 +41,9 @@ export function personaToolDeclarations(): ReadonlyArray<ToolDeclaration> {
     getDataCompletenessDeclaration,
     getValidationStatusDeclaration,
     getRunResultsDeclaration,
+    // §28 A.1: the stored network analyses (critical nodes, centralities,
+    // their freshness, counts) — reads of the analysis store, never computed.
+    ...networkToolDeclarations,
     // §14.4: project memory joins every surface when M2 is on.
     ...(memoryEnabled() ? [getProjectMemoryDeclaration] : []),
   ];
