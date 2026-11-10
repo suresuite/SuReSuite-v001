@@ -139,7 +139,7 @@ export const mitigationSkill: Skill = {
       };
     }
     if (states.some((s) => s.state === "pending")) {
-      return { reply: `The mitigation study for ${what} is running. ${progressLine(arms, states)}`, parts: [], calls, outcome: "in_progress" };
+      return { reply: `The mitigation study for ${what} is running. ${progressLine(arms, states)}`, parts: [], calls, outcome: "in_progress", pendingRunIds: states.flatMap((s) => (s.state === "pending" ? [s.runId] : [])) };
     }
     // MISS (some or all arms): one study card.
     const comparisonOn = experimentTypesEnabled().includes("comparison");
@@ -171,6 +171,7 @@ export const mitigationSkill: Skill = {
       calls,
       proposal,
       outcome: "proposed",
+      ...(subject.from === "history" ? { subjectText: subject.text } : {}),
     };
   },
 };

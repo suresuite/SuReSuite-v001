@@ -128,7 +128,7 @@ export const sensitivitySkill: Skill = {
       };
     }
     if (states.some((s) => s.state === "pending")) {
-      return { reply: `The ${factorWords} sweep is running. ${progressLine(arms, states)}`, parts: [], calls, outcome: "in_progress" };
+      return { reply: `The ${factorWords} sweep is running. ${progressLine(arms, states)}`, parts: [], calls, outcome: "in_progress", pendingRunIds: states.flatMap((s) => (s.state === "pending" ? [s.runId] : [])) };
     }
     if (!opts.canDraft || !experimentTypesEnabled().includes("comparison")) {
       return {
@@ -154,6 +154,7 @@ export const sensitivitySkill: Skill = {
           : ` ${prep.modeNote ?? "Exploratory — not a validated result."}`) +
         (prep.defaults.length ? ` I assumed ${prep.defaults.join(", ")}.` : ""),
       parts: [{ kind: "proposal", data: proposal }], calls, proposal, outcome: "proposed",
+      ...(subject.from === "history" ? { subjectText: subject.text } : {}),
     };
   },
 };

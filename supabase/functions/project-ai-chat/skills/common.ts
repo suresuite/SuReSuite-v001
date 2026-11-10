@@ -55,6 +55,14 @@ export interface SkillResult {
    * interpretation is appended to `reply`. */
   leadWithInterpretation?: boolean;
   footer?: string;
+  /** The earlier user message the subject came from, when it was not this
+   * one ("how do I mitigate it?" after a what-if). The plan stores it with
+   * the question, so the resume — which has no conversation — still knows
+   * what "it" was (§10 entry 38(ak)). */
+  subjectText?: string;
+  /** Runs of a multi-arm study still running: a resume that finds the study
+   * unfinished waits on one of them instead of failing the answer. */
+  pendingRunIds?: string[];
 }
 
 export interface Skill {

@@ -10,7 +10,8 @@ import { makeAgentRpcs, makeStubDb, type Row } from "./harness/stub_db.ts";
 import type { ToolContext } from "../tools.ts";
 import "../agentTurn.ts"; // registers the handlers, as index.ts does
 import { matchSkill, SKILLS, type SkillId } from "../skills/index.ts";
-import { closeSkillPlan, runSkillTurn, parseSkillNote, skillNote } from "../skills/runner.ts";
+import { closeSkillPlan, parseSkillNote, resumeInput, runSkillTurn, skillNote, waitSkillPlanOn } from "../skills/runner.ts";
+import { mitigationSkill } from "../skills/mitigation.ts";
 import { runResumePreStep } from "../planTools.ts";
 import { ciHalfWidth95, mean, pairedDelta, std, tCritical95 } from "../skills/common.ts";
 import * as browserStats from "../../../../src/lib/sim/stats.ts";
@@ -364,7 +365,73 @@ Deno.test("M.3 note round-trip: skill id + question fit the 200-char note", () =
   const n = skillNote("mitigation", long);
   assert(n.length <= 200);
   assertEquals(parseSkillNote(n)?.skillId, "mitigation");
+  // With a long subject both still fit, the subject first, the question's
+  // recognizable start kept.
+  const m = skillNote("mitigation", long, "what if supplier S1 is down at week 22 for 4 weeks ".repeat(5));
+  assert(m.length <= 200, String(m.length));
+  const r = parseSkillNote(m)!;
+  assert(r.utterance.startsWith("how do I mitigate"), r.utterance);
+  assert(r.subject!.startsWith("what if supplier S1"), String(r.subject));
 });
+
+Deno.test("38(ak) a follow-up study resumes with its subject: the plan note keeps the earlier what-if, and arms still running WAIT rather than fail", () =>
+  withEnv({ ...DESIGNER, CHAT_STORE_ENABLED: "true", PLAN_TOOL_ENABLED: "true" }, async () => {
+    const h = await harness();
+    // Production 2026-11-10: the question named no disruption — its subject
+    // was the what-if two messages earlier.
+    const whatIf = "what if disruption with S1 at week 22 and duration of 4 weeks";
+    const ask = "how could i mitigate the impact of the disruption?";
+    const { turn } = await run(ask, h, [{ role: "user", content: whatIf }, { role: "assistant", content: "…" }]);
+    assertEquals(turn.result.outcome, "proposed", turn.reply);
+    const plan = h.tables.chat_plans[0] as Record<string, unknown>;
+    const note = String((plan.steps as Array<Record<string, unknown>>)[2].note);
+    assert(note.length <= 200, note);
+    const ref = parseSkillNote(note)!;
+    assertEquals([ref.skillId, ref.utterance, ref.subject], ["mitigation", ask, whatIf]);
+
+    // The card is approved: every arm is dispatched and still running.
+    const proposal = h.tables.proposals[0];
+    const before = new Set(h.tables.simulation_runs.map((r) => String(r.id)));
+    const applied = await applyExperimentSpec(h.db, { upstash: () => Promise.resolve("ok") }, {
+      projectId: PROJECT, payload: proposal.payload as Record<string, unknown>,
+      grounding: proposal.grounding as Record<string, unknown>, userId: USER,
+    });
+    proposal.status = "applied";
+    proposal.applied_result = { run_id: applied.run_id };
+    // The arm the plan binds (the last) finished first; the others still run.
+    for (const r of h.tables.simulation_runs.filter((x) => !before.has(String(x.id)))) {
+      Object.assign(r, String(r.id) === applied.run_id
+        ? { status: "done", rep_count_done: 3, rep_count_target: 3 }
+        : { status: "running", rep_count_done: 1, rep_count_target: 3 });
+    }
+    const outcome = await runResumePreStep(h.db, { planId: String(plan.id), userId: USER });
+    assertEquals(outcome.kind, "run_done", JSON.stringify(outcome));
+    if (outcome.kind !== "run_done") return;
+    // The resume has NO conversation — only what the plan stored.
+    const input = resumeInput(ref);
+    const match = mitigationSkill.recognize(input);
+    assert((match as { subject: unknown }).subject, "the subject is recovered from the note, not asked for again");
+    const resumed = await runSkillTurn({
+      skill: mitigationSkill, match, input,
+      opts: { canDraft: false, enabledAgents: ["experiment-designer"] },
+      ctx: h.ctx, modelId: "gpt-5", personaId: null, budget: makeRequestBudget(), verifierOn: false, projectId: PROJECT, resuming: true,
+    });
+    assert(!resumed.reply.includes("Which disruption"), resumed.reply);
+    assertEquals(resumed.result.outcome, "in_progress", resumed.reply);
+    const pending = resumed.result.pendingRunIds ?? [];
+    assert(pending.length > 0, "the unfinished arms are named");
+
+    // The plan waits on an unfinished arm; the answer is NOT failed.
+    assert(!pending.includes(String(applied.run_id)), "a finished arm is not waited on");
+    const part = await waitSkillPlanOn(h.ctx, outcome.plan as unknown as { id: string; steps: Array<Record<string, unknown>> }, outcome.stepId, pending[0]);
+    const steps = (part!.data as { steps: Array<{ id: string; status: string; ref?: { run_id?: string } }> }).steps;
+    assertEquals(steps.map((st) => `${st.id}:${st.status}`), ["check:done", "run:awaiting_run", "answer:pending"]);
+    assertEquals(steps[1].ref?.run_id, pending[0]);
+
+    // A note with no subject still parses (plans filed before 38(ak)).
+    assertEquals(parseSkillNote("skill:mitigation|how do I mitigate it?")?.subject, null);
+    assertEquals(resumeInput({ utterance: "q", subject: null }).history, []);
+  }));
 
 Deno.test("38(ah) Retry rebind: a failed first apply, then a successful Retry ⇒ the resume APPENDS a step on the new run and the skill closes the plan", () =>
   withEnv({ ...DESIGNER, CHAT_STORE_ENABLED: "true", PLAN_TOOL_ENABLED: "true" }, async () => {
