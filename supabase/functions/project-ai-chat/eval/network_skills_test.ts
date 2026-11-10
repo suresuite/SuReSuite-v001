@@ -77,10 +77,11 @@ Deno.test("A.1 recognition: network questions reach the network skills; others d
     ["are there isolated nodes?", "network"],
     // not network reads
     ["what is betweenness centrality?", "howto"],
-    ["what if my most critical supplier fails for 4 weeks", "whatif"],
-    // a RUN ask is never answered from the static score (N8 composes it, A.5)
-    ["simulate losing my most critical supplier", null],
-    ["stress test my most central node", null],
+    ["what if my most critical supplier fails for 4 weeks", "criticalwhatif"],
+    // a RUN ask is never answered from the static score: N8 names the node,
+    // then the what-if loop (or the stored stress test) answers it
+    ["simulate losing my most critical supplier", "criticalwhatif"],
+    ["stress test my most central node", "stress"],
     ["why does my model say stale?", "model"],
     ["who are our suppliers?", null],
     ["how many materials do we have?", null],

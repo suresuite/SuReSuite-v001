@@ -14,7 +14,9 @@
 //                          `network_metrics` run for the centralities;
 //   get_analysis_status    every analysis kind: when it last ran, on which
 //                          level, and whether the data has moved since;
-//   get_network_structure  node and lane counts — counts of stored rows.
+//   get_network_structure  node and lane counts — counts of stored rows;
+//   get_stress_results     the stored nexus stress test (a SIMULATED ranking)
+//                          through `get_nexus_stress_results`, the card's read.
 //
 // "Current" is never decided here. It is the database's rule
 // (`analysis_current_run` / `analysis_run_is_current`, PLAN.md §4 D238): a run
@@ -518,10 +520,87 @@ async function getNetworkStructure(_args: Record<string, unknown>, ctx: ToolCont
   }
 }
 
+// ── get_stress_results ──────────────────────────────────────────────────────
+
+export const getStressResultsDeclaration: ToolDeclaration = {
+  name: "get_stress_results",
+  description:
+    "Read the project's STORED nexus stress test: a SIMULATED ranking of every supplier and purchased material by the lost sales (EUR) a delivery delay of 2-9 weeks causes, run on a Validated Model. Returns rows ranked by average lost sales, with the model, policy version, data version, replications and engine build it ran on, and whether the data or the model has changed since. Use for 'rank suppliers by simulated impact', 'what did the stress test show', 'which supplier hurts most if delayed'. It never starts a battery (that is the Simulation Lab's stress card) and computes nothing.",
+  parameters: {
+    type: "object",
+    properties: {
+      kind: { type: "string", description: "'supplier' (default) or 'material'." },
+      node: { type: "string", description: "Optional supplier or material id fragment." },
+      duration_weeks: { type: "number", description: "Optional: also show the lost sales for this delay length." },
+      top_n: { type: "number", description: "Rows to return (1-50). Default 10." },
+    },
+  },
+};
+
+async function getStressResults(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolEnvelope> {
+  const tool = "get_stress_results";
+  const db = dbOf(ctx);
+  const kind = String(args.kind ?? "supplier").toLowerCase().startsWith("mat") ? "material" : "supplier";
+  const topN = clampN(args.top_n, 10, 1, 50);
+  const node = args.node ? String(args.node).trim() : "";
+  const weeks = num(args.duration_weeks);
+  try {
+    const { data, error } = await db.rpc("get_nexus_stress_results", { p_project_id: ctx.projectId, p_user_id: ctx.userId });
+    if (error) return failed(tool, "the stress test results");
+    const r = (data ?? {}) as Any;
+    if (!r.run_id) {
+      return envelope(tool, "text",
+        `No stress test has been run for this project, so there is no simulated ranking to read. It runs on a Validated Model from ${ANALYSIS_PAGE.nexus_stress}. Do not present a static network score as a simulated impact.`,
+        0, "no_analysis");
+    }
+    const all = ((kind === "material" ? r.materials : r.suppliers) ?? []) as Any[];
+    let rows = all;
+    const names = await namesOf(ctx, all.map((x) => String(x.id)));
+    if (node) rows = rows.filter((x) => matches(node, String(x.id), names.get(String(x.id)) ?? ""));
+    if (rows.length === 0) {
+      return envelope(tool, "text",
+        node ? `"${node}" is not a ${kind} in the stress test (${all.length} ${kind}s were tested).` : `The stress test holds no ${kind} rows.`,
+        0, node ? "node_not_found" : "empty");
+    }
+    const shown = rows.slice(0, topN);
+    const b = (r.baseline ?? {}) as Any;
+    const sm = (r.summary ?? {}) as Any;
+    const sc = (r.scenario ?? {}) as Any;
+    const cell = (x: Any): number | null => (weeks === null ? null : num(x.by_duration?.[String(weeks)]?.mean));
+    const stress = {
+      run_id: String(r.run_id), computed_at: day(r.finished_at), engine_build: r.code_version ? String(r.code_version) : null,
+      model: [b.model_code, b.model_name].filter(Boolean).join(" · ") || null,
+      policy_version: b.policy_version_code ?? (b.policy_version_no != null ? `v${b.policy_version_no}` : null),
+      data_version: b.dataset_version_no != null ? `v${b.dataset_version_no}` : null,
+      replications: num(sm.replications), seed: num(sm.seed),
+      durations_weeks: Array.isArray(sc.durations_weeks) ? sc.durations_weeks : [],
+      start_week: num(sm.start_week) ?? num(sc.start_week), effect: sc.effect ? String(sc.effect) : null,
+      data_is_current: Boolean(r.data_is_current), model_is_active: Boolean(r.model_is_active),
+      tested: all.length, kind,
+    };
+    return envelope(tool, "table", {
+      columns: ["Rank", kind === "material" ? "Material" : "Supplier", "Name", "Average lost sales (EUR)", ...(weeks !== null ? [`${weeks}-week delay (EUR)`] : [])],
+      rows: shown.map((x) => [
+        num(x.rank) ?? "-", String(x.id), names.get(String(x.id)) ?? "-", Math.round(num(x.average_eur) ?? 0),
+        ...(weeks !== null ? [cell(x) === null ? "-" : Math.round(cell(x) as number)] : []),
+      ]),
+      nodes: shown.map((x) => ({
+        node_id: String(x.id), name: names.get(String(x.id)) ?? null, rank: num(x.rank), average_eur: num(x.average_eur),
+        at_duration_eur: cell(x), zero_reason: x.zero_reason ?? null,
+      })),
+      stress,
+    }, shown.length, stress.data_is_current && stress.model_is_active ? undefined : "stale");
+  } catch (e) {
+    console.warn("get_stress_results failed:", (e as Error).message);
+    return failed(tool, "the stress test results");
+  }
+}
+
 registerToolHandler("get_critical_nodes", getCriticalNodes);
 registerToolHandler("get_network_metrics", getNetworkMetrics);
 registerToolHandler("get_analysis_status", getAnalysisStatus);
 registerToolHandler("get_network_structure", getNetworkStructure);
+registerToolHandler("get_stress_results", getStressResults);
 
 /** The persona read surface gains these (personaTools.ts, §19.3's exposure law). */
 export const networkToolDeclarations: ReadonlyArray<ToolDeclaration> = [
@@ -529,4 +608,5 @@ export const networkToolDeclarations: ReadonlyArray<ToolDeclaration> = [
   getNetworkMetricsDeclaration,
   getAnalysisStatusDeclaration,
   getNetworkStructureDeclaration,
+  getStressResultsDeclaration,
 ];

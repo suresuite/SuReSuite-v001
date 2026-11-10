@@ -111,7 +111,7 @@
 {"id": "mt-111", "utterance": "what is betweenness centrality?", "expect_skill": "howto"}
 {"id": "mt-112", "utterance": "how many materials do we have?", "expect_skill": null}
 {"id": "mt-113", "utterance": "why does my model say stale?", "expect_skill": "model", "expect_outcome": "stale", "project": "drifted"}
-{"id": "mt-114", "utterance": "simulate losing my most critical supplier", "expect_skill": null, "note": "a run ask is never answered from the static score"}
+{"id": "mt-114", "utterance": "simulate losing my most critical supplier", "expect_skill": "criticalwhatif", "note": "N8: the node is named from the stored analysis; timing is asked, nothing is drafted", "expect_outcome": "needs_timing", "project": "network"}
 {"id": "mt-115", "utterance": "which validated model am I using?", "expect_skill": "model", "expect_outcome": "in_force"}
 {"id": "mt-116", "utterance": "is my model valid?", "expect_skill": "model", "expect_outcome": "in_force"}
 {"id": "mt-117", "utterance": "is my model valid?", "expect_skill": "model", "expect_outcome": "no_model", "project": "no_model"}
@@ -146,3 +146,35 @@
 {"id": "mt-146", "utterance": "estimate the holding cost for MAT-4", "expect_skill": null}
 {"id": "mt-147", "utterance": "what is TTR?", "expect_skill": "howto"}
 {"id": "mt-148", "utterance": "what if S1 goes down at week 4 for 6 weeks?", "expect_skill": "whatif"}
+{"id": "mt-149", "utterance": "is that difference significant?", "expect_skill": "significance", "expect_outcome": "resolved"}
+{"id": "mt-150", "utterance": "how confident are you in that number?", "expect_skill": "significance", "expect_outcome": "resolved"}
+{"id": "mt-151", "utterance": "why is the interval so wide?", "expect_skill": "significance", "expect_outcome": "resolved"}
+{"id": "mt-152", "utterance": "is 0.91 vs 0.93 a real improvement?", "expect_skill": "significance", "expect_outcome": "resolved"}
+{"id": "mt-153", "utterance": "do I need more replications to tell them apart?", "expect_skill": "significance", "expect_outcome": "resolved"}
+{"id": "mt-154", "utterance": "can I trust a run with 5 replications?", "expect_skill": "significance", "expect_outcome": "resolved"}
+{"id": "mt-155", "utterance": "are these two runs comparable?", "expect_skill": "significance", "expect_outcome": "resolved"}
+{"id": "mt-156", "utterance": "is my run done?", "expect_skill": "status", "expect_outcome": "idle"}
+{"id": "mt-157", "utterance": "why is my run stuck in queued?", "expect_skill": "status", "expect_outcome": "idle"}
+{"id": "mt-158", "utterance": "how long will it take?", "expect_skill": "status", "expect_outcome": "idle"}
+{"id": "mt-159", "utterance": "cancel that run", "expect_skill": "status", "expect_outcome": "idle"}
+{"id": "mt-160", "utterance": "what's running right now?", "expect_skill": "status", "expect_outcome": "idle"}
+{"id": "mt-161", "utterance": "did the study finish?", "expect_skill": "status", "expect_outcome": "idle"}
+{"id": "mt-162", "utterance": "compare runs 99999999 and 99999999", "expect_skill": "results"}
+{"id": "mt-163", "utterance": "what did the nexus stress test show?", "expect_skill": "stress", "expect_outcome": "answered", "project": "network_stress"}
+{"id": "mt-164", "utterance": "rank suppliers by simulated impact", "expect_skill": "stress", "expect_outcome": "answered", "project": "network_stress"}
+{"id": "mt-165", "utterance": "which supplier hurts most if it's delayed 4 weeks?", "expect_skill": "stress", "expect_outcome": "answered", "project": "network_stress"}
+{"id": "mt-166", "utterance": "which material delay costs the most lost sales in the stress test?", "expect_skill": "stress", "expect_outcome": "answered", "project": "network_stress"}
+{"id": "mt-167", "utterance": "has the stress battery been run on the current model?", "expect_skill": "stress", "expect_outcome": "answered", "project": "network_stress"}
+{"id": "mt-168", "utterance": "stress test all my suppliers", "expect_skill": "stress", "expect_outcome": "answered", "project": "network_stress"}
+{"id": "mt-169", "utterance": "run ST-1", "expect_skill": "stress", "expect_outcome": "no_battery", "project": "network"}
+{"id": "mt-170", "utterance": "what did the stress test show?", "expect_skill": "stress", "expect_outcome": "answered_stale", "project": "network_stress_stale"}
+{"id": "mt-171", "utterance": "what did the stress test show?", "expect_skill": "stress", "expect_outcome": "no_battery", "project": "network"}
+{"id": "mt-172", "utterance": "does the stress test agree with the critical-node ranking?", "expect_skill": "stress", "expect_outcome": "answered", "project": "network_stress"}
+{"id": "mt-173", "utterance": "is the most central supplier also the worst in simulation?", "expect_skill": "stress", "expect_outcome": "answered", "project": "network_stress"}
+{"id": "mt-174", "utterance": "what horizon should I choose for a stress test?", "expect_skill": "setup"}
+{"id": "mt-175", "utterance": "what if my most critical supplier is down for 4 weeks from week 22?", "expect_skill": "criticalwhatif", "expect_outcome": "proposed", "project": "network"}
+{"id": "mt-176", "utterance": "what if my top 2 critical suppliers fail at week 22 for 4 weeks", "expect_skill": "criticalwhatif", "expect_outcome": "proposed", "project": "network"}
+{"id": "mt-177", "utterance": "simulate losing my most critical supplier", "expect_skill": "criticalwhatif", "expect_outcome": "no_analysis", "project": "network_none"}
+{"id": "mt-178", "utterance": "what happens if our biggest hub goes down for 3 weeks from week 20?", "expect_skill": "criticalwhatif", "expect_outcome": "proposed", "project": "network"}
+{"id": "mt-179", "utterance": "what if my most critical supplier is down for 4 weeks from week 22?", "expect_skill": "criticalwhatif", "expect_outcome": "no_model", "project": "network_nomodel"}
+{"id": "mt-180", "utterance": "which supplier is most critical?", "expect_skill": "critical", "expect_outcome": "answered", "project": "network_stress"}

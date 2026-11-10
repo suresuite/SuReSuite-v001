@@ -30,6 +30,8 @@ export interface NetworkOptions {
   stale?: boolean;
   /** true ⇒ a deep-tier firm network with stored metrics exists. */
   firm?: boolean;
+  /** A stored nexus stress battery: on the current data, or one the data has left behind. */
+  stress?: "current" | "stale";
 }
 
 const P = NET_PROJECT;
@@ -171,4 +173,24 @@ export function networkProject(t: Record<string, Row[]>, rpcs: Record<string, Rp
   } else {
     rpcs.get_network_nodes = () => [];
   }
+
+  // The stored nexus stress battery (a SIMULATED ranking): S1's delay costs the
+  // most lost sales — NOT the same supplier the static analysis ranks first.
+  const STRESS_RUN = "cccccccc-cccc-4ccc-8ccc-cccccccccc05";
+  rpcs.get_nexus_stress_results = () => {
+    if (!opts.stress) return { run_id: null };
+    const row = (id: string, rank: number, average_eur: number, w4: number) => ({
+      id, rank, average_eur, zero_reason: average_eur === 0 ? "absorbed" : null,
+      by_duration: { "2": { mean: w4 / 2 }, "4": { mean: w4 }, "9": { mean: w4 * 2 } },
+    });
+    return {
+      run_id: STRESS_RUN, finished_at: "2026-11-04T10:00:00Z", code_version: "scsim-2.4.1+ab12cd34ef56",
+      scenario: { durations_weeks: [2, 4, 9], start_week: 26, effect: "lead_time_extension", measure_unit: "EUR" },
+      summary: { replications: 30, seed: 42, start_week: 26, warmup_week: 12 },
+      baseline: { model_name: "Q4 baseline", model_code: "VM-3", policy_version_code: "PV-6", dataset_version_no: 12 },
+      data_is_current: opts.stress === "current", model_is_active: true,
+      suppliers: [row("S1", 1, 412000, 380000), row("S2", 2, 150500, 120000), row("S3", 3, 0, 0)],
+      materials: [row("MAT-4", 1, 300000, 250000), row("MAT-5", 2, 90000, 80000)],
+    };
+  };
 }

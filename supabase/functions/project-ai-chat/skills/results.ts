@@ -6,7 +6,7 @@
 // version — the CRN conditions — and otherwise says it is descriptive and
 // why (§9.3's rule, the comparability.ts posture: still compared, labelled).
 
-import { callTool, dbOf, fmt, runKindLabel, loadRecentRuns, loadRepKpis, loadRun, orderKpis, pairedDelta, runCi, scalarKpis, signed, type RunRow, type Skill, type SkillInput, type SkillResult } from "./common.ts";
+import { callTool, dbOf, fmt, runKindLabel, loadRecentRuns, loadRepKpis, loadRun, orderKpis, pairedDelta, runCi, scalarKpis, signed, type RunRow, type Skill, type SkillInput, type SkillResult, pairingOf } from "./common.ts";
 
 const RESULTS_WORDS =
   /\b(what\s+did\s+(?:the|my|our)\s+(?:last|latest|recent|previous)?\s*(?:run|simulation)s?\s+(?:show|say|find)|(?:results?|kpis?|outcome)\s+of\s+(?:the\s+|my\s+)?(?:last\s+|latest\s+)?(?:run|simulation)|summari[sz]e\s+(?:the\s+|my\s+)?(?:last\s+|latest\s+)?(?:run|simulation)|compare\s+(?:the\s+)?(?:last\s+two\s+)?runs?|(?:last|latest)\s+run(?:'s)?\s+results?)\b/i;
@@ -83,13 +83,7 @@ export const resultsSkill: Skill = {
     }
 
     const [a, b] = picked;
-    const paired = a.seed !== null && a.seed === b.seed && a.rep_count_done === b.rep_count_done &&
-      a.policy_version_id === b.policy_version_id;
-    const why = paired ? "" : [
-      a.seed === null || b.seed === null ? "a run does not record its seed" : a.seed !== b.seed ? "different seeds" : "",
-      a.rep_count_done !== b.rep_count_done ? "different replication counts" : "",
-      a.policy_version_id !== b.policy_version_id ? "different policy versions" : "",
-    ].filter(Boolean).join(", ");
+    const { paired, why } = pairingOf(a, b);
     const ka = scalarKpis(a);
     const kb = scalarKpis(b);
     const keys = orderKpis([...ka.keys()].filter((k) => kb.has(k)));
