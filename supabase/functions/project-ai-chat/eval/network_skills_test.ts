@@ -81,7 +81,7 @@ Deno.test("A.1 recognition: network questions reach the network skills; others d
     // a RUN ask is never answered from the static score (N8 composes it, A.5)
     ["simulate losing my most critical supplier", null],
     ["stress test my most central node", null],
-    ["why does my model say stale?", null],
+    ["why does my model say stale?", "model"],
     ["who are our suppliers?", null],
     ["how many materials do we have?", null],
   ];

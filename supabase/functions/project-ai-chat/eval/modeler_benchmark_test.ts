@@ -67,7 +67,7 @@ async function stubProject(variant?: Task["project"]): Promise<{ ctx: ToolContex
 }
 
 Deno.test("M.0 benchmark: modeler and analyst tasks — right skill AND right outcome (gate: 100%)", async () => {
-  assert(tasks.length >= 114, `the benchmark holds ${tasks.length} tasks; §28 A.1 brought it to 114`);
+  assert(tasks.length >= 148, `the benchmark holds ${tasks.length} tasks; §28 A.3 brought it to 148`);
   for (const k of ["AGENT_ENABLED_IDS", "AGENT_EXPERIMENT_TYPES", "CLOSED_LOOP_ENABLED"]) Deno.env.delete(k);
   Deno.env.set("AGENT_ENABLED_IDS", "experiment-designer");
   Deno.env.set("AGENT_EXPERIMENT_TYPES", "single,comparison");

@@ -21,6 +21,8 @@ import { readinessSkill } from "./readiness.ts";
 import { setupSkill } from "./setup.ts";
 import { explainSkill } from "./explain.ts";
 import { howtoSkill } from "./howto.ts";
+import { modelSkill } from "./model.ts";
+import { optimizeSkill, outOfScopeSkill, predictSkill } from "./guards.ts";
 import { centralitySkill, criticalSkill, networkSkill } from "./network.ts";
 
 export type { Skill, SkillId, SkillInput, SkillOptions, SkillResult } from "./common.ts";
@@ -89,9 +91,16 @@ export const SKILLS: readonly Skill[] = [
   networkSkill,
   criticalSkill,
   centralitySkill,
+  // §28 A.2 — questions about the Validated Model itself; before readiness,
+  // which keeps "can I run?".
+  modelSkill,
   readinessSkill,
   setupSkill,
   resultsSkill,
+  // §28 A.3 — the honest limits, after every skill that can actually answer.
+  optimizeSkill,
+  predictSkill,
+  outOfScopeSkill,
   howtoSkill,
 ];
 

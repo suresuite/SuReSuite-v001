@@ -18,6 +18,7 @@ import {
   type Skill,
   type SkillInput,
   type SkillResult,
+  runKindLabel,
 } from "./common.ts";
 
 const EXPLAIN_WORDS =
@@ -49,6 +50,8 @@ export const explainSkill: Skill = {
       return { reply: "There's no finished run to explain yet.", parts: [], calls, outcome: "no_runs" };
     }
     await callTool(calls, ctx, "get_run_results", { run_id: run.id });
+    // §27 row 13: say what kind of result is being explained.
+    const kind = await runKindLabel(dbOf(ctx), run);
     const schedule = run.disruption_schedule ?? [];
     const warm = run.warmup_detected_at;
     const events = schedule.map((e) => {
@@ -89,9 +92,9 @@ export const explainSkill: Skill = {
       ? keys.filter((key) => kb.has(key)).map((key) => `${key} ${fmt(k.get(key))} vs ${fmt(kb.get(key))} with no disruption (${signed((k.get(key) ?? 0) - (kb.get(key) ?? 0))})`).join("; ")
       : "";
     const timeline = events.length
-      ? `Run ${run.id.slice(0, 8)} simulated ${events.map((e) => `${e.target} ${e.effect}, weeks ${e.start}–${e.end}`).join("; ")}` +
+      ? `Run ${run.id.slice(0, 8)} (${kind}) simulated ${events.map((e) => `${e.target} ${e.effect}, weeks ${e.start}–${e.end}`).join("; ")}` +
         `${warm !== null ? `, measured from week ${warm}` : ""}.`
-      : `Run ${run.id.slice(0, 8)} has no disruption.`;
+      : `Run ${run.id.slice(0, 8)} (${kind}) has no disruption.`;
     return {
       reply: [
         timeline,

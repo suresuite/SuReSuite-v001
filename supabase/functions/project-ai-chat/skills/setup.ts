@@ -9,7 +9,7 @@ import registry from "../../_shared/registry.generated.json" with { type: "json"
 import { buildComputedBlock } from "../../_shared/vvEvidence.ts";
 import { loadEvidenceRun } from "../vvTools.ts";
 import { AGENT_REPLICATIONS_DEFAULT_CAP, AGENT_REPLICATIONS_HARD_CAP } from "../experimentTools.ts";
-import { callTool, dbOf, fmt, type Skill, type SkillInput, type SkillResult } from "./common.ts";
+import { callTool, dbOf, fmt, loadRun, runKindLabel, type Skill, type SkillInput, type SkillResult } from "./common.ts";
 
 const RUN_WINDOW = (registry as unknown as { run_window?: { analysis_window_weeks?: number; days_per_tick?: number } }).run_window ?? {};
 
@@ -36,6 +36,9 @@ export const setupSkill: Skill = {
       };
     }
     await callTool(calls, ctx, "get_run_results", { run_id: run.id });
+    // §27 row 13: say what kind of result the evidence is.
+    const full = await loadRun(dbOf(ctx), ctx.projectId, String(run.id));
+    const kind = full ? await runKindLabel(dbOf(ctx), full) : "run record not found";
     const computed = buildComputedBlock({ run, reps, findings: [] });
     const warmWeeks = Math.round(computed.adopted_warmup_days / 7);
     const window = Number(RUN_WINDOW.analysis_window_weeks ?? 52);
@@ -43,7 +46,7 @@ export const setupSkill: Skill = {
     const rows = per.map(([k, a]) => [k, fmt(a.mean), `± ${fmt(a.half)}`, `${fmt(a.rel * 100)}%`, String(a.n), String(a.n_star)]);
     const method = computed.warmup_method === "engine" ? "detected by the engine" : `estimated by ${computed.warmup_method === "welch" ? "Welch's method" : "MSER-5"}`;
     const advice = [
-      `From run ${run.id.slice(0, 8)} (${reps.length} replications): warm-up **${warmWeeks} weeks** (${computed.adopted_warmup_days} days, ${method}).`,
+      `From run ${run.id.slice(0, 8)} (${reps.length} replications; ${kind}): warm-up **${warmWeeks} weeks** (${computed.adopted_warmup_days} days, ${method}).`,
       `Replications: **${computed.recommended_replications}** reach ±${fmt(computed.replication_basis.target_precision * 100)}% precision at ${fmt(computed.replication_basis.confidence * 100)}% confidence on the focal KPIs` +
         (computed.adequacy_met ? " — this run already meets it." : " — this run does not yet."),
       `Horizon: at least **${warmWeeks + window} weeks** (warm-up + the engine's ${window}-week analysis window), plus the disruption and its recovery for a stress scenario.`,

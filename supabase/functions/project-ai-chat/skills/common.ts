@@ -24,6 +24,10 @@ export type SkillId =
   | "critical"
   | "centrality"
   | "network"
+  | "model"
+  | "optimize"
+  | "predict"
+  | "outofscope"
   | "capabilities";
 
 export interface SkillInput {

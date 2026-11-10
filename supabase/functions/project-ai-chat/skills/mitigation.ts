@@ -28,7 +28,7 @@ import {
 } from "./study.ts";
 
 const MITIGATION_WORDS =
-  /\b(mitigat\w*|recover(?:y|ies)?\s+(?:option|plan|strateg\w*|playbook\w*)|playbooks?|reduce\s+(?:the\s+)?(?:impact|damage|effect)|lessen\s+the\s+impact|(?:best|which)\s+(?:response|strategy|strategies|option)|how\s+(?:do|can|should)\s+(?:we|i)\s+(?:respond|handle|protect|recover|mitigate|cope)|what\s+should\s+(?:we|i)\s+do\s+about)\b/i;
+  /\b(mitigat\w*|recover(?:y|ies)?\s+(?:option|plan|strateg\w*|playbook\w*)|playbooks?|reduce\s+(?:the\s+)?(?:impact|damage|effect)|lessen\s+the\s+impact|(?:best|which|cheapest|least[-\s]cost(?:ly)?|most\s+cost[-\s]effective)\s+(?:response|strategy|strategies|option|playbook|way\s+to\s+(?:respond|recover))|how\s+(?:do|can|should)\s+(?:we|i)\s+(?:respond|handle|protect|recover|mitigate|cope)|what\s+should\s+(?:we|i)\s+do\s+about)\b/i;
 
 interface PlaybookRow {
   id: string;

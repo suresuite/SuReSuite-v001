@@ -26,7 +26,7 @@
 {"id": "mt-26", "utterance": "why was service worse in run 99999999?", "expect_skill": "explain", "expect_outcome": "timeline"}
 {"id": "mt-27", "utterance": "can I run my model?", "expect_skill": "readiness"}
 {"id": "mt-28", "utterance": "what data is missing?", "expect_skill": "readiness"}
-{"id": "mt-29", "utterance": "is my model validated?", "expect_skill": "readiness"}
+{"id": "mt-29", "utterance": "is my model validated?", "expect_skill": "model", "expect_outcome": "in_force", "note": "\u00a728 S9: the model skill states the model; readiness keeps \"can I run\""}
 {"id": "mt-30", "utterance": "what is blocking my run?", "expect_skill": "readiness"}
 {"id": "mt-31", "utterance": "am I ready to simulate?", "expect_skill": "readiness"}
 {"id": "mt-32", "utterance": "run the pre-run check", "expect_skill": "readiness"}
@@ -56,7 +56,7 @@
 {"id": "mt-56", "utterance": "fill missing products.demand_cv", "expect_skill": null, "note": "a Data Steward ask"}
 {"id": "mt-57", "utterance": "configure safety stock to 2 weeks for M001", "expect_skill": null, "note": "a Policy Configurator ask"}
 {"id": "mt-58", "utterance": "make a PDF report of the last run", "expect_skill": null, "note": "a Report Builder ask"}
-{"id": "mt-59", "utterance": "what is the capital of France?", "expect_skill": null}
+{"id": "mt-59", "utterance": "what is the capital of France?", "expect_skill": "outofscope", "expect_outcome": "out_of_scope", "note": "\u00a728 X1: a fixed refusal, never the model's general knowledge"}
 {"id": "mt-60", "utterance": "list materials supplied by S1", "expect_skill": null}
 {"id": "mt-61", "utterance": "what if S1 has an outage at week 22 for 4 weeks", "expect_skill": "whatif", "expect_outcome": "no_model", "project": "no_model", "note": "\u00a727 row 2"}
 {"id": "mt-62", "utterance": "what if S1 has an outage at week 22 for 4 weeks \u2014 run it anyway as exploratory", "expect_skill": "whatif", "expect_outcome": "proposed", "project": "no_model", "note": "\u00a727 row 2, explicit request"}
@@ -110,5 +110,39 @@
 {"id": "mt-110", "utterance": "are there isolated nodes?", "expect_skill": "network", "expect_outcome": "counted", "project": "network"}
 {"id": "mt-111", "utterance": "what is betweenness centrality?", "expect_skill": "howto"}
 {"id": "mt-112", "utterance": "how many materials do we have?", "expect_skill": null}
-{"id": "mt-113", "utterance": "why does my model say stale?", "expect_skill": null}
+{"id": "mt-113", "utterance": "why does my model say stale?", "expect_skill": "model", "expect_outcome": "stale", "project": "drifted"}
 {"id": "mt-114", "utterance": "simulate losing my most critical supplier", "expect_skill": null, "note": "a run ask is never answered from the static score"}
+{"id": "mt-115", "utterance": "which validated model am I using?", "expect_skill": "model", "expect_outcome": "in_force"}
+{"id": "mt-116", "utterance": "is my model valid?", "expect_skill": "model", "expect_outcome": "in_force"}
+{"id": "mt-117", "utterance": "is my model valid?", "expect_skill": "model", "expect_outcome": "no_model", "project": "no_model"}
+{"id": "mt-118", "utterance": "is my model still valid?", "expect_skill": "model", "expect_outcome": "stale", "project": "drifted"}
+{"id": "mt-119", "utterance": "what changed since I validated?", "expect_skill": "model", "expect_outcome": "stale", "project": "drifted"}
+{"id": "mt-120", "utterance": "what's the protocol of my model?", "expect_skill": "model", "expect_outcome": "in_force"}
+{"id": "mt-121", "utterance": "do I need to re-validate?", "expect_skill": "model", "expect_outcome": "stale", "project": "drifted"}
+{"id": "mt-122", "utterance": "do I need to re-validate?", "expect_skill": "model", "expect_outcome": "in_force"}
+{"id": "mt-123", "utterance": "what is my baseline run?", "expect_skill": "model", "expect_outcome": "in_force"}
+{"id": "mt-124", "utterance": "which runs followed the model and which were exploratory?", "expect_skill": "model", "expect_outcome": "runs_labelled"}
+{"id": "mt-125", "utterance": "what does the credibility badge mean for my project?", "expect_skill": "model", "expect_outcome": "in_force"}
+{"id": "mt-126", "utterance": "which model am I using?", "expect_skill": "model", "expect_outcome": "no_model", "project": "no_model"}
+{"id": "mt-127", "utterance": "can I run?", "expect_skill": "readiness"}
+{"id": "mt-128", "utterance": "what is a validated model?", "expect_skill": "howto"}
+{"id": "mt-129", "utterance": "what's the optimal safety stock for M001?", "expect_skill": "optimize", "expect_outcome": "not_supported"}
+{"id": "mt-130", "utterance": "find the best reorder point", "expect_skill": "optimize", "expect_outcome": "not_supported"}
+{"id": "mt-131", "utterance": "minimize cost while keeping 98% fill rate", "expect_skill": "optimize", "expect_outcome": "not_supported"}
+{"id": "mt-132", "utterance": "what policy should I use?", "expect_skill": "optimize", "expect_outcome": "not_supported"}
+{"id": "mt-133", "utterance": "tune my policies automatically", "expect_skill": "optimize", "expect_outcome": "not_supported"}
+{"id": "mt-134", "utterance": "what will fill rate be next quarter?", "expect_skill": "predict", "expect_outcome": "refused_prediction"}
+{"id": "mt-135", "utterance": "predict the impact without running", "expect_skill": "predict", "expect_outcome": "refused_prediction"}
+{"id": "mt-136", "utterance": "roughly, what would happen? just estimate the fill rate", "expect_skill": "predict", "expect_outcome": "refused_prediction"}
+{"id": "mt-137", "utterance": "what's the probability S1 fails this year?", "expect_skill": "predict", "expect_outcome": "refused_prediction"}
+{"id": "mt-138", "utterance": "forecast demand for P1", "expect_skill": "predict", "expect_outcome": "refused_prediction"}
+{"id": "mt-139", "utterance": "what's a good fill rate for the electronics industry?", "expect_skill": "outofscope", "expect_outcome": "out_of_scope"}
+{"id": "mt-140", "utterance": "is there a port strike in Rotterdam right now?", "expect_skill": "outofscope", "expect_outcome": "out_of_scope"}
+{"id": "mt-141", "utterance": "what's TTI's credit rating?", "expect_skill": "outofscope", "expect_outcome": "out_of_scope"}
+{"id": "mt-142", "utterance": "write me a Python script to parse a CSV", "expect_skill": "outofscope", "expect_outcome": "out_of_scope"}
+{"id": "mt-143", "utterance": "what happened in another project?", "expect_skill": "outofscope", "expect_outcome": "out_of_scope"}
+{"id": "mt-144", "utterance": "which playbook is best for an S1 outage in weeks 22-25?", "expect_skill": "mitigation"}
+{"id": "mt-145", "utterance": "how many replications do I need?", "expect_skill": "setup"}
+{"id": "mt-146", "utterance": "estimate the holding cost for MAT-4", "expect_skill": null}
+{"id": "mt-147", "utterance": "what is TTR?", "expect_skill": "howto"}
+{"id": "mt-148", "utterance": "what if S1 goes down at week 4 for 6 weeks?", "expect_skill": "whatif"}
