@@ -55,6 +55,14 @@ export interface SkillResult {
    * interpretation is appended to `reply`. */
   leadWithInterpretation?: boolean;
   footer?: string;
+  /** The earlier user message the subject came from, when it was not this
+   * one ("how do I mitigate it?" after a what-if). The plan stores it with
+   * the question, so the resume — which has no conversation — still knows
+   * what "it" was (§10 entry 38(ak)). */
+  subjectText?: string;
+  /** Runs of a multi-arm study still running: a resume that finds the study
+   * unfinished waits on one of them instead of failing the answer. */
+  pendingRunIds?: string[];
 }
 
 export interface Skill {
@@ -184,11 +192,13 @@ export interface RunRow {
   disruption_schedule: Array<Record<string, unknown>> | null;
   created_at: unknown;
   ended_at: unknown;
+  /** §27: the Validated Model the run followed (null = it followed none). */
+  model_validation_id: string | null;
 }
 
 const RUN_COLS =
   "id,project_id,scenario_id,status,rep_count_done,rep_count_target,policy_version_id,seed,code_version," +
-  "aggregate_kpis,ci_half_widths,warmup_detected_at,disruption_schedule,created_at,ended_at";
+  "aggregate_kpis,ci_half_widths,warmup_detected_at,disruption_schedule,created_at,ended_at,model_validation_id";
 
 function asRun(r: Record<string, unknown>): RunRow {
   return {
@@ -211,6 +221,7 @@ function asRun(r: Record<string, unknown>): RunRow {
       : null,
     created_at: r.created_at,
     ended_at: r.ended_at,
+    model_validation_id: r.model_validation_id ? String(r.model_validation_id) : null,
   };
 }
 
@@ -309,4 +320,18 @@ export function fixFor(
 export function previousUserMessages(history: SkillInput["history"], max = 6): string[] {
   return history.filter((h) => h.role === "user" && typeof h.content === "string")
     .map((h) => h.content).slice(-max).reverse();
+}
+
+/** §27 rows 12–13: what kind of result a run is, said wherever one is shown. */
+export async function runKindLabel(db: Db, run: RunRow): Promise<string> {
+  if (!run.model_validation_id) return "exploratory — followed no Validated Model";
+  try {
+    const { data } = await db.from("model_validations").select("id,name,model_code,status").eq("id", run.model_validation_id).maybeSingle();
+    const c = data as Record<string, unknown> | null;
+    if (c) {
+      const name = [c.model_code, c.name].filter((v) => typeof v === "string" && v).join(" · ") || String(c.id).slice(0, 8);
+      return `follows Validated Model "${name}"${c.status !== "active" ? ` (now ${String(c.status)})` : ""}`;
+    }
+  } catch { /* the id still says it followed one */ }
+  return "follows a Validated Model";
 }

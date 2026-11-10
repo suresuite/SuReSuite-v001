@@ -13,6 +13,7 @@
 
 import { parseWhatIf, runWhatIfLoop, whatIfInterpretationMessage, whatIfLoopEnabled, whatIfReply } from "../whatIf.ts";
 import type { Skill, SkillId, SkillInput, SkillResult } from "./common.ts";
+import { parseRunChoice } from "../modelContext.ts";
 import { mitigationSkill } from "./mitigation.ts";
 import { sensitivitySkill } from "./sensitivity.ts";
 import { resultsSkill } from "./results.ts";
@@ -95,10 +96,36 @@ export function enabledSkills(): Skill[] {
   return SKILLS.filter((s) => (allow ? allow.has(s.id) : true) && (s.id !== "whatif" || whatIfLoopEnabled()));
 }
 
-export function matchSkill(input: SkillInput): { skill: Skill; match: unknown } | null {
-  for (const skill of enabledSkills()) {
+export interface SkillHit {
+  skill: Skill;
+  match: unknown;
+  /** The input the skill runs on — the message itself, or (for a follow-up
+   * choice) the earlier question joined with the choice. */
+  input: SkillInput;
+}
+
+export function matchSkill(input: SkillInput): SkillHit | null {
+  const skills = enabledSkills();
+  for (const skill of skills) {
     const match = skill.recognize(input);
-    if (match !== null && match !== undefined) return { skill, match };
+    if (match !== null && match !== undefined) return { skill, match, input };
+  }
+  // §27 follow-up: "run as validated" / "run it as exploratory" / "extend the
+  // horizon" answers a question the assistant asked about an EARLIER what-if,
+  // mitigation or sweep. Re-run that skill on the earlier question joined
+  // with the choice (the user's own words, both of them).
+  const choice = parseRunChoice(input.utterance);
+  if ((choice.mode || choice.extendHorizon) && input.utterance.length <= 160) {
+    const users = input.history.filter((h) => h.role === "user" && typeof h.content === "string");
+    for (let i = users.length - 1; i >= 0 && i >= users.length - 6; i--) {
+      const prior = users[i].content;
+      for (const skill of skills.filter((sk) => sk.drafts)) {
+        if (skill.recognize({ utterance: prior, history: [] }) == null) continue;
+        const joined: SkillInput = { utterance: `${prior} — ${input.utterance}`.slice(0, 2000), history: input.history };
+        const match = skill.recognize(joined);
+        if (match !== null && match !== undefined) return { skill, match, input: joined };
+      }
+    }
   }
   return null;
 }

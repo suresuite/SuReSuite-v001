@@ -82,4 +82,25 @@ describe("experiment_spec card (§5.4 / §20.8)", () => {
     expect(rows[1].value).toContain("with recovery response");
     expect(rows.at(-1)!.value).toBe("5 per arm × 2 arms = 10 (same random numbers in every arm)");
   });
+
+  it("§27: a card that follows a Validated Model says so first, with its protocol and every deviation", () => {
+    const rows = experimentSpecRows({
+      validated_model_id: "88888888-8888-4888-8888-888888888802",
+      model_name: "Q4 baseline",
+      protocol: { replications: 30, horizon_weeks: 52, warmup_week: 12, root_seed: 42, crn: true },
+      deviations: [{ key: "replications", label: "Replications", model: 30, run: 10 }],
+      new_scenario: payload.new_scenario,
+      policy_version_id: payload.policy_version_id,
+      replications: 10,
+    });
+    expect(rows[0]).toMatchObject({ entity: "Q4 baseline", field: "follows", value: "Validated Model" });
+    expect(rows[1].value).toBe("30 replications · 52 weeks · measured from week 13 · seed 42 · common random numbers");
+    expect(rows[2]).toMatchObject({ entity: "Replications", field: "DEVIATION", value: "model 30 → this run 10" });
+  });
+
+  it("§27: an exploratory card is labelled as not a validated result", () => {
+    const rows = experimentSpecRows({ run_mode: "exploratory", new_scenario: payload.new_scenario, replications: 5 });
+    expect(rows[0]).toMatchObject({ field: "EXPLORATORY" });
+    expect(rows[0].value).toContain("not a validated result");
+  });
 });

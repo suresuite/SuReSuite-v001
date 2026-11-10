@@ -10,13 +10,15 @@ import { makeAgentRpcs, makeStubDb, type Row } from "./harness/stub_db.ts";
 import type { ToolContext } from "../tools.ts";
 import "../agentTurn.ts"; // registers the handlers, as index.ts does
 import { matchSkill, SKILLS, type SkillId } from "../skills/index.ts";
-import { closeSkillPlan, runSkillTurn, parseSkillNote, skillNote } from "../skills/runner.ts";
+import { closeSkillPlan, parseSkillNote, resumeInput, runSkillTurn, skillNote, waitSkillPlanOn } from "../skills/runner.ts";
+import { mitigationSkill } from "../skills/mitigation.ts";
 import { runResumePreStep } from "../planTools.ts";
 import { ciHalfWidth95, mean, pairedDelta, std, tCritical95 } from "../skills/common.ts";
 import * as browserStats from "../../../../src/lib/sim/stats.ts";
 import { makeRequestBudget } from "../budgets.ts";
 import { applyExperimentSpec } from "../../agent-apply/experimentSpecApply.ts";
 import { validateArms } from "../experimentTools.ts";
+import { BASE_RUN, MODEL, validatedProject } from "./harness/model_fixture.ts";
 
 const PROJECT = "11111111-1111-4111-8111-111111111111";
 const USER = "22222222-2222-4222-8222-222222222222";
@@ -43,6 +45,7 @@ async function harness(opts?: { patch?: (t: Record<string, Row[]>) => void; utte
   tables.proposals ??= [];
   tables.recovery_playbooks = structuredClone(PLAYBOOKS);
   tables.chat_plans ??= [];
+  validatedProject(tables); // §27: the stub is a VALIDATED project
   opts?.patch?.(tables);
   const rpcs = makeAgentRpcs(tables, { graphHash: opts?.graphHash ?? "graph-hash-1" });
   rpcs.current_policy_hash = () => "ph-run";
@@ -148,7 +151,7 @@ Deno.test("MODELER_SKILLS: off disables every skill; a list keeps only those", (
 
 // ── M2 mitigation ───────────────────────────────────────────────────────────
 
-Deno.test("M2: a miss files ONE comparison card — No recovery + each playbook, 5 reps, same disruption; the plan binds it (M.3)", () =>
+Deno.test("M2: a miss files ONE comparison card — No recovery + each playbook, the protocol's reps, every arm follows the model; the plan binds it (M.3)", () =>
   withEnv({ ...DESIGNER, CHAT_STORE_ENABLED: "true", PLAN_TOOL_ENABLED: "true" }, async () => {
     const h = await harness();
     const { skill, turn } = await run("how do I mitigate an S1 outage in weeks 22-25?", h);
@@ -159,10 +162,12 @@ Deno.test("M2: a miss files ONE comparison card — No recovery + each playbook,
     assertEquals(p.experiment_type, "comparison");
     const arms = p.arms as Array<Record<string, unknown>>;
     assertEquals(arms.map((a) => a.label), ["No recovery", "Expedite Shipments", "Activate Backup Supplier"]);
-    assertEquals(p.replications, 5, "owner decision 38(ad)");
+    assertEquals(p.replications, 3, "§27: the model's protocol count");
+    assertEquals(p.validated_model_id, MODEL, "every arm follows the Validated Model");
+    assertEquals(p.deviations, []);
     for (const a of arms) assertEquals((a.disruption_schedule as Array<Record<string, unknown>>)[0].start_day, 154);
     assertEquals(arms[1].recovery_overrides, PLAYBOOKS[0].config);
-    assertEquals(h.tables.simulation_runs.length, 1, "nothing runs before approval");
+    assertEquals(h.tables.simulation_runs.length, 2, "nothing runs before approval (the two fixture runs only)");
     // M.3: the plan waits on the card and remembers which skill answers it.
     const plan = h.tables.chat_plans[0] as Record<string, unknown>;
     assert(plan, "a plan was filed");
@@ -292,7 +297,7 @@ Deno.test("M3: two runs on one seed and rep count compare PAIRED; otherwise DESC
   const q = `compare runs ${RUN} and 99999999-9999-4999-8999-999999999921`;
   const paired = await run(q, h);
   assertEquals(paired.turn.result.outcome, "compared_paired", paired.turn.reply);
-  h.tables.simulation_runs[1].seed = 7;
+  h.tables.simulation_runs.find((r) => String(r.id).endsWith("21"))!.seed = 7;
   const desc = await run(q, h);
   assertEquals(desc.turn.result.outcome, "compared_descriptive");
   assertStringIncludes(desc.turn.reply, "different seeds");
@@ -360,7 +365,73 @@ Deno.test("M.3 note round-trip: skill id + question fit the 200-char note", () =
   const n = skillNote("mitigation", long);
   assert(n.length <= 200);
   assertEquals(parseSkillNote(n)?.skillId, "mitigation");
+  // With a long subject both still fit, the subject first, the question's
+  // recognizable start kept.
+  const m = skillNote("mitigation", long, "what if supplier S1 is down at week 22 for 4 weeks ".repeat(5));
+  assert(m.length <= 200, String(m.length));
+  const r = parseSkillNote(m)!;
+  assert(r.utterance.startsWith("how do I mitigate"), r.utterance);
+  assert(r.subject!.startsWith("what if supplier S1"), String(r.subject));
 });
+
+Deno.test("38(ak) a follow-up study resumes with its subject: the plan note keeps the earlier what-if, and arms still running WAIT rather than fail", () =>
+  withEnv({ ...DESIGNER, CHAT_STORE_ENABLED: "true", PLAN_TOOL_ENABLED: "true" }, async () => {
+    const h = await harness();
+    // Production 2026-11-10: the question named no disruption — its subject
+    // was the what-if two messages earlier.
+    const whatIf = "what if disruption with S1 at week 22 and duration of 4 weeks";
+    const ask = "how could i mitigate the impact of the disruption?";
+    const { turn } = await run(ask, h, [{ role: "user", content: whatIf }, { role: "assistant", content: "…" }]);
+    assertEquals(turn.result.outcome, "proposed", turn.reply);
+    const plan = h.tables.chat_plans[0] as Record<string, unknown>;
+    const note = String((plan.steps as Array<Record<string, unknown>>)[2].note);
+    assert(note.length <= 200, note);
+    const ref = parseSkillNote(note)!;
+    assertEquals([ref.skillId, ref.utterance, ref.subject], ["mitigation", ask, whatIf]);
+
+    // The card is approved: every arm is dispatched and still running.
+    const proposal = h.tables.proposals[0];
+    const before = new Set(h.tables.simulation_runs.map((r) => String(r.id)));
+    const applied = await applyExperimentSpec(h.db, { upstash: () => Promise.resolve("ok") }, {
+      projectId: PROJECT, payload: proposal.payload as Record<string, unknown>,
+      grounding: proposal.grounding as Record<string, unknown>, userId: USER,
+    });
+    proposal.status = "applied";
+    proposal.applied_result = { run_id: applied.run_id };
+    // The arm the plan binds (the last) finished first; the others still run.
+    for (const r of h.tables.simulation_runs.filter((x) => !before.has(String(x.id)))) {
+      Object.assign(r, String(r.id) === applied.run_id
+        ? { status: "done", rep_count_done: 3, rep_count_target: 3 }
+        : { status: "running", rep_count_done: 1, rep_count_target: 3 });
+    }
+    const outcome = await runResumePreStep(h.db, { planId: String(plan.id), userId: USER });
+    assertEquals(outcome.kind, "run_done", JSON.stringify(outcome));
+    if (outcome.kind !== "run_done") return;
+    // The resume has NO conversation — only what the plan stored.
+    const input = resumeInput(ref);
+    const match = mitigationSkill.recognize(input);
+    assert((match as { subject: unknown }).subject, "the subject is recovered from the note, not asked for again");
+    const resumed = await runSkillTurn({
+      skill: mitigationSkill, match, input,
+      opts: { canDraft: false, enabledAgents: ["experiment-designer"] },
+      ctx: h.ctx, modelId: "gpt-5", personaId: null, budget: makeRequestBudget(), verifierOn: false, projectId: PROJECT, resuming: true,
+    });
+    assert(!resumed.reply.includes("Which disruption"), resumed.reply);
+    assertEquals(resumed.result.outcome, "in_progress", resumed.reply);
+    const pending = resumed.result.pendingRunIds ?? [];
+    assert(pending.length > 0, "the unfinished arms are named");
+
+    // The plan waits on an unfinished arm; the answer is NOT failed.
+    assert(!pending.includes(String(applied.run_id)), "a finished arm is not waited on");
+    const part = await waitSkillPlanOn(h.ctx, outcome.plan as unknown as { id: string; steps: Array<Record<string, unknown>> }, outcome.stepId, pending[0]);
+    const steps = (part!.data as { steps: Array<{ id: string; status: string; ref?: { run_id?: string } }> }).steps;
+    assertEquals(steps.map((st) => `${st.id}:${st.status}`), ["check:done", "run:awaiting_run", "answer:pending"]);
+    assertEquals(steps[1].ref?.run_id, pending[0]);
+
+    // A note with no subject still parses (plans filed before 38(ak)).
+    assertEquals(parseSkillNote("skill:mitigation|how do I mitigate it?")?.subject, null);
+    assertEquals(resumeInput({ utterance: "q", subject: null }).history, []);
+  }));
 
 Deno.test("38(ah) Retry rebind: a failed first apply, then a successful Retry ⇒ the resume APPENDS a step on the new run and the skill closes the plan", () =>
   withEnv({ ...DESIGNER, CHAT_STORE_ENABLED: "true", PLAN_TOOL_ENABLED: "true" }, async () => {
@@ -422,5 +493,82 @@ Deno.test("38(ai) a plan waiting on a run the worker never started says so — n
     assertStringIncludes(out.reply, "queued for 25 minutes");
     assertStringIncludes(out.reply, "hasn't started it");
     assert(!out.reply.includes("nothing is hung"), out.reply);
+  }));
+
+// ── Phase V (ai-agents.md §27): apply + follow-up choices ───────────────────
+
+Deno.test("V.3 apply: an approved model-following card creates the scenario FROM THE MODEL and dispatches a model run", () =>
+  withEnv(DESIGNER, async () => {
+    const h = await harness();
+    const { turn } = await run("what if disruption with S1 at week 22 and duration of 4 weeks", h);
+    assertEquals(turn.result.outcome, "proposed", turn.reply);
+    const proposal = h.tables.proposals[0];
+    const before = h.tables.simulation_runs.length;
+    const applied = await applyExperimentSpec(h.db, { upstash: () => Promise.resolve("ok") }, {
+      projectId: PROJECT,
+      payload: proposal.payload as Record<string, unknown>,
+      grounding: proposal.grounding as Record<string, unknown>,
+      userId: USER,
+    });
+    assertEquals(h.tables.simulation_runs.length - before, 1);
+    const sc = h.tables.scenarios.find((x) => String(x.id) === applied.scenario_id)!;
+    // The model's world and protocol — not the Lab's generic defaults.
+    assertEquals([sc.horizon_days, sc.seed, sc.crn, sc.warmup_mode, sc.warmup_days, sc.replications], [364, 42, true, "manual", 14, 3]);
+    assertEquals(sc.inherited_validation_id, MODEL, "a faithful scenario inherits the model");
+    const runRow = h.tables.simulation_runs.find((r) => String(r.id) === applied.run_id)!;
+    assertEquals(runRow.model_validation_id, MODEL, "the run FOLLOWS the Validated Model");
+    assertEquals(runRow.policy_version_id, VER);
+    assertEquals(runRow.created_by ?? null, null);
+  }));
+
+Deno.test("V.3 apply: a model revoked while the card waited ⇒ the apply refuses and says to ask again", () =>
+  withEnv(DESIGNER, async () => {
+    const h = await harness();
+    await run("what if disruption with S1 at week 22 and duration of 4 weeks", h);
+    h.tables.model_validations[0].status = "revoked";
+    let msg = "";
+    try {
+      await applyExperimentSpec(h.db, { upstash: () => Promise.resolve("ok") }, {
+        projectId: PROJECT,
+        payload: h.tables.proposals[0].payload as Record<string, unknown>,
+        grounding: h.tables.proposals[0].grounding as Record<string, unknown>,
+        userId: USER,
+      });
+    } catch (e) {
+      msg = e instanceof Error ? e.message : String(e);
+    }
+    assertStringIncludes(msg, "revoked");
+  }));
+
+Deno.test("V follow-up: \"run as exploratory\" answers the question the assistant asked about the EARLIER what-if", () =>
+  withEnv(DESIGNER, async () => {
+    const q = "what if disruption with S1 at week 22 and duration of 4 weeks";
+    const h = await harness({ graphHash: "graph-hash-2" }); // the project drifted
+    const first = await run(q, h);
+    assertEquals(first.turn.result.outcome, "needs_choice");
+    assertEquals(h.tables.proposals.length, 0);
+    const history = [{ role: "user", content: q }, { role: "assistant", content: first.turn.reply }];
+    const hit = matchSkill({ utterance: "run as exploratory", history });
+    assert(hit, "the choice is routed back to the what-if");
+    assertEquals(hit!.skill.id, "whatif");
+    assertStringIncludes(hit!.input.utterance, q);
+    h.ctx.draft!.utterance = hit!.input.utterance;
+    const turn = await runSkillTurn({
+      skill: hit!.skill, match: hit!.match, input: hit!.input,
+      opts: { canDraft: true, enabledAgents: ["experiment-designer"] },
+      ctx: h.ctx, modelId: "gpt-5", personaId: null, budget: makeRequestBudget(), verifierOn: false, projectId: PROJECT,
+    });
+    assertEquals(turn.result.outcome, "proposed", turn.reply);
+    assertEquals((h.tables.proposals[0].payload as Record<string, unknown>).run_mode, "exploratory");
+    // A bare "run as exploratory" with no earlier experiment is NOT claimed.
+    assertEquals(matchSkill({ utterance: "run as exploratory", history: [] }), null);
+  }));
+
+Deno.test("V row 9: a mitigation study on a drifted project also stops and asks", () =>
+  withEnv(DESIGNER, async () => {
+    const h = await harness({ graphHash: "graph-hash-2" });
+    const { turn } = await run("how do I mitigate an S1 outage in weeks 22-25?", h);
+    assertEquals(turn.result.outcome, "needs_choice");
+    assertEquals(h.tables.proposals.length, 0);
   }));
 

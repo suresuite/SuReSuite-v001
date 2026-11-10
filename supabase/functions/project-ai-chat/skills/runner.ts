@@ -38,20 +38,41 @@ export interface SkillTurn {
 /** The note on a skill plan's answer step: which skill to re-run on resume,
  * and the question it answers (§21.1 caps a note at 200 chars). */
 export const SKILL_NOTE_PREFIX = "skill:";
-export function skillNote(skillId: string, utterance: string): string {
-  return `${SKILL_NOTE_PREFIX}${skillId}|${utterance.replace(/\s+/g, " ").slice(0, 200 - SKILL_NOTE_PREFIX.length - skillId.length - 1)}`;
+/** Separates the question from the earlier message that named its subject. */
+const SUBJECT_SEP = " |re: ";
+const flat = (t: string) => t.replace(/\s+/g, " ").replace(/\|re: /g, "re: ").trim();
+export function skillNote(skillId: string, utterance: string, subject?: string): string {
+  const room = 200 - SKILL_NOTE_PREFIX.length - skillId.length - 1;
+  const q = flat(utterance);
+  const sub = subject ? flat(subject) : "";
+  if (!sub) return `${SKILL_NOTE_PREFIX}${skillId}|${q.slice(0, room)}`;
+  // The subject is what the resume cannot recover; it gets room first, the
+  // question (re-recognized by its own skill, so a prefix is enough) the rest.
+  const subRoom = Math.min(sub.length, room - SUBJECT_SEP.length - Math.min(q.length, 40));
+  const qRoom = room - SUBJECT_SEP.length - subRoom;
+  return `${SKILL_NOTE_PREFIX}${skillId}|${q.slice(0, qRoom)}${SUBJECT_SEP}${sub.slice(0, subRoom)}`;
 }
-export function parseSkillNote(note: string | undefined): { skillId: string; utterance: string } | null {
+export function parseSkillNote(note: string | undefined): { skillId: string; utterance: string; subject: string | null } | null {
   if (!note || !note.startsWith(SKILL_NOTE_PREFIX)) return null;
   const body = note.slice(SKILL_NOTE_PREFIX.length);
   const bar = body.indexOf("|");
   if (bar < 0) return null;
-  return { skillId: body.slice(0, bar), utterance: body.slice(bar + 1) };
+  const rest = body.slice(bar + 1);
+  const at = rest.indexOf(SUBJECT_SEP);
+  return at < 0
+    ? { skillId: body.slice(0, bar), utterance: rest, subject: null }
+    : { skillId: body.slice(0, bar), utterance: rest.slice(0, at), subject: rest.slice(at + SUBJECT_SEP.length) || null };
 }
 
-async function filePlan(ctx: ToolContext, skill: Skill, input: SkillInput, proposalId: string, title: string): Promise<{ planId: string | null; part: { kind: string; data: unknown } | null }> {
+/** The input a resume re-runs the skill on: the stored question, and the
+ * earlier message that named its subject as the only history. */
+export function resumeInput(ref: { utterance: string; subject: string | null }): SkillInput {
+  return { utterance: ref.utterance, history: ref.subject ? [{ role: "user", content: ref.subject }] : [] };
+}
+
+async function filePlan(ctx: ToolContext, skill: Skill, input: SkillInput, proposalId: string, title: string, subject?: string): Promise<{ planId: string | null; part: { kind: string; data: unknown } | null }> {
   if (!planToolEnabled() || !ctx.draft?.threadId) return { planId: null, part: null };
-  const note = skillNote(skill.id, input.utterance);
+  const note = skillNote(skill.id, input.utterance, subject);
   const steps = (check: string, run: string, ref?: Record<string, string>) => [
     { id: "check", label: "Look for a finished run that already answers it", status: check },
     { id: "run", label: "Run it — waits for your approval", status: run, ...(ref ? { ref } : {}) },
@@ -119,7 +140,7 @@ export async function runSkillTurn(args: {
   let planId: string | null = null;
   if (result.proposal && !result.proposal.duplicate && !args.resuming) {
     try {
-      const filed = await filePlan(args.ctx, args.skill, args.input, result.proposal.proposal_id, result.proposal.title);
+      const filed = await filePlan(args.ctx, args.skill, args.input, result.proposal.proposal_id, result.proposal.title, result.subjectText);
       planId = filed.planId;
       if (filed.part) parts.push(filed.part);
     } catch (e) {
@@ -148,6 +169,31 @@ export async function closeSkillPlan(
   steps = steps.map((s) => (s.id === "answer" ? { ...s, status: "active" } : s));
   await executeTool("update_task_plan", { plan_id: plan.id, steps }, ctx);
   steps = steps.map((s) => (s.id === "answer" ? { ...s, status: answered ? "done" : "failed" } : s));
+  const last = await executeTool("update_task_plan", { plan_id: plan.id, steps }, ctx);
+  return last.kind === "plan" ? { kind: "plan", data: last.data } : null;
+}
+
+/** A study resumed while some arms still run: the run step waits on one of
+ * them (append-only: same step, new ref) and the answer stays pending. The
+ * next run_done resumes it again; it never fails an answer that is coming. */
+export async function waitSkillPlanOn(
+  ctx: ToolContext,
+  plan: { id: string; steps: Array<Record<string, unknown>> },
+  runStepId: string,
+  runId: string,
+): Promise<{ kind: string; data: unknown } | null> {
+  // §21.1 rule 3: a waiting step reaches another wait only through active.
+  const current = plan.steps.find((s) => s.id === runStepId);
+  let base = plan.steps.map((s) => ({ ...s }));
+  if (current && current.status !== "active") {
+    base = base.map((s) => (s.id === runStepId ? { ...s, status: "active" } : s));
+    await executeTool("update_task_plan", { plan_id: plan.id, steps: base }, ctx);
+  }
+  const steps = base.map((s) => {
+    if (s.id !== runStepId) return s;
+    const ref = (s.ref && typeof s.ref === "object" ? s.ref : {}) as Record<string, unknown>;
+    return { ...s, status: "awaiting_run", ref: { ...ref, run_id: runId } };
+  });
   const last = await executeTool("update_task_plan", { plan_id: plan.id, steps }, ctx);
   return last.kind === "plan" ? { kind: "plan", data: last.data } : null;
 }

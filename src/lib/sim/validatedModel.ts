@@ -234,16 +234,9 @@ export function adoptionDecision(input: {
 
 /** Why a model is stale, in words — one phrasing for the summary card and the
  *  Lab. Newer data or policy never mutates a model; it makes it stale. */
-export function driftReasons(drift: string[]): string[] {
-  return [
-    // WP 11.2 · §4 D259 — `data` is the simulation's INPUTS (the scope the engine
-    // reads); a deep-tier change is a note, never this.
-    drift.includes("data") ? "the simulation's inputs changed" : null,
-    drift.includes("policy") ? "a newer policy exists" : null,
-    drift.includes("scenario") ? "the scenario's world changed" : null,
-    drift.includes("engine") ? "the engine changed" : null,
-  ].filter((x): x is string => x !== null);
-}
+// Stated once in `supabase/functions/_shared/modelRules.ts` (ai-agents.md §27 WP V.1).
+export { driftReasons } from "../../../supabase/functions/_shared/modelRules";
+import { driftReasons } from "../../../supabase/functions/_shared/modelRules";
 
 /** WP 11.3 — what a credibility's informational notes SAY. Never a reason to
  *  re-validate: `network` is a change the simulation does not read. */

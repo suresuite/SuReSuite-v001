@@ -14,6 +14,7 @@
  * Pure: no React, no client. `useScenarios.create(name, seed)` writes the row.
  */
 import { SCENARIO_ENGINE_DEFAULTS, type Scenario } from "@/hooks/useScenarios";
+import { protocolScenarioFields } from "../../../supabase/functions/_shared/modelRules";
 
 /** Where a new scenario's world came from — said on screen, never assumed. */
 export type WorldSource = "validation" | "baseline" | "project_window" | "defaults";
@@ -117,20 +118,10 @@ export function buildScenarioSeed(o: SeedOptions): Partial<Scenario> {
   };
 }
 
+/** Stated once in `_shared/modelRules.ts` (ai-agents.md §27 WP V.1): the chat
+ *  seeds a scenario from a Validated Model by the same rule. */
 function protocolFields(p: SeedOptions["protocol"]): Partial<Scenario> {
-  if (!p) return {};
-  const out: Partial<Scenario> = {};
-  if (p.replications != null) out.replications = p.replications;
-  if (p.warmup_week != null) {
-    out.warmup_mode = "manual";
-    out.warmup_days = p.warmup_week * 7;
-  }
-  if (p.root_seed != null) out.seed = p.root_seed;
-  if (p.crn != null) out.crn = p.crn;
-  if (p.stopping_rule === "fixed_horizon" || p.stopping_rule === "ci_halfwidth") {
-    out.stopping_rule = { kind: p.stopping_rule };
-  }
-  return out;
+  return protocolScenarioFields(p) as Partial<Scenario>;
 }
 
 /** True when the seed keeps the certified world, so inheritance can match it. */

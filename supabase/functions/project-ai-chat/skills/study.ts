@@ -65,17 +65,38 @@ export async function locateArms(
       out.push({ state: "missing" });
       continue;
     }
-    const env = await callTool(calls, ctx, "find_completed_run", {
-      scenario: scenario.id,
-      policy_version_id: prep.versionId,
-      replications: prep.replications,
-    });
-    const note = String(env.meta.note ?? "");
-    if (note.startsWith("cache_hit") && env.kind === "table") {
-      const runId = String(((env.data as { rows?: unknown[][] })?.rows ?? [])[0]?.[0] ?? "");
-      if (runId) {
-        out.push({ state: "done", runId, scenario });
+    let note = "";
+    let staleText = "";
+    if (prep.mode === "model") {
+      // §27 WP V.5: only a finished run that followed THIS model counts.
+      let modelRun: Record<string, unknown> | null = null;
+      try {
+        const { data } = await db.from("simulation_runs")
+          .select("id,status,rep_count_done,model_validation_id,exploratory,created_at")
+          .eq("scenario_id", scenario.id).eq("status", "done").order("created_at", { ascending: false }).limit(10);
+        modelRun = ((data ?? []) as Array<Record<string, unknown>>).find((r) =>
+          String(r.model_validation_id ?? "") === String(prep.model.card!.id) && r.exploratory !== true &&
+          Number(r.rep_count_done ?? 0) >= prep.replications
+        ) ?? null;
+      } catch { /* treated as missing */ }
+      if (modelRun) {
+        out.push({ state: "done", runId: String(modelRun.id), scenario });
         continue;
+      }
+    } else {
+      const env = await callTool(calls, ctx, "find_completed_run", {
+        scenario: scenario.id,
+        policy_version_id: prep.versionId,
+        replications: prep.replications,
+      });
+      note = String(env.meta.note ?? "");
+      staleText = String(env.data ?? "");
+      if (note.startsWith("cache_hit") && env.kind === "table") {
+        const runId = String(((env.data as { rows?: unknown[][] })?.rows ?? [])[0]?.[0] ?? "");
+        if (runId) {
+          out.push({ state: "done", runId, scenario });
+          continue;
+        }
       }
     }
     // A run already queued or running for this arm: the study is in flight.
@@ -95,7 +116,7 @@ export async function locateArms(
       }
     } catch { /* treated as missing */ }
     if (note === "cache_stale") {
-      out.push({ state: "stale", scenario, note: String(env.data ?? "") });
+      out.push({ state: "stale", scenario, note: staleText });
       continue;
     }
     out.push({ state: "missing" });
@@ -203,6 +224,10 @@ export async function draftStudy(
       recovery_overrides: a.recovery_overrides,
       ...(a.recovery_playbook_id ? { recovery_playbook_id: a.recovery_playbook_id } : {}),
     })),
+    // §27: every arm follows the model, or the whole study is exploratory.
+    ...(prep.mode === "model"
+      ? { validated_model_id: String(prep.model.card!.id) }
+      : { exploratory: true, ...(prep.seedScenarioId ? { base_scenario_id: prep.seedScenarioId } : {}) }),
     policy_version_id: prep.versionId,
     replications: prep.replications,
     title: args.title.slice(0, 140),
@@ -218,6 +243,9 @@ export function studyHorizonDays(prep: PreparedWhatIf, schedules: Array<Array<Re
   for (const sched of schedules) {
     for (const e of sched) endDay = Math.max(endDay, Number(e.start_day ?? 0) + Number(e.duration_days ?? 0));
   }
+  // §27: a study that follows the model keeps the model's horizon (the
+  // guardrail in prepareWhatIf already asked before extending it).
+  if (prep.mode === "model" && endDay <= prep.horizonDays) return prep.horizonDays;
   const tail = Math.max(8 * 7, ...schedules.flat().map((e) => Number(e.duration_days ?? 0)));
   return Math.min(3650, Math.max(Number(prep.base?.horizon_days ?? 0) || 0, Math.ceil((endDay + tail) / 7) * 7));
 }

@@ -47,7 +47,7 @@ import { whatIfRouteDecision } from "./whatIf.ts";
 // modeler's tasks (what-if, mitigation study, sensitivity, results, readiness,
 // setup, how-to, explain, capabilities). Kill switch MODELER_SKILLS.
 import { matchSkill, skillById } from "./skills/index.ts";
-import { closeSkillPlan, parseSkillNote, runSkillTurn } from "./skills/runner.ts";
+import { closeSkillPlan, parseSkillNote, resumeInput, runSkillTurn, waitSkillPlanOn } from "./skills/runner.ts";
 // Importing agentTurn.ts registers the staged draft tools (draftTools.ts,
 // configuratorTools.ts, vvTools.ts, memory.ts) into the shared executeTool
 // registry (ai-agents.md §9.2–§9.4, §14.7).
@@ -593,7 +593,11 @@ serve(async (req) => {
               agentId: planAgentId,
             },
           };
-          const input = { utterance: skillRef.utterance, history: [] };
+          // The question AND the earlier message that named its subject: a
+          // follow-up ("how do I mitigate it?") has none of its own (38(ak)).
+          // A plan filed before the note carried its subject falls back to
+          // the thread's own history, which the resume request sends.
+          const input = skillRef.subject ? resumeInput(skillRef) : { utterance: skillRef.utterance, history };
           const match = resumeSkill.recognize(input);
           const turn = match === null || match === undefined
             ? null
@@ -611,6 +615,25 @@ serve(async (req) => {
               projectId: projectId as string,
               resuming: true,
             });
+          // A study with arms still running is not a failed answer: wait on
+          // one of the unfinished arms and say how far it got.
+          const stillRunning = turn?.result.outcome === 'in_progress' ? (turn.result.pendingRunIds ?? []) : [];
+          if (stillRunning.length > 0) {
+            const planPartWait = await waitSkillPlanOn(
+              skillCtx,
+              outcome.plan as unknown as { id: string; steps: Array<Record<string, unknown>> },
+              outcome.stepId,
+              stillRunning[0],
+            );
+            return await finishResume({
+              reply: turn!.reply,
+              parts: [...turn!.parts, ...(planPartWait ? [planPartWait] : [])],
+              toolCalls: turn!.result.calls.map((c) => ({
+                name: c.name, args: c.args, ok: c.envelope.meta.note !== 'error', row_count: c.envelope.meta.row_count,
+              })),
+              model: resolvedModel.label,
+            });
+          }
           const answered = !!turn && ['hit', 'answered'].includes(turn.result.outcome);
           const planPartNow = await closeSkillPlan(
             skillCtx,
@@ -1050,7 +1073,9 @@ serve(async (req) => {
             modelCode: resolvedModel.id,
             providerCode: resolvedModel.provider,
             canProposals: capFeatures['agent_proposals'] === true,
-            utterance: routedUtterance,
+            // The skill's own input: for a follow-up choice this is the
+            // earlier question joined with the choice (§27).
+            utterance: skillHit.input.utterance,
             mode: chatMode,
             agentId: 'experiment-designer',
           },
@@ -1058,7 +1083,7 @@ serve(async (req) => {
         const turn = await runSkillTurn({
           skill: skillHit.skill,
           match: skillHit.match,
-          input: { utterance: routedUtterance, history: history as Array<{ role: string; content: string }> },
+          input: skillHit.input,
           opts: { canDraft, draftBlockedReason, enabledAgents },
           ctx: skillCtx,
           modelId: model,

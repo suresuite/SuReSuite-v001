@@ -16,6 +16,7 @@ import { runChat } from "../providers.ts";
 import { makeRequestBudget, WALL_WRAPUP_NOTE, BUDGET_EXHAUSTED_LINES } from "../budgets.ts";
 import { installFetchMock, type ScriptedResponse } from "./harness/fetch_mock.ts";
 import { kpiText } from "../vvTools.ts";
+import { BASE_RUN, BASE_SCEN, MODEL, validatedProject, VER } from "./harness/model_fixture.ts";
 // Importing agentTurn registers find_completed_run / get_run_results /
 // draft_experiment_spec into the shared registry, as index.ts does.
 import "../agentTurn.ts";
@@ -140,73 +141,161 @@ Deno.test("wi-key: the cache compares disruptions as the ENGINE runs them", () =
   assertEquals(k({ ...base, target: "S9" }), null, "a target the engine skips is no event");
 });
 
-// ── 2–4. The loop on the stub project ─────────────────────────────────────────
+// ── 2–4. The loop on a VALIDATED project (ai-agents.md §27) ─────────────────
+// Every chat experiment follows the Validated Model: its versions, its
+// protocol, its baseline. `validatedProject` (harness/model_fixture.ts) makes
+// the stub what a validated project is.
 
-Deno.test("wi-01 cache hit BY CONTENT: an unnamed ask finds the matching scenario's run; no card, no run row", async () => {
+Deno.test("V row 1 (hit): a finished run of the MODEL answers, PAIRED against the model's own baseline; no card", async () => {
   await withDesigner(async () => {
-    const { ctx, tables } = await harness();
-    const ask = parseWhatIf("what if S1 goes down at week 4 for 6 weeks?")!;
-    const wi = await runWhatIfLoop(ctx, ask, { canDraft: true });
+    const { ctx, tables } = await harness({ patch: validatedProject });
+    const wi = await runWhatIfLoop(ctx, parseWhatIf("what if S1 goes down at week 4 for 6 weeks?")!, { canDraft: true });
     assertEquals(wi.outcome.kind, "hit");
     if (wi.outcome.kind !== "hit") return;
     assertEquals(wi.outcome.runId, RUN);
-    assertEquals(wi.outcome.scenarioName, "6-week outage of S1");
-    assertEquals(tables.proposals.length, 0, "a hit files no proposal");
-    assertEquals(tables.simulation_runs.length, 1, "and starts no run");
-    const names = wi.calls.map((c) => c.name);
-    assertEquals(names.slice(0, 2), ["find_completed_run", "get_run_results"], "the §20.2 identity, then the read");
-    assert(!names.includes("draft_experiment_spec"));
+    assertEquals(wi.outcome.baselineRunId, BASE_RUN, "the model's evidence run IS the baseline");
+    assertEquals(wi.outcome.paired, true);
+    assertEquals(tables.proposals.length, 0);
     const reply = whatIfReply(wi.outcome);
-    assertStringIncludes(reply, RUN);
-    assertStringIncludes(reply, "0.87", "the headline KPI, verbatim from the stored run");
-    const table = wi.parts.find((p) => p.kind === "table");
-    assert(table, "the KPI table is a display part");
-    assertEquals((table!.data as { columns: string[] }).columns.slice(0, 2), ["KPI", "With disruption"]);
-    const handoff = whatIfInterpretationMessage("q", wi.outcome)!;
-    assertStringIncludes(handoff, "fill_rate: 0.87", "the interpretation call sees only the stored numbers");
+    assertStringIncludes(reply, 'follows Validated Model "Q4 baseline"');
+    assertStringIncludes(reply, "0.87");
+    assertStringIncludes(reply, "-0.1 ± 0", "fill rate 0.86/0.87/0.88 vs 0.96/0.97/0.98, per replication");
+    assertStringIncludes(reply, "paired");
+    const table = wi.parts.find((p) => p.kind === "table")!.data as { columns: string[] };
+    assertEquals(table.columns[4], "Difference (paired, 95% CI)");
   });
 });
 
-Deno.test("wi-02 the motivating ask (week 22, 4 weeks): miss ⇒ ONE experiment card for a NEW scenario sized to measure recovery", async () => {
+Deno.test("V row 1 (miss): ONE card that FOLLOWS the model — its policy version, protocol replications, its horizon; no deviation", async () => {
   await withDesigner(async () => {
     const utterance = "what if disruption with S1 at week 22 and duration of 4 weeks";
-    const { ctx, tables } = await harness({ utterance });
+    const { ctx, tables } = await harness({ utterance, patch: validatedProject });
     const wi = await runWhatIfLoop(ctx, parseWhatIf(utterance)!, { canDraft: true });
-    assertEquals(wi.outcome.kind, "proposed");
-    assertEquals(tables.proposals.length, 1, "exactly one card");
-    assertEquals(tables.simulation_runs.length, 1, "nothing ran — the card waits for a human");
+    assertEquals(wi.outcome.kind, "proposed", whatIfReply(wi.outcome));
+    assertEquals(tables.proposals.length, 1);
     const payload = tables.proposals[0].payload as Record<string, unknown>;
-    const ns = payload.new_scenario as { horizon_days: number; disruption_schedule: Array<Record<string, unknown>> };
-    assertEquals(ns.disruption_schedule, [{
-      target: "supplier:S1",
-      target_type: "node",
-      start_day: 154,
-      duration_days: 28,
-      magnitude_pct: 100,
-    }]);
-    assertEquals(ns.horizon_days, (22 + 4 + 8) * 7, "the event's end plus an 8-week recovery window (> the base 182 days)");
-    assertEquals(payload.acknowledge_warnings, false, "§5.4: only the reviewer can acknowledge");
-    assertEquals(payload.replications, 5, "38(ad): 5 unless the user states a count (the card recommends 30)");
-    const reply = whatIfReply(wi.outcome);
-    assertStringIncludes(reply, "weeks 22–25");
-    assertStringIncludes(reply, "a full outage", "the defaulted effect is NAMED (T2)");
-    assertStringIncludes(reply, "approve");
-    assertEquals(wi.calls.map((c) => c.name), ["draft_experiment_spec"], "no scenario matched, so no cache lookup was wasted");
+    assertEquals(payload.validated_model_id, MODEL);
+    assertEquals(payload.policy_version_id, VER, "the MODEL's policy version");
+    assertEquals(payload.replications, 3, "the protocol's count — not the 5 cap, not a guess");
+    assertEquals(payload.deviations, [], "faithful by construction");
+    assertEquals(payload.model_name, "Q4 baseline");
+    const ns = payload.new_scenario as { horizon_days: number; disruption_schedule: unknown[] };
+    assertEquals(ns.horizon_days, 364, "the model's 52 weeks, not a computed length");
+    assertEquals(payload.experiment_type, undefined, "a usable baseline run exists — nothing extra runs");
+    assertStringIncludes(String(tables.proposals[0].title), "What-if");
+    assertStringIncludes(whatIfReply(wi.outcome), 'follows Validated Model "Q4 baseline"');
   });
 });
 
-Deno.test("wi-02b a stated replication count is honored (38(ad))", async () => {
+Deno.test("V row 6: a stated replication count is used and SHOWN as a deviation from the protocol", async () => {
   await withDesigner(async () => {
-    const utterance = "what if S1 has an outage at week 22 for 4 weeks, with 40 replications";
-    const { ctx, tables } = await harness({ utterance });
-    const wi = await runWhatIfLoop(ctx, parseWhatIf(utterance)!, { canDraft: true });
-    assertEquals(wi.outcome.kind, "proposed");
-    assertEquals((tables.proposals[0].payload as Record<string, unknown>).replications, 40);
+    const utterance = "what if S1 has an outage at week 22 for 4 weeks, with 10 replications";
+    const { ctx, tables } = await harness({ utterance, patch: validatedProject });
+    await runWhatIfLoop(ctx, parseWhatIf(utterance)!, { canDraft: true });
+    const payload = tables.proposals[0].payload as Record<string, unknown>;
+    assertEquals(payload.replications, 10);
+    assertEquals((payload.deviations as Array<Record<string, unknown>>).map((d) => [d.key, d.model, d.run]), [["replications", 3, 10]]);
   });
 });
 
-Deno.test("wi-03 drafting not available (Ask mode / Designer not enabled): the miss is answered with the exact Lab spec, no card", async () => {
-  const { ctx, tables } = await harness();
+Deno.test("V row 8: no usable baseline run of the model ⇒ the card runs the baseline too (one approval, paired)", async () => {
+  await withDesigner(async () => {
+    Deno.env.set("AGENT_EXPERIMENT_TYPES", "single,comparison");
+    const utterance = "what if S1 has an outage at week 22 for 4 weeks";
+    const { ctx, tables } = await harness({
+      utterance,
+      patch: (t) => {
+        validatedProject(t);
+        t.simulation_runs.find((r) => String(r.id) === BASE_RUN)!.status = "failed";
+      },
+    });
+    const wi = await runWhatIfLoop(ctx, parseWhatIf(utterance)!, { canDraft: true });
+    assertEquals(wi.outcome.kind, "proposed", whatIfReply(wi.outcome));
+    const payload = tables.proposals[0].payload as Record<string, unknown>;
+    assertEquals(payload.experiment_type, "comparison");
+    assertEquals((payload.arms as Array<Record<string, unknown>>).map((a) => a.label), ["Baseline (no disruption)", "With disruption"]);
+    assertEquals(payload.validated_model_id, MODEL, "both arms follow the model");
+  });
+});
+
+Deno.test("V row 2: no Validated Model ⇒ NO card, the validation step is offered; exploratory only on explicit request", async () => {
+  await withDesigner(async () => {
+    const noModel = (t: Record<string, Row[]>) => { t.model_validations = []; };
+    const a = await harness({ patch: noModel });
+    const stop = await runWhatIfLoop(a.ctx, parseWhatIf("what if S1 has an outage at week 22 for 4 weeks")!, { canDraft: true });
+    assertEquals(stop.outcome.kind, "no_model");
+    assertEquals(a.tables.proposals.length, 0);
+    assertStringIncludes(whatIfReply(stop.outcome), "Run & Validate");
+
+    const utterance = "what if S1 has an outage at week 22 for 4 weeks — run it anyway as exploratory";
+    const b = await harness({ utterance, patch: noModel });
+    const go = await runWhatIfLoop(b.ctx, parseWhatIf(utterance)!, { canDraft: true });
+    assertEquals(go.outcome.kind, "proposed", whatIfReply(go.outcome));
+    const payload = b.tables.proposals[0].payload as Record<string, unknown>;
+    assertEquals(payload.run_mode, "exploratory");
+    assertEquals(payload.validated_model_id, undefined);
+    assertEquals(payload.replications, 5, "38(ad) still governs exploratory runs");
+    assertStringIncludes(whatIfReply(go.outcome), "not a validated result");
+  });
+});
+
+Deno.test("V rows 3–4: the project drifted from the model ⇒ STOP AND ASK, every time; the user's choice decides", async () => {
+  await withDesigner(async () => {
+    const q = "what if S1 has an outage at week 22 for 4 weeks";
+    // data drift (the live graph hash moved)
+    const a = await harness({ graphHash: "graph-hash-2", patch: validatedProject });
+    const ask = await runWhatIfLoop(a.ctx, parseWhatIf(q)!, { canDraft: true });
+    assertEquals(ask.outcome.kind, "needs_choice");
+    assertEquals(a.tables.proposals.length, 0, "nothing is drafted before the user chooses");
+    const text = whatIfReply(ask.outcome);
+    assertStringIncludes(text, "the simulation's inputs changed");
+    assertStringIncludes(text, '"run as validated"');
+    assertStringIncludes(text, '"run as exploratory"');
+
+    // "run as validated": follows the model (replays its versions)
+    const u1 = `${q} — run as validated`;
+    const b = await harness({ graphHash: "graph-hash-2", utterance: u1, patch: validatedProject });
+    const follow = await runWhatIfLoop(b.ctx, parseWhatIf(u1)!, { canDraft: true });
+    assertEquals(follow.outcome.kind, "proposed", whatIfReply(follow.outcome));
+    assertEquals((b.tables.proposals[0].payload as Record<string, unknown>).validated_model_id, MODEL);
+    assertStringIncludes(whatIfReply(follow.outcome), "not the project's current ones");
+
+    // "run as exploratory": current versions, labelled
+    const u2 = `${q} — run as exploratory`;
+    const c = await harness({ graphHash: "graph-hash-2", utterance: u2, patch: validatedProject });
+    const explore = await runWhatIfLoop(c.ctx, parseWhatIf(u2)!, { canDraft: true });
+    assertEquals(explore.outcome.kind, "proposed", whatIfReply(explore.outcome));
+    const p = c.tables.proposals[0].payload as Record<string, unknown>;
+    assertEquals([p.run_mode, p.validated_model_id, p.base_scenario_id], ["exploratory", undefined, BASE_SCEN]);
+  });
+});
+
+Deno.test("V row 7: inside the warm-up ⇒ refused with a measurable week; past the horizon ⇒ ASK before extending", async () => {
+  await withDesigner(async () => {
+    const a = await harness({ patch: validatedProject });
+    const warm = await runWhatIfLoop(a.ctx, parseWhatIf("what if S1 has an outage at week 2 for 2 weeks")!, { canDraft: true });
+    assertEquals(warm.outcome.kind, "invalid");
+    assertStringIncludes(whatIfReply(warm.outcome), "warm-up");
+
+    const q = "what if S1 has an outage at week 50 for 6 weeks";
+    const b = await harness({ patch: validatedProject });
+    const far = await runWhatIfLoop(b.ctx, parseWhatIf(q)!, { canDraft: true });
+    assertEquals(far.outcome.kind, "needs_horizon");
+    assertEquals(b.tables.proposals.length, 0);
+    assertStringIncludes(whatIfReply(far.outcome), "simulates 52 weeks");
+
+    const u = `${q} — extend the horizon`;
+    const c = await harness({ utterance: u, patch: validatedProject });
+    const ext = await runWhatIfLoop(c.ctx, parseWhatIf(u)!, { canDraft: true });
+    assertEquals(ext.outcome.kind, "proposed", whatIfReply(ext.outcome));
+    const payload = c.tables.proposals[0].payload as Record<string, unknown>;
+    assertEquals((payload.new_scenario as { horizon_days: number }).horizon_days, (55 + 8) * 7);
+    assertEquals((payload.deviations as Array<Record<string, unknown>>).map((d) => d.key), ["horizon_weeks"], "the longer run is a shown deviation");
+  });
+});
+
+Deno.test("V row 14: drafting not available ⇒ the Lab steps name the MODEL to choose; no card", async () => {
+  const { ctx, tables } = await harness({ patch: validatedProject });
   const wi = await runWhatIfLoop(ctx, parseWhatIf("what if S1 shuts down at week 22 for 4 weeks")!, {
     canDraft: false,
     draftBlockedReason: "this thread is in Ask mode, which never files proposals",
@@ -215,11 +304,11 @@ Deno.test("wi-03 drafting not available (Ask mode / Designer not enabled): the m
   assertEquals(tables.proposals.length, 0);
   const reply = whatIfReply(wi.outcome);
   assertStringIncludes(reply, "Ask mode");
-  assertStringIncludes(reply, "start week 22, duration 4 weeks");
+  assertStringIncludes(reply, 'choose the model "Q4 baseline"');
 });
 
 Deno.test("wi-04 an unknown target is asked about, with the project's real suppliers — never guessed", async () => {
-  const { ctx } = await harness();
+  const { ctx } = await harness({ patch: validatedProject });
   const wi = await runWhatIfLoop(ctx, parseWhatIf("what if S999 has an outage at week 5 for 2 weeks")!, { canDraft: true });
   assertEquals(wi.outcome.kind, "needs_target");
   const reply = whatIfReply(wi.outcome);
@@ -241,28 +330,6 @@ Deno.test("wi-05 an ambiguous fragment lists the candidates (§19.5)", async () 
   const reply = whatIfReply(wi.outcome);
   assertStringIncludes(reply, "SUP-10");
   assertStringIncludes(reply, "SUP-11");
-});
-
-Deno.test("wi-06 stale data: the drift is NAMED and the re-run of the SAME scenario is proposed (no duplicate scenario)", async () => {
-  await withDesigner(async () => {
-    const { ctx, tables } = await harness({ graphHash: "graph-hash-2" });
-    const wi = await runWhatIfLoop(ctx, parseWhatIf("what if S1 goes down at week 4 for 6 weeks")!, { canDraft: true });
-    assertEquals(wi.outcome.kind, "proposed");
-    if (wi.outcome.kind !== "proposed") return;
-    assertStringIncludes(wi.outcome.staleNote ?? "", "graph_hash");
-    assertEquals(wi.outcome.reusedScenario, "6-week outage of S1");
-    assertEquals((tables.proposals[0].payload as Record<string, unknown>).scenario_id, SCEN);
-    assertStringIncludes(whatIfReply(wi.outcome), "out of date");
-  });
-});
-
-Deno.test("wi-07 no saved policy version: the honest dependency answer, no card", async () => {
-  await withDesigner(async () => {
-    const { ctx, tables } = await harness({ patch: (t) => (t.policy_versions = []) });
-    const wi = await runWhatIfLoop(ctx, parseWhatIf("what if S1 goes down at week 22 for 4 weeks")!, { canDraft: true });
-    assertEquals(wi.outcome.kind, "no_policy_version");
-    assertEquals(tables.proposals.length, 0);
-  });
 });
 
 // ── v1.6 harness changes shipped with the loop ────────────────────────────────

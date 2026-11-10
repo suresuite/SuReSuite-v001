@@ -17,6 +17,7 @@ import "../agentTurn.ts";
 import { matchSkill } from "../skills/index.ts";
 import { runSkillTurn } from "../skills/runner.ts";
 import { makeRequestBudget } from "../budgets.ts";
+import { validatedProject } from "./harness/model_fixture.ts";
 
 interface Task {
   id: string;
@@ -25,6 +26,8 @@ interface Task {
   expect_outcome?: string;
   history?: Array<{ role: string; content: string }>;
   note?: string;
+  /** §27: the project's state — default a validated project in force. */
+  project?: "no_model" | "drifted";
 }
 
 const PROJECT = "11111111-1111-4111-8111-111111111111";
@@ -33,15 +36,17 @@ const USER = "22222222-2222-4222-8222-222222222222";
 const tasks: Task[] = (await Deno.readTextFile(new URL("./fixtures/modeler/modeler-tasks.jsonl", import.meta.url)))
   .split("\n").filter(Boolean).map((l) => JSON.parse(l));
 
-async function stubProject(): Promise<{ ctx: ToolContext; tables: Record<string, Row[]> }> {
+async function stubProject(variant?: Task["project"]): Promise<{ ctx: ToolContext; tables: Record<string, Row[]> }> {
   const f = JSON.parse(await Deno.readTextFile(new URL("./fixtures/closed-loop/cl-01-cache-hit.json", import.meta.url)));
   const tables = structuredClone(f.project_snapshot) as Record<string, Row[]>;
   tables.proposals ??= [];
+  validatedProject(tables); // §27: the benchmark project is a VALIDATED project
+  if (variant === "no_model") tables.model_validations = [];
   tables.recovery_playbooks = [
     { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01", project_id: PROJECT, is_system: false, name: "Expedite Shipments", config: { responses: ["expedite"], recovery_target_days: 10, cost_cap: 50000 } },
     { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa02", project_id: PROJECT, is_system: false, name: "Activate Backup Supplier", config: { responses: ["backup_supplier"], recovery_target_days: 14, cost_cap: 20000 } },
   ];
-  const rpcs = makeAgentRpcs(tables, { graphHash: "graph-hash-1" });
+  const rpcs = makeAgentRpcs(tables, { graphHash: variant === "drifted" ? "graph-hash-2" : "graph-hash-1" });
   rpcs.current_policy_hash = () => "ph-run";
   const db = makeStubDb(tables, rpcs);
   return {
@@ -55,8 +60,8 @@ async function stubProject(): Promise<{ ctx: ToolContext; tables: Record<string,
   };
 }
 
-Deno.test("M.0 benchmark: 60 modeler tasks — right skill AND right outcome (gate: 100%)", async () => {
-  assert(tasks.length >= 60, `the benchmark holds ${tasks.length} tasks; §26.4 asks for 60`);
+Deno.test("M.0 benchmark: 72 modeler tasks — right skill AND right outcome (gate: 100%)", async () => {
+  assert(tasks.length >= 72, `the benchmark holds ${tasks.length} tasks; §26.4 asks for 60`);
   for (const k of ["AGENT_ENABLED_IDS", "AGENT_EXPERIMENT_TYPES", "CLOSED_LOOP_ENABLED"]) Deno.env.delete(k);
   Deno.env.set("AGENT_ENABLED_IDS", "experiment-designer");
   Deno.env.set("AGENT_EXPERIMENT_TYPES", "single,comparison");
@@ -71,7 +76,7 @@ Deno.test("M.0 benchmark: 60 modeler tasks — right skill AND right outcome (ga
       let ok = got === t.expect_skill;
       let outcome = "-";
       if (ok && hit && t.expect_outcome) {
-        const { ctx } = await stubProject();
+        const { ctx } = await stubProject(t.project);
         ctx.draft!.utterance = t.utterance;
         const turn = await runSkillTurn({
           skill: hit.skill, match: hit.match, input,

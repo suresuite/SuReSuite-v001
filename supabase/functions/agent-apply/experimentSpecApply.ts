@@ -43,6 +43,14 @@ import {
   sha256Hex,
 } from "../_shared/dispatch.ts";
 import { ApplyFailure } from "./itemMasterApply.ts";
+import {
+  cardProtocol,
+  overridesOf,
+  protocolDeviations,
+  scenarioFromModel,
+  seedWorldFields,
+  type Deviation,
+} from "../_shared/modelRules.ts";
 
 /** §4.4 `applied_result` shape for experiment_spec (+ the full provenance
  * stamps for the card and the §13.4 quota join). */
@@ -248,6 +256,32 @@ export async function applyExperimentSpec(
   const previewHasBlock = preview.some((f) => f?.severity === "block");
   const acknowledgeWarnings = args.acknowledgeWarnings === true && previewHasWarn && !previewHasBlock;
 
+  // (0b) §27 WP V.3 — the Validated Model this run follows, re-read at apply
+  // (a card may wait days): it must still be this project's and in force.
+  const modelId = typeof payload.validated_model_id === "string" ? payload.validated_model_id : null;
+  const exploratory = payload.run_mode === "exploratory";
+  let modelCard: Record<string, unknown> | null = null;
+  let modelSeed: Record<string, unknown> | null = null;
+  if (modelId) {
+    const { data: card } = await db.from("model_validations").select("*").eq("id", modelId).maybeSingle();
+    if (!card || String((card as Record<string, unknown>).project_id) !== args.projectId) {
+      throw new ApplyFailure("stale_values", "the Validated Model this card follows no longer exists in this project — ask for a fresh draft");
+    }
+    modelCard = card as Record<string, unknown>;
+    if (modelCard.status !== "active") {
+      throw new ApplyFailure("stale_values", `the Validated Model this card follows is now ${String(modelCard.status)} — ask again so the card follows the model in force`);
+    }
+    if (typeof modelCard.evidence_run_id === "string") {
+      const { data: er } = await db.from("simulation_runs").select("scenario_id").eq("id", modelCard.evidence_run_id).maybeSingle();
+      const sid = (er as Record<string, unknown> | null)?.scenario_id;
+      if (sid) {
+        const { data: sc } = await db.from("scenarios").select("*").eq("id", sid).maybeSingle();
+        modelSeed = (sc as Record<string, unknown> | null) ?? null;
+      }
+    }
+  }
+  let deviations: Deviation[] = [];
+
   // (1) Scenario write path — the Lab's own.
   let scenarioId: string;
   if (specScenarioId) {
@@ -261,6 +295,18 @@ export async function applyExperimentSpec(
       // own dispatch — dispatchExperimentRun reads replications off the row.
       const { error } = await db.from("scenarios").update({ replications }).eq("id", scenarioId);
       if (error) throw new ApplyFailure("rpc_error", `scenario replication update failed: ${error.message}`);
+    }
+    if (modelCard) {
+      const sc = scenario as Record<string, unknown>;
+      deviations = protocolDeviations(cardProtocol(modelCard), {
+        replications,
+        horizon_days: Number(sc.horizon_days ?? 0),
+        seed: Number(sc.seed ?? 42),
+        crn: sc.crn !== false,
+        warmup_mode: (sc.warmup_mode as string | undefined) ?? "auto",
+        warmup_days: (sc.warmup_days as number | undefined) ?? null,
+        stopping_rule: (sc.stopping_rule as { kind?: string } | undefined) ?? null,
+      });
     }
   } else {
     const name = String(newScenario!.name ?? "").trim().slice(0, 120);
@@ -282,6 +328,34 @@ export async function applyExperimentSpec(
         ? { recovery_playbook_id: newScenario!.recovery_playbook_id }
         : {}),
     };
+    // §27 WP V.3: where the scenario's WORLD and run settings come from.
+    //   follows a model → the model's baseline world + its protocol (the
+    //     Lab's `buildScenarioSeed` rule), so the run is faithful by
+    //     construction; the spec's horizon/replications win and any
+    //     difference is a recorded deviation;
+    //   exploratory → the world of the scenario the card names;
+    //   neither (a card filed before Phase V) → the Lab defaults, as before.
+    let seeded: Record<string, unknown> = {};
+    if (modelCard) {
+      const built = scenarioFromModel(
+        cardProtocol(modelCard),
+        modelSeed,
+        (modelCard.scenario_fingerprint ?? null) as Record<string, unknown> | null,
+        { horizon_days: fields.horizon_days, replications },
+      );
+      deviations = built.deviations;
+      seeded = {
+        ...built.fields,
+        // Inheritance is explicit: a run that deviates does not claim it.
+        inherited_validation_id: deviations.length === 0 ? modelCard.id : null,
+      };
+    } else if (typeof payload.base_scenario_id === "string") {
+      const { data: bs } = await db.from("scenarios").select("*").eq("id", payload.base_scenario_id).maybeSingle();
+      if (bs && String((bs as Record<string, unknown>).project_id) === args.projectId) {
+        seeded = seedWorldFields(bs as Record<string, unknown>, null);
+      }
+    }
+    Object.assign(fields, { ...seeded, ...fields });
     // Reuse-or-create on (project, name): a retry after a failed dispatch
     // must not litter the Lab with duplicate scenarios (§4.4 idempotency).
     const { data: existing } = await db
@@ -318,7 +392,17 @@ export async function applyExperimentSpec(
         project_id: args.projectId,
         scenario_id: scenarioId,
         kind: "experiment.run",
-        payload: { policy_version_id: policyVersionId, acknowledge_warnings: acknowledgeWarnings },
+        payload: {
+          policy_version_id: policyVersionId,
+          acknowledge_warnings: acknowledgeWarnings,
+          // §27: follow the model (its versions; deviations recorded on the
+          // run as protocol_overrides), or run labelled exploratory.
+          ...(modelCard
+            ? { validated_model_id: String(modelCard.id), protocol_overrides: overridesOf(deviations) }
+            : exploratory
+            ? { exploratory: true }
+            : {}),
+        },
       },
       // The approving account: the run's actor and quota owner (actor_user_id).
       args.userId ?? null,
