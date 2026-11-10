@@ -21,6 +21,9 @@ export type SkillId =
   | "setup"
   | "howto"
   | "explain"
+  | "critical"
+  | "centrality"
+  | "network"
   | "capabilities";
 
 export interface SkillInput {

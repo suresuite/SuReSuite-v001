@@ -68,6 +68,9 @@ class QueryBuilder implements PromiseLike<QueryResult> {
     return this;
   }
   limit(n: number) { this.limitN = n; return this; }
+  /** PostgREST .range(from, to), inclusive. */
+  range(from: number, to: number) { this.rangeFrom = from; this.limitN = to - from + 1; return this; }
+  private rangeFrom = 0;
   maybeSingle() { this.wantSingle = true; return this; }
   /** supabase-js .single(): here identical to maybeSingle (callers assert). */
   single() { this.wantSingle = true; return this; }
@@ -118,7 +121,7 @@ class QueryBuilder implements PromiseLike<QueryResult> {
         return this.orderAsc ? d : -d;
       });
     }
-    if (this.limitN != null) out = out.slice(0, this.limitN);
+    if (this.limitN != null) out = out.slice(this.rangeFrom, this.rangeFrom + this.limitN);
     // Clone like the wire would: callers must never hold references into the
     // store (the apply path's `before` snapshot depends on this).
     if (this.wantSingle) return { data: out[0] ? structuredClone(out[0]) : null, error: null };

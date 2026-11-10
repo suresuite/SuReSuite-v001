@@ -21,6 +21,7 @@ import { readinessSkill } from "./readiness.ts";
 import { setupSkill } from "./setup.ts";
 import { explainSkill } from "./explain.ts";
 import { howtoSkill } from "./howto.ts";
+import { centralitySkill, criticalSkill, networkSkill } from "./network.ts";
 
 export type { Skill, SkillId, SkillInput, SkillOptions, SkillResult } from "./common.ts";
 
@@ -83,6 +84,11 @@ export const SKILLS: readonly Skill[] = [
   sensitivitySkill,
   explainSkill,
   whatIfSkill,
+  // §28 A.1 — network reads. `network` first: "when were critical nodes last
+  // computed?" asks about the analysis, not for the ranking.
+  networkSkill,
+  criticalSkill,
+  centralitySkill,
   readinessSkill,
   setupSkill,
   resultsSkill,
