@@ -36,6 +36,7 @@ import type { ProposalPartData } from "./draftTools.ts";
 import { loadRepKpis, pairedDelta } from "./skills/common.ts";
 import {
   AGENT_REPLICATIONS_DEFAULT_CAP,
+  AGENT_REPLICATIONS_HARD_CAP,
   experimentTypesEnabled,
   DISRUPTION_EVENTS_MAX,
   REPLICATIONS_MAX,
@@ -652,9 +653,11 @@ export async function prepareWhatIf(
     return { ok: false, outcome: run.outcome };
   }
   // §27.3 decision 1: a run that follows the model takes the PROTOCOL's
-  // replications; a count the user states is used and shown as a deviation.
-  // An exploratory run keeps 38(ad)'s 5-unless-stated.
-  const protocolReps = mode === "model" ? Number(model.protocol.replications) || null : null;
+  // replications — capped at 38(al)'s 30; a count the user states is used and
+  // shown as a deviation. An exploratory run keeps 38(ad)'s 5-unless-stated.
+  const protocolReps = mode === "model"
+    ? Math.min(AGENT_REPLICATIONS_HARD_CAP, Number(model.protocol.replications) || 0) || null
+    : null;
   const replications = Math.max(
     REPLICATIONS_MIN,
     Math.min(REPLICATIONS_MAX, Math.floor(ask.replications ?? protocolReps ?? AGENT_REPLICATIONS_DEFAULT_CAP)),
