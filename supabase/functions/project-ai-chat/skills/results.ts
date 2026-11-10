@@ -6,7 +6,7 @@
 // version — the CRN conditions — and otherwise says it is descriptive and
 // why (§9.3's rule, the comparability.ts posture: still compared, labelled).
 
-import { callTool, dbOf, fmt, loadRecentRuns, loadRepKpis, loadRun, orderKpis, pairedDelta, runCi, scalarKpis, signed, type RunRow, type Skill, type SkillInput, type SkillResult } from "./common.ts";
+import { callTool, dbOf, fmt, runKindLabel, loadRecentRuns, loadRepKpis, loadRun, orderKpis, pairedDelta, runCi, scalarKpis, signed, type RunRow, type Skill, type SkillInput, type SkillResult } from "./common.ts";
 
 const RESULTS_WORDS =
   /\b(what\s+did\s+(?:the|my|our)\s+(?:last|latest|recent|previous)?\s*(?:run|simulation)s?\s+(?:show|say|find)|(?:results?|kpis?|outcome)\s+of\s+(?:the\s+|my\s+)?(?:last\s+|latest\s+)?(?:run|simulation)|summari[sz]e\s+(?:the\s+|my\s+)?(?:last\s+|latest\s+)?(?:run|simulation)|compare\s+(?:the\s+)?(?:last\s+two\s+)?runs?|(?:last|latest)\s+run(?:'s)?\s+results?)\b/i;
@@ -70,7 +70,7 @@ export const resultsSkill: Skill = {
       const rows = keys.map((k) => [k, fmt(kpis.get(k)), runCi(r, k) === null ? "—" : `± ${fmt(runCi(r, k))}`]);
       const head = keys[0];
       return {
-        reply: `Run ${r.id.slice(0, 8)} (scenario "${name}", ${r.rep_count_done} replications${r.code_version ? `, engine version ${r.code_version}` : ""}): ` +
+        reply: `Run ${r.id.slice(0, 8)} (scenario "${name}", ${r.rep_count_done} replications, ${await runKindLabel(db, r)}${r.code_version ? `, engine version ${r.code_version}` : ""}): ` +
           (head ? `${head} ${fmt(kpis.get(head))}${runCi(r, head) !== null ? ` ± ${fmt(runCi(r, head))}` : ""}.` : "no KPIs were recorded."),
         parts: rows.length ? [{ kind: "table", data: { columns: ["KPI", "Mean", "95% CI"], rows } }] : [],
         calls,
@@ -100,11 +100,14 @@ export const resultsSkill: Skill = {
       return [k, fmt(ka.get(k)), fmt(kb.get(k)), d ? `${signed(d.mean)} ± ${fmt(d.ci)}` : signed((kb.get(k) ?? 0) - (ka.get(k) ?? 0))];
     });
     const [na, nb] = [await scenarioName(db, a.scenario_id), await scenarioName(db, b.scenario_id)];
+    const kinds = a.model_validation_id === b.model_validation_id
+      ? ` Both: ${await runKindLabel(db, a)}.`
+      : ` Run ${a.id.slice(0, 8)}: ${await runKindLabel(db, a)}; run ${b.id.slice(0, 8)}: ${await runKindLabel(db, b)}.`;
     return {
       reply: `Comparing run ${a.id.slice(0, 8)} ("${na}") with run ${b.id.slice(0, 8)} ("${nb}"): ` +
         (paired
           ? "they share the seed, replication count and policy version, so the differences below are paired with 95% intervals."
-          : `the difference is DESCRIPTIVE, not paired — ${why}. Re-run one on the other's settings for a like-for-like comparison.`),
+          : `the difference is DESCRIPTIVE, not paired — ${why}. Re-run one on the other's settings for a like-for-like comparison.`) + kinds,
       parts: rows.length
         ? [{ kind: "table", data: { columns: ["KPI", `Run ${a.id.slice(0, 8)}`, `Run ${b.id.slice(0, 8)}`, paired ? "Δ (paired, 95% CI)" : "Δ (descriptive)"], rows } }]
         : [],

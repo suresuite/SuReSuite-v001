@@ -58,3 +58,15 @@
 {"id": "mt-58", "utterance": "make a PDF report of the last run", "expect_skill": null, "note": "a Report Builder ask"}
 {"id": "mt-59", "utterance": "what is the capital of France?", "expect_skill": null}
 {"id": "mt-60", "utterance": "list materials supplied by S1", "expect_skill": null}
+{"id": "mt-61", "utterance": "what if S1 has an outage at week 22 for 4 weeks", "expect_skill": "whatif", "expect_outcome": "no_model", "project": "no_model", "note": "\u00a727 row 2"}
+{"id": "mt-62", "utterance": "what if S1 has an outage at week 22 for 4 weeks \u2014 run it anyway as exploratory", "expect_skill": "whatif", "expect_outcome": "proposed", "project": "no_model", "note": "\u00a727 row 2, explicit request"}
+{"id": "mt-63", "utterance": "what if S1 has an outage at week 22 for 4 weeks", "expect_skill": "whatif", "expect_outcome": "needs_choice", "project": "drifted", "note": "\u00a727 rows 3-4: stop and ask"}
+{"id": "mt-64", "utterance": "what if S1 has an outage at week 22 for 4 weeks \u2014 run as validated", "expect_skill": "whatif", "expect_outcome": "proposed", "project": "drifted"}
+{"id": "mt-65", "utterance": "what if S1 has an outage at week 22 for 4 weeks \u2014 run as exploratory", "expect_skill": "whatif", "expect_outcome": "proposed", "project": "drifted"}
+{"id": "mt-66", "utterance": "what if S1 has an outage at week 2 for 2 weeks", "expect_skill": "whatif", "expect_outcome": "invalid", "note": "\u00a727 row 7: inside the warm-up"}
+{"id": "mt-67", "utterance": "what if S1 has an outage at week 50 for 6 weeks", "expect_skill": "whatif", "expect_outcome": "needs_horizon", "note": "\u00a727 row 7: ask before extending"}
+{"id": "mt-68", "utterance": "what if S1 has an outage at week 50 for 6 weeks \u2014 extend the horizon", "expect_skill": "whatif", "expect_outcome": "proposed"}
+{"id": "mt-69", "utterance": "what if S1 has an outage at week 22 for 4 weeks, with 10 replications", "expect_skill": "whatif", "expect_outcome": "proposed", "note": "\u00a727 row 6: a shown deviation"}
+{"id": "mt-70", "utterance": "how do I mitigate an S1 outage in weeks 22-25?", "expect_skill": "mitigation", "expect_outcome": "needs_choice", "project": "drifted", "note": "\u00a727 row 9"}
+{"id": "mt-71", "utterance": "how do I mitigate an S1 outage in weeks 22-25?", "expect_skill": "mitigation", "expect_outcome": "no_model", "project": "no_model"}
+{"id": "mt-72", "utterance": "what did the last run show?", "expect_skill": "results", "expect_outcome": "brief", "project": "no_model", "note": "\u00a727 row 13"}

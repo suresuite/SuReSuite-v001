@@ -66,6 +66,35 @@ function eventText(e: Record<string, unknown>): string {
 export function experimentSpecRows(payload: Record<string, unknown> | undefined): ProposalRow[] {
   if (!payload) return [];
   const rows: ProposalRow[] = [];
+  // §27: FIRST, what kind of result this run is — it follows a Validated
+  // Model (with its protocol and any deviation), or it is exploratory.
+  const modelName = typeof payload.model_name === "string" ? payload.model_name : null;
+  if (payload.validated_model_id) {
+    rows.push({ table: "model", entity: modelName ?? String(payload.validated_model_id).slice(0, 8), field: "follows", value: "Validated Model", source: "validated" });
+    const p = payload.protocol && typeof payload.protocol === "object" ? (payload.protocol as Record<string, unknown>) : null;
+    if (p) {
+      const parts = [
+        p.replications != null ? `${p.replications} replications` : null,
+        p.horizon_weeks != null ? `${p.horizon_weeks} weeks` : null,
+        p.warmup_week != null ? `measured from week ${Number(p.warmup_week) + 1}` : null,
+        p.root_seed != null ? `seed ${p.root_seed}` : null,
+        p.crn === true ? "common random numbers" : null,
+      ].filter(Boolean);
+      if (parts.length) rows.push({ table: "model", entity: modelName ?? "—", field: "protocol", value: parts.join(" · "), source: "validated" });
+    }
+    const devs = Array.isArray(payload.deviations) ? (payload.deviations as Array<Record<string, unknown>>) : [];
+    for (const d of devs) {
+      rows.push({
+        table: "model",
+        entity: String(d.label ?? d.key ?? ""),
+        field: "DEVIATION",
+        value: `model ${String(d.model)} → this run ${String(d.run)}`,
+        source: "your request",
+      });
+    }
+  } else if (payload.run_mode === "exploratory") {
+    rows.push({ table: "model", entity: "—", field: "EXPLORATORY", value: "follows no Validated Model — not a validated result", source: "your request" });
+  }
   const ns = payload.new_scenario && typeof payload.new_scenario === "object"
     ? (payload.new_scenario as Record<string, unknown>)
     : null;

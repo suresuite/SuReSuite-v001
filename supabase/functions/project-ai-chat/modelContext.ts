@@ -27,8 +27,7 @@ import {
   type ProtocolLike,
 } from "../_shared/modelRules.ts";
 
-// deno-lint-ignore no-explicit-any
-type Db = { from(table: string): any; rpc(fn: string, args?: Record<string, unknown>): any };
+import type { Db } from "./skills/common.ts";
 
 export type RunMode = "model" | "exploratory";
 
