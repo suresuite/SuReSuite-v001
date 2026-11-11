@@ -1,20 +1,21 @@
 # %% [markdown]
 # # SuReSuite 05 · Available to promise
 #
-# Answers, for the materials you choose: *can Q units leave stock in this week, and if not, how much
-# and when?* It runs your chain on **this machine** as it is, in several possible futures, and reads
-# the answer from each material's stock. Five steps:
+# For a list of requests — *can Q units of this material leave stock in this week?* — it runs your
+# chain on **this machine** in several possible scenarios and gives one decision per request. The
+# materials, quantities and weeks can all differ, and a material can be asked for more than once.
 #
 # 1. **Versions** — the engine, data and policies the runs read (the latest, or pinned).
-# 2. **Futures** — the chain as it is, one run per future. Kept on disk: a new question runs nothing.
-# 3. **Materials** — the ones to check, and how much of each, by when.
-# 4. **Answer** — case 1, the request is within ATP: yes. Case 2, above ATP: how much, and when the rest.
-# 5. **Decision** — accept, and see the weeks after: stock, reorders, and what existing customers lose.
+# 2. **Scenarios** — the chain as it is, one run per scenario. Kept on disk: a new question runs nothing.
+# 3. **Requests** — one line each: the material, how much, and when.
+# 4. **Which case?** — **case 1**, the request is within what is available to promise (ATP): all of it
+#    in the week. **Case 2**, above ATP: the part ATP covers in the week, the rest later.
+# 5. **Decision** — that plan, simulated. **This is the answer**; ATP is the quick screen before it.
 #
-# **Available to promise** in a week is what can leave stock then without production running short
-# before a reorder can arrive: the lowest point stock reaches from that week to one lead time later
-# (after each week's production, before its receipts), in at least `CONFIDENCE` of the futures. Nothing here changes your project or uses quota. Demo mode needs no
-# key; with one, `read:data` and `read:policies` are enough.
+# **ATP** in a week is what can leave stock then without production running short before a reorder
+# can arrive, in at least `CONFIDENCE` of the scenarios (0.9 = 9 of 10). Two things to know: the
+# requests are accepted **together**, and an accepted order is known from week 0, so your
+# replenishment may react before the week. Nothing here changes your project or uses quota.
 
 # %% include: config
 
@@ -22,8 +23,8 @@
 
 # %% [markdown]
 # ## Settings
-# Everything you choose is in this one cell. Sections 1 and 2 cost a run per future, and so does 5 for
-# each new decision; 3 and 4 cost nothing.
+# Everything you choose is in this one cell. Sections 1 and 2 cost a run per scenario; a new list of
+# requests in section 3 costs one more per scenario, for the decision.
 
 # %%
 # 1 · Versions — "latest"/"current" follow the platform; pin a value to repeat a study exactly
@@ -31,23 +32,19 @@ ENGINE = "latest"      # or "0.8.3", or a run's code_version ("scsim-0.8.3+…")
 DATA = "current"       # "current" = your data now | "latest" = the newest frozen version | a dataset version id
 POLICY = "current"     # "current" = /policies now | "latest" = the newest saved version | a policy version id
 
-# 2 · Futures — the horizon and warm-up are your scenario's (SCENARIO_ID above)
-N_WORLDS = 10          # futures (one seed each); more = a steadier answer, and only the new ones are run
+# 2 · Scenarios — the horizon and warm-up are your scenario's (SCENARIO_ID above)
+N_SCENARIOS = 10       # possible courses of the year (one seed each); more = a steadier answer
+CONFIDENCE = 0.9       # promise only what holds in at least this share of them (0.9 = 9 of 10)
 
-# 3 · Materials
-MATERIALS = []         # material ids to check, e.g. ["M1", "M2"]; [] = the TOP_N with the least cover
-TOP_N = 4
-QUANTITY = 150         # units of each — or one per material: {"M1": 300, "M2": 150}
-NEEDED_BY = ""         # "YYYY-MM-DD"; "" = NEEDED_WEEK
-NEEDED_WEEK = 20       # weeks from week 0
+# 3 · Requests — one line each: (material, quantity, when). `when` is a week number or a "YYYY-MM-DD" date.
+#     A material may appear several times, at different weeks and quantities.
+REQUESTS = [
+    # ("M1", 400, 20),
+    # ("M2", 300, "2027-03-31"),
+    # ("M1", 250, 34),
+]
 START_DATE = ""        # the date of week 0; "" = your earliest forecast period, else today
-
-# 4 · Answer
-CONFIDENCE = 0.9       # promise only what holds in at least this share of futures
-
-# 5 · Decision — what to accept, simulated to show the weeks after
-ACCEPT = "request"     # "request" = all that was asked (case 2 goes above ATP) | "atp" = what ATP covers
-#                        | your own, e.g. {"M1": 300} | "none" = skip this step
+TRY = dict(top_n=4, quantity=150, week=20)   # used only while REQUESTS is empty: the materials with the least cover
 
 EXPORT = "available_to_promise.xlsx"   # "" = no export
 
@@ -67,95 +64,74 @@ data = load_dataset(api, PID, DATA, SCOPES, api.live, "notebook 05")
 pol, drift, _ = load_policies(api, PID, "current" if POLICY == "current" else "pinned",
                               POLICY_VERSION_ID if POLICY == "current" else "" if POLICY == "latest" else POLICY,
                               SCOPES, "notebook 05")
-scenario, FRAME, _ = study_scenario(api, PID, SCENARIO_ID, SCOPES, N_WORLDS)
+scenario, FRAME, _ = study_scenario(api, PID, SCENARIO_ID, SCOPES, N_SCENARIOS)
 RUN = {**scenario, **FRAME}
 display(styled(versions_table(api, PID, data, pol, scenario, FRAME)))
 
 # %% [markdown]
-# ## 2 · Futures
-# One replication per seed, every material's weeks kept. This is the only step that runs the engine.
-# **Expect:** how many futures were run and how many came from the cache.
+# ## 2 · Scenarios
+# **Expect:** how many scenarios were run and how many came from the cache.
 
 # %%
 T = input_tables(data)
-BOM, LANES = flat_bom(T), supply_lanes(T)
 EV = engine_view(data, pol, RUN, MODEL)   # what the engine receives: lead times, capacities, opening stock
-SEEDS = [int(RUN.get("seed", 42)) + i for i in range(N_WORLDS)]
-WORLDS = futures(data, pol, RUN, MODEL, SEEDS, BOM)
+SEEDS = [int(RUN.get("seed", 42)) + i for i in range(N_SCENARIOS)]
+AS_IS = futures(data, pol, RUN, MODEL, SEEDS, flat_bom(T))
 
 # %% [markdown]
-# ## 3 · Materials
+# ## 3 · Requests
 # Week 0 is the start of the simulation: your opening stock as it is in the data. The data holds no
 # open purchase orders, so the first lead-time weeks can understate supply you have already ordered.
-# **Expect:** the week asked for, then the stock position of the materials checked.
+# **Expect:** the requests as read, each with its week and date.
 
 # %%
 START = week_zero(T, START_DATE)
-WEEK = int((pd.Timestamp(NEEDED_BY) - START).days // 7) if NEEDED_BY else int(NEEDED_WEEK)
-if not 0 <= WEEK < len(WORLDS[SEEDS[0]]["on_hand"]):
-    raise Stop(f"week {WEEK} is outside the simulated weeks 0–{len(WORLDS[SEEDS[0]]['on_hand']) - 1}")
-POSITION = atp_position(WORLDS, EV, WEEK, CONFIDENCE)
-REQUESTS = pick_requests(POSITION, MATERIALS, QUANTITY, TOP_N)
-print(f"week {WEEK} = {(START + pd.Timedelta(weeks=WEEK)).date()} · {len(POSITION)} materials · checking {', '.join(REQUESTS)}")
-display(styled(POSITION.loc[list(REQUESTS)], fmt="{:,.0f}", shade=["ATP"], cmap="Greens",
-               caption=f"Stock position in week {WEEK} — ATP at {CONFIDENCE:.0%} confidence"))
+POSITION = atp_position(AS_IS, EV, TRY["week"], CONFIDENCE)
+ASKED = read_requests(REQUESTS, POSITION, START, len(AS_IS[SEEDS[0]]["on_hand"]), **TRY)
+display(styled(ASKED, fmt="{:,.0f}", caption=f"{len(ASKED)} requests for {ASKED['material'].nunique()} materials"))
 
 # %% [markdown]
-# ## 4 · Answer
-# **Expect:** one row per material — yes, or how much then and when the rest, the nearest week that
-# takes all of it, and what an order placed now would add — then each material's stock, its ATP and
-# the request on one panel.
+# ## 4 · Which case?
+# Requests for the same material are taken in order of their week, and each sees what is left after
+# the ones before it.
+# **Expect:** each request against its ATP, its case, and the plan that follows from it.
 
 # %%
-ANSWER = promise(WORLDS, EV, LANES, REQUESTS, WEEK, CONFIDENCE, START)
-display(styled(ANSWER, fmt="{:,.0f}", shade=["on time (% of futures)"], cmap="Greens",
-               caption=f"Can it leave stock in week {WEEK}? — {N_WORLDS} futures, {CONFIDENCE:.0%} confidence"))
-plot_atp(WORLDS, EV, REQUESTS, WEEK, CONFIDENCE)
-
-# %% [markdown]
-# **Reading it.** The green line is what you can promise in each week; the request is the dot. A dot
-# under the line is **case 1**: yes. A dot above it is **case 2**: promise the part under the line now,
-# and the rest in the week the line climbs back over it ("all of it by"), or accept all of it and see
-# in step 5 what that costs. Raise `N_WORLDS` before you quote a date that sits just above the bar.
+SCREEN, PLANS = plan_requests(AS_IS, EV, ASKED, CONFIDENCE)
+display(styled(SCREEN, fmt="{:,.0f}", caption="Each request against what is available to promise in its week"))
 
 # %% [markdown]
 # ## 5 · Decision
-# The accepted quantities are taken out of stock in the week, all together, in the same futures as
-# step 2, so the only difference is the decision. The material leaves through a stand-in order on a
-# copy of your data, which waits if the stock is not there; your replenishment reacts as your
-# policies say, and because the order is known from week 0, they may react before the week. One
-# more run per future, kept on disk like the others.
-# **Expect:** what existing customers lose, a row per material with and without the decision, and
-# each material's stock in both.
+# The plans above are taken out of stock, all together, in the same scenarios as step 2, so the only
+# difference is the decision. One more run per scenario, kept on disk like the others.
+# **Expect:** one row per request: the decision, in how many scenarios it is delivered as planned, and
+# `ok` or what goes wrong. Then what existing customers lose, and a chart per material.
 
 # %%
-ACCEPTED = accepted_quantities(ANSWER, ACCEPT) if ACCEPT != "none" else {}
-if ACCEPTED:
-    BEFORE, AFTER = decide(WORLDS, data, pol, RUN, MODEL, SEEDS, ACCEPTED, WEEK)
-    IMPACT = impact(BEFORE, AFTER, ANSWER, ACCEPTED, WEEK, CONFIDENCE)
-    display(styled(IMPACT, fmt="{:,.0f}", shade=["weeks with no stock · accepted"],
-                   caption=f"Accepting in week {WEEK}: the weeks after — {N_WORLDS} futures"))
-    plot_impact(BEFORE, AFTER, ACCEPTED, WEEK)
+BEFORE, AFTER = decide(AS_IS, data, pol, RUN, MODEL, SEEDS, SCREEN, PLANS)
+DECISION, CUSTOMERS, DETAIL = decision(BEFORE, AFTER, SCREEN, PLANS, CONFIDENCE)
+display(styled(DECISION, fmt="{:,.0f}", caption=f"The decision — {N_SCENARIOS} scenarios, promised when it holds in {CONFIDENCE:.0%} of them"))
+print(CUSTOMERS)
+plot_decision(BEFORE, AFTER, EV, SCREEN, PLANS, CONFIDENCE)
 
 # %% [markdown]
-# **Reading it.** Case 1 should leave "weeks with no stock" and existing customers where they were:
-# the stock dips, the next order is larger or earlier, and the line returns. Case 2 accepted in full
-# shows what the part above ATP costs: weeks with no stock, production waiting for the material, and
-# customers losing units. If that cost is too high, set `ACCEPT = "atp"` and promise the rest later.
+# **Reading it.** `ok`: promise it as written. `late`: the material is not there in the planned week
+# in enough scenarios; "complete by" is the week to quote instead. `stock runs out`: accepting empties
+# the stock for longer than today, and production waits for it. On the chart, the green line is what
+# can be promised each week and the dots are the plan: a dot under the line is safe by the screen, and
+# the orange line shows what the stock really does once the plan is in the books.
 
 # %% [markdown]
 # ## Export
-# **Expect:** one workbook: the versions, the answer, the decision, and every material's stock position.
+# **Expect:** one workbook: the versions, the decision for each request, and the detail behind it by material.
 
 # %%
 if EXPORT:
     with pd.ExcelWriter(EXPORT) as xw:
         versions_table(api, PID, data, pol, scenario, FRAME).to_excel(xw, sheet_name="versions")
-        ANSWER.assign(week=WEEK, date=str((START + pd.Timedelta(weeks=WEEK)).date()), confidence=CONFIDENCE,
-                      futures=N_WORLDS).to_excel(xw, sheet_name="answer")
-        if ACCEPTED:
-            IMPACT.to_excel(xw, sheet_name="decision")
-        POSITION.to_excel(xw, sheet_name="stock position")
+        ASKED.join(DECISION.drop(columns="material")).assign(
+            confidence=CONFIDENCE, scenarios=N_SCENARIOS, customers=CUSTOMERS).to_excel(xw, sheet_name="decision")
+        DETAIL.to_excel(xw, sheet_name="detail by material")
     print("written:", EXPORT)
     try:
         from google.colab import files
