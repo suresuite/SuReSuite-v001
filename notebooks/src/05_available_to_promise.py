@@ -12,8 +12,16 @@
 #    in the week. **Case 2**, above ATP: the part ATP covers in the week, the rest later.
 # 5. **Decision** — that plan, simulated. **This is the answer**; ATP is the quick screen before it.
 #
-# **ATP** in a week is what can leave stock then without production running short before a reorder
-# can arrive, in at least `CONFIDENCE` of the scenarios (0.9 = 9 of 10). Two things to know: the
+# **How ATP is worked out.** What can leave stock in a week without production running short before
+# a reorder can arrive:
+#
+# > ATP = stock at the start of the week + what arrives − what production uses − what earlier requests were promised
+#
+# counted up to the **tightest week** between the request's week and one lead time later (a reorder
+# placed in that week lands then). Stock that planned production will use before then is not free,
+# so a material can hold a lot and still have little to promise. It is read in the scenario that
+# makes the promise hold in at least `CONFIDENCE` of them (0.9 = 9 of 10). Step 4 shows this sum
+# for every request. Two things to know: the
 # requests are accepted **together**, and an accepted order is known from week 0, so your
 # replenishment may react before the week. Nothing here changes your project or uses quota.
 
@@ -94,11 +102,13 @@ display(styled(ASKED, fmt="{:,.0f}", caption=f"{len(ASKED)} requests for {ASKED[
 # ## 4 · Which case?
 # Requests for the same material are taken in order of their week, and each sees what is left after
 # the ones before it.
-# **Expect:** each request against its ATP, its case, and the plan that follows from it.
+# **Expect:** each request against its ATP, its case and the plan that follows; then how each ATP is
+# worked out, line by line.
 
 # %%
-SCREEN, PLANS = plan_requests(AS_IS, EV, ASKED, CONFIDENCE)
+SCREEN, HOW, PLANS = plan_requests(AS_IS, EV, ASKED, CONFIDENCE)
 display(styled(SCREEN, fmt="{:,.0f}", caption="Each request against what is available to promise in its week"))
+display(styled(HOW, fmt="{:,.0f}", caption="How each ATP is worked out"))
 
 # %% [markdown]
 # ## 5 · Decision
@@ -111,15 +121,17 @@ display(styled(SCREEN, fmt="{:,.0f}", caption="Each request against what is avai
 BEFORE, AFTER = decide(AS_IS, data, pol, RUN, MODEL, SEEDS, SCREEN, PLANS)
 DECISION, CUSTOMERS, DETAIL = decision(BEFORE, AFTER, SCREEN, PLANS, CONFIDENCE)
 display(styled(DECISION, fmt="{:,.0f}", caption=f"The decision — {N_SCENARIOS} scenarios, promised when it holds in {CONFIDENCE:.0%} of them"))
-print(CUSTOMERS)
+if CUSTOMERS:
+    print(CUSTOMERS)
 plot_decision(BEFORE, AFTER, EV, SCREEN, PLANS, CONFIDENCE)
 
 # %% [markdown]
-# **Reading it.** `ok`: promise it as written. `late`: the material is not there in the planned week
+# **Reading it.** `Decline`: nothing is free in that week or later; see step 4 for the sum behind it.
+# `ok`: promise it as written. `late`: the material is not there in the planned week
 # in enough scenarios; "complete by" is the week to quote instead. `stock runs out`: accepting empties
-# the stock for longer than today, and production waits for it. On the chart, the green line is what
-# can be promised each week and the dots are the plan: a dot under the line is safe by the screen, and
-# the orange line shows what the stock really does once the plan is in the books.
+# the stock for longer than today, and production waits for it. On the chart, the green line is
+# what can be promised each week, a ring is a request and a dot is what the plan accepts: a dot under
+# the line is safe by the screen. The dashed line is the stock once the plan is in the books.
 
 # %% [markdown]
 # ## Export
@@ -131,6 +143,7 @@ if EXPORT:
         versions_table(api, PID, data, pol, scenario, FRAME).to_excel(xw, sheet_name="versions")
         ASKED.join(DECISION.drop(columns="material")).assign(
             confidence=CONFIDENCE, scenarios=N_SCENARIOS, customers=CUSTOMERS).to_excel(xw, sheet_name="decision")
+        HOW.to_excel(xw, sheet_name="how ATP is worked out")
         DETAIL.to_excel(xw, sheet_name="detail by material")
     print("written:", EXPORT)
     try:
