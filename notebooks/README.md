@@ -11,7 +11,7 @@ notebooks/
     common/config.py      the CONFIG cell — /developer patches it; its variables must match nbConfigCell
     common/setup.py       packages + API key (Colab Secrets → SURESUITE_API_KEY → prompt in "live")
     common/study.py       how 04 and 05 read a project: data, policies, scenario, engine, per-item weeks
-    common/atp.py         05's futures (cached on disk), stock position and material-level answer
+    common/atp.py         05's scenarios (cached on disk), the case and plan per request, and the simulated decision
     common/trace.py       04's tables and charts for following several items through one replication
   demo/example_project.json   recorded engine output the demo mode replays
   tools/record_demo.py        re-records it through the worker's own path
