@@ -11,6 +11,7 @@ notebooks/
     common/config.py      the CONFIG cell — /developer patches it; its variables must match nbConfigCell
     common/setup.py       packages + API key (Colab Secrets → SURESUITE_API_KEY → prompt in "live")
     common/study.py       how 04 and 05 read a project: data, policies, scenario, engine, per-item weeks
+    common/trace.py       04's tables and charts for following several items through one replication
   demo/example_project.json   recorded engine output the demo mode replays
   tools/record_demo.py        re-records it through the worker's own path
   tools/run_notebooks.py      executes every built notebook in demo mode
@@ -27,6 +28,7 @@ notebooks/
 # %% include: setup         # packages + key (collapsed in Colab)
 # %% include: library       # client.py + kpi_display.py (collapsed in Colab)
 # %% include: study         # common/study.py (collapsed in Colab)
+# %% include: trace         # common/trace.py (collapsed in Colab)
 # %% include: demo_data baseline s2_outage   # only the recordings this notebook replays
 
 # %%

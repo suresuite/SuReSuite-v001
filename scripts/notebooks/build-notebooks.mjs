@@ -22,7 +22,7 @@
  * Cell markers in a source:
  *   # %%                          a code cell
  *   # %% [markdown]               a markdown cell (each line starts with "# ")
- *   # %% include: config|setup|library|local|study
+ *   # %% include: config|setup|library|local|study|trace
  *   # %% include: demo_data <label> <label> …   the recordings the notebook replays
  *
  * ── WHAT --check REFUSES ───────────────────────────────────────────────────
@@ -129,6 +129,12 @@ const INCLUDES = {
   study: {
     title: "Study helpers (shared by notebooks 04 and 05)",
     text: () => read(join(SRC, "common", "study.py")),
+    form: true,
+  },
+  // Notebook 04's tables and charts for following several items through one replication.
+  trace: {
+    title: "Trace helpers (run it; no need to read it)",
+    text: () => read(join(SRC, "common", "trace.py")),
     form: true,
   },
 };
