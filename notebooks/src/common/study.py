@@ -36,6 +36,8 @@ def key_table(scopes, verify_use="VERIFY_ON_PLATFORM"):
 
 def styled(df, fmt=None, shade=(), cmap="Reds", caption=None):
     """A formatted table with value shading, or the plain table where the notebook cannot style."""
+    if isinstance(fmt, str):  # one format for every numeric column; text columns are left alone
+        fmt = {c: fmt for c in df.select_dtypes("number").columns}
     try:
         s = df.style.format(fmt or {}, na_rep="—")
         for c in shade:

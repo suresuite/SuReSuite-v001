@@ -30,6 +30,7 @@ notebooks/
 # %% include: study         # common/study.py (collapsed in Colab)
 # %% include: trace         # common/trace.py (collapsed in Colab)
 # %% include: demo_data baseline s2_outage   # only the recordings this notebook replays
+# %% include: bundle setup library local study trace demo_data baseline   # all of them as ONE cell (04)
 
 # %%
 api = connect(BASE_URL, API_KEY, DEMO_DATA)

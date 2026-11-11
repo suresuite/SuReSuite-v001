@@ -147,7 +147,7 @@ const NOTEBOOKS = [
   { path: '/notebooks/suresuite_01_policy_experiment.ipynb', title: '01 · Policy experiment', mirrors: '/policies edit → Save version → Lab Compare, paired by replication', minutes: 15 },
   { path: '/notebooks/suresuite_02_disruption_resilience.ipynb', title: '02 · Disruption and resilience', mirrors: 'Lab stress tests: plant shutdown, supplier outage, recovery times', minutes: 15 },
   { path: '/notebooks/suresuite_03_local_simulation.ipynb', title: '03 · Simulate on your own machine', mirrors: 'Pull a dataset and policy version, run the engine locally, sweep for free', minutes: 15 },
-  { path: '/notebooks/suresuite_04_component_inventory.ipynb', title: '04 · Component inventory: trace materials week by week', mirrors: 'Policies → Run & validate → Single (Inspection mode): pick the versions, the experiment, and the materials and products to follow week by week, as they are or under a disruption', minutes: 10 },
+  { path: '/notebooks/suresuite_04_component_inventory.ipynb', title: '04 · Component inventory: trace materials week by week', mirrors: 'Policies → Run & validate → Single (Inspection mode): pick the versions, run or pull the baseline, knock out suppliers, and follow the materials you choose week by week with and without the disruption', minutes: 10 },
   { path: '/notebooks/suresuite_05_available_to_promise.ipynb', title: '05 · Available to promise', mirrors: 'Answer a make-to-order or material request: stock position, available to promise, partial delivery, pull in or push back', minutes: 10 },
 ] as const;
 type NotebookPath = (typeof NOTEBOOKS)[number]['path'];

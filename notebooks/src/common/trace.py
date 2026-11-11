@@ -1,11 +1,7 @@
 # ── Trace helpers (notebook 04) ─────────────────────────────────────────────
 # One replication with every item's weeks, and the tables and charts that follow
-# several materials and products through it. Run this cell; you do not need to read it.
-import matplotlib.colors as mcolors
-
+# several materials through it, with and without a disruption. Run this cell; you do not need to read it.
 WORLD_COLORS = ["#2a78d6", "#d9480f"]   # baseline, disrupted
-MEASURE_COLORS = ["#2a78d6", "#7a5af8", "#94a3b8", "#0f766e", "#eda100"]
-MEASURE_STYLES = ["-", "--", ":", "-."]
 INK, STOCKOUT = "#5f6b7a", "#e03131"
 
 
@@ -62,113 +58,90 @@ def material_summary(world, lanes, base=None):
     return t if base else t.drop(columns="Δ avg on hand")
 
 
-def product_summary(world):
-    p, w0 = world["product"], world["warmup"]
-    total = lambda k: p[k].loc[w0:].sum() if k in p else np.nan
-    t = pd.DataFrame({"demand": total("demand"), "produced": total("production"), "delivered": total("fulfillment"),
-                      "lost units": total("lost_units"),
-                      "peak backlog": p["backlog"].loc[w0:].max() if "backlog" in p else np.nan})
-    t["fill rate %"] = 100 * t["delivered"] / t["demand"].replace(0, np.nan)
-    return t.rename_axis("product")
-
-
-def select_items(summary, bom, products, materials, top_n):
-    """The materials and products to follow: the ones named, plus the `top_n` riskiest materials of the
-    named products (of the whole project when nothing is named)."""
-    known_p = set(bom.product_id)
-    unknown = sorted((set(materials) - set(summary.index)) | (set(products) - known_p))
+def select_materials(summary, materials, top_n):
+    """The materials named, or the `top_n` riskiest when none is."""
+    unknown = sorted(set(materials) - set(summary.index))
     if unknown:
-        print("not in this run (check the ids):", ", ".join(unknown))
-    products = [p for p in products if p in known_p]
-    named = [m for m in materials if m in summary.index]
-    scope = set(bom.material_id[bom.product_id.isin(products)]) if products else set(summary.index)
-    auto = [m for m in summary.index if m in scope and m not in named][:top_n] if products or not named else []
-    return named + auto, products or sorted(set(bom.product_id[bom.material_id.isin(named + auto)]))
+        print("not a material of this run (check the ids):", ", ".join(unknown))
+    return [m for m in materials if m in summary.index] or list(summary.index[:top_n])
 
 
-def plot_items(worlds, kind, items, measures, window=None, ncols=3, title=None):
-    """Small multiples, one panel per item. `worlds` is {label: trace}. One world: a colour per
-    measure. Two worlds: a colour per world and a line style per measure. Triangles mark weeks
-    with no stock on hand (in the last world)."""
-    items = [i for i in items if any(i in w[kind].get(k, ()) for w in worlds.values() for k in measures)]
-    if not items:
-        print(f"nothing to plot for {kind}s")
-        return
-    ncols = min(ncols, len(items))
-    nrows = -(-len(items) // ncols)
-    fig, axes = plt.subplots(nrows, ncols, figsize=(4.2 * ncols, 2.4 * nrows + 0.6), sharex=True, squeeze=False)
+def baseline(api, source, data, pol, run_scenario, project_model):
+    """The baseline: run on this machine ("run"), or a finished platform run pulled by its id.
+    A pulled run is only the same baseline when it read the same data, policies, seed and replications."""
+    if source == "run":
+        return simulate(data, pol, scenario=run_scenario, disruptions=[], project_model=project_model)
+    run = api.run(source)
+    if run["status"] != "done":
+        raise Stop(f"run {source} is {run['status']} — pull a finished run, or set BASELINE = \"run\"")
+    sc = next((s for s in api.scenarios(run["project_id"]) if s["id"] == run["scenario_id"]), {})
+    differs = [what for what, theirs, mine in [
+        ("data", run.get("dataset_version_id"), data.id), ("policies", run.get("policy_version_id"), pol.id),
+        ("seed", sc.get("seed"), run_scenario.get("seed")),
+        ("replications", run.get("rep_count_done"), run_scenario.get("replications")),
+        ("disruptions", bool(sc.get("disruption_schedule")), False)] if theirs != mine]
+    print(f"pulled run {source} ({run.get('code_version')})" + (
+        f" — NOTE: its {', '.join(differs)} differ from this study's, so a difference from it is not only the disruption"
+        if differs else " — same data, policies, seed and replications as this study"))
+    return {"run": run, "replications": api.replications(source)}
+
+
+def compare_table(worlds, lanes, materials):
+    """The traced materials, one block of columns per world."""
+    cols = ["avg on hand", "min on hand", "weeks at zero", "first stockout", "avg in transit", "ordered"]
+    first = material_summary(next(iter(worlds.values())), lanes)
+    blocks = {label: material_summary(w, lanes).loc[materials, cols] for label, w in worlds.items()}
+    table = pd.concat(blocks, axis=1) if len(blocks) > 1 else next(iter(blocks.values()))
+    table.insert(0, "suppliers", first.loc[materials, "suppliers"])
+    table.insert(1, "avg use / wk", first.loc[materials, "avg use / wk"])
+    return table
+
+
+DYNAMICS = {"on_hand": "on hand", "in_transit": "in transit", "orders": "ordered / wk", "use": "used / wk"}
+
+
+def plot_dynamics(worlds, materials, window=None, per_figure=4):
+    """Inventory control dynamics: a column per material, a row per measure (on hand, in transit,
+    ordered, used), every world drawn over the baseline. Triangles mark weeks with no stock."""
     last = list(worlds.values())[-1]
-    for ax, item in zip(axes.flat, items):
-        for wi, (label, world) in enumerate(worlds.items()):
-            for mi, k in enumerate(measures):
-                df = world[kind].get(k)
-                if df is None or item not in df:
-                    continue
-                one = len(worlds) == 1
-                ax.plot(df.index, df[item], linewidth=1.8 if mi == 0 else 1.2,
-                        color=MEASURE_COLORS[mi % len(MEASURE_COLORS)] if one else WORLD_COLORS[wi % 2],
-                        linestyle="-" if one else MEASURE_STYLES[mi % len(MEASURE_STYLES)],
-                        label=k.replace("_", " ") if one else f"{k.replace('_', ' ')} · {label}")
-        if kind == "material" and "on_hand" in measures:
-            oh = last[kind]["on_hand"][item]
-            out = oh.index[(oh <= 1e-6) & (oh.index >= last["warmup"])]
-            ax.scatter(out, [0] * len(out), color=STOCKOUT, marker="v", s=22, zorder=5, label="no stock")
-        if window:
-            ax.axvspan(*window, color=INK, alpha=0.12, linewidth=0, label="disruption")
-        if last["warmup"]:
-            ax.axvline(last["warmup"], color=INK, linestyle=":", linewidth=1, label="warm-up ends")
-        ax.set_title(item, fontsize=9)
-        ax.set_ylim(bottom=0)
-        ax.tick_params(labelsize=8)
-        ax.spines[["top", "right"]].set_visible(False)
-    for ax in axes.flat[len(items):]:
-        ax.set_visible(False)
-    for ax in axes[-1]:
-        ax.set_xlabel("week", fontsize=8)
-    handles = {l: h for ax in axes.flat for h, l in zip(*ax.get_legend_handles_labels())}
-    fig.legend(handles.values(), handles.keys(), loc="upper center", ncols=min(len(handles), 6), fontsize=8,
-               frameon=False, bbox_to_anchor=(0.5, 1.0))
-    fig.suptitle(title or f"{kind}s — units per week", fontsize=10, y=1.06)
-    plt.tight_layout()
-    plt.show()
+    for start in range(0, len(materials), per_figure):
+        chunk = materials[start:start + per_figure]
+        fig, axes = plt.subplots(len(DYNAMICS), len(chunk), figsize=(3.6 * len(chunk) + 0.6, 1.7 * len(DYNAMICS) + 0.8),
+                                 sharex=True, squeeze=False)
+        for c, m in enumerate(chunk):
+            for r, (k, name) in enumerate(DYNAMICS.items()):
+                ax = axes[r, c]
+                for wi, (label, world) in enumerate(worlds.items()):
+                    df = world["material"][k]
+                    ax.plot(df.index, df[m], color=WORLD_COLORS[wi % 2], linewidth=1.6, label=label,
+                            drawstyle="steps-mid" if k == "orders" else "default")
+                if k == "on_hand":
+                    oh = last["material"]["on_hand"][m]
+                    out = oh.index[(oh <= 1e-6) & (oh.index >= last["warmup"])]
+                    ax.scatter(out, [0] * len(out), color=STOCKOUT, marker="v", s=22, zorder=5, label="no stock")
+                if window:
+                    ax.axvspan(*window, color=INK, alpha=0.12, linewidth=0, label="disruption")
+                if last["warmup"]:
+                    ax.axvline(last["warmup"], color=INK, linestyle=":", linewidth=1, label="warm-up ends")
+                ax.set_ylim(bottom=0)
+                ax.tick_params(labelsize=8)
+                ax.spines[["top", "right"]].set_visible(False)
+                if r == 0:
+                    ax.set_title(m, fontsize=9)
+                if c == 0:
+                    ax.set_ylabel(name, fontsize=8)
+            axes[-1, c].set_xlabel("week", fontsize=8)
+        handles = {l: h for ax in axes.flat for h, l in zip(*ax.get_legend_handles_labels())}
+        fig.legend(handles.values(), handles.keys(), loc="upper center", ncols=len(handles), fontsize=8,
+                   frameon=False, bbox_to_anchor=(0.5, 1.0))
+        fig.align_ylabels(axes[:, 0])
+        plt.tight_layout(rect=(0, 0, 1, 0.95))
+        plt.show()
 
 
-def stock_map(world, items, base=None, window=None):
-    """Every traced material on one chart, a row each, week by week. Baseline only: stock on hand as a
-    share of that material's own peak (white = empty). With `base`: this world minus the baseline, as a
-    share of the baseline average (red = less stock, blue = more)."""
-    oh = world["material"]["on_hand"][items]
-    if base:
-        b = base["material"]["on_hand"][items]
-        z = (oh - b) / b.loc[world["warmup"]:].mean().replace(0, np.nan)
-        lim = float(min(1.0, max(np.nanmax(np.abs(z.to_numpy())), 0.01)))
-        look = {"cmap": "RdBu", "norm": mcolors.TwoSlopeNorm(0, -lim, lim)}
-        title, fmt = "Stock on hand: disrupted minus baseline, as a share of the baseline average", "{x:+.0%}"
-    else:
-        z = oh / oh.max().replace(0, np.nan)
-        look = {"cmap": "Blues", "vmin": 0, "vmax": 1}
-        title, fmt = "Stock on hand, as a share of each material's own peak", "{x:.0%}"
-    fig, ax = plt.subplots(figsize=(11, 0.32 * len(items) + 1.4))
-    im = ax.imshow(z.T.to_numpy(), aspect="auto", extent=[-0.5, z.index.max() + 0.5, len(items) - 0.5, -0.5], **look)
-    ax.set_yticks(range(len(items)), items, fontsize=8)
-    for x in window or ():
-        ax.axvline(x, color="#212529", linewidth=0.8, linestyle="--")
-    ax.set_xlabel("week")
-    ax.set_title(title, fontsize=10)
-    fig.colorbar(im, ax=ax, shrink=0.8, format=fmt)
-    plt.tight_layout()
-    plt.show()
-
-
-def weekly(worlds, materials, products):
-    """The traced items as one long table: world · kind · item · measure · week · value."""
-    parts = []
-    for label, world in worlds.items():
-        for kind, items in (("material", materials), ("product", products)):
-            for measure, df in world[kind].items():
-                cols = [i for i in items if i in df]
-                if cols:
-                    parts.append(df[cols].rename_axis("week").reset_index()
-                                 .melt(id_vars="week", var_name="item", value_name="value")
-                                 .assign(world=label, kind=kind, measure=measure))
-    return pd.concat(parts)[["world", "kind", "item", "measure", "week", "value"]]
+def weekly(worlds, materials):
+    """The traced materials as one long table: world · material · measure · week · value."""
+    return pd.concat([df[materials].rename_axis("week").reset_index()
+                      .melt(id_vars="week", var_name="material", value_name="value").assign(world=label, measure=measure)
+                      for label, world in worlds.items() for measure, df in world["material"].items()
+                      if set(materials) <= set(df)])[["world", "material", "measure", "week", "value"]]
