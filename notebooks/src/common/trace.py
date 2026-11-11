@@ -5,27 +5,6 @@ WORLD_COLORS = ["#2a78d6", "#d9480f"]   # baseline, disrupted
 INK, STOCKOUT = "#5f6b7a", "#e03131"
 
 
-def versions_table(api, project_id, data, pol, scenario, frame):
-    """What the runs read, and whether each is the newest the platform has."""
-    from sim_worker.build import code_version
-    newest = lambda rows: max(rows, key=lambda v: v.get("created_at") or "")["id"] if rows else None
-    try:
-        engine_latest = api.engine().get("engine_version")
-    except SuReSuiteError:  # the offline demo hands out no engine
-        engine_latest = None
-    build = code_version()
-    is_latest = lambda mine, latest: "—" if latest is None else ("yes" if mine == latest else f"no — latest is {latest}")
-    return pd.DataFrame([
-        ("engine", build, is_latest(build.split("+")[0].removeprefix("scsim-"), engine_latest)),
-        ("data", f"v{data.version_no} · {data.label} · graph_hash {str(data.graph_hash)[:12]}",
-         is_latest(data.id, newest(api.dataset_versions(project_id)))),
-        ("policies", f"{pol.label} · policy_hash {str(pol.policy_hash)[:12]}" if pol.policy_hash else str(pol.label),
-         is_latest(pol.id, newest(api.policy_versions(project_id))) if pol.policy_hash else "not saved"),
-        ("scenario", f"{scenario['name']} · {frame.get('horizon_days')} days · {frame.get('replications')} replications "
-                     f"· seed {frame.get('seed')}", "—"),
-    ], columns=["", "version", "latest"]).set_index("")
-
-
 def trace(data, pol, scenario, project_model, seed, bom, disruptions=None):
     """One replication on `seed` → {measure: weeks × items} for materials and for products.
     Materials: on_hand, in_transit, orders, use (+ the MRP record where a material is planned by MRP).

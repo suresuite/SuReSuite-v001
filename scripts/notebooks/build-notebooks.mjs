@@ -133,6 +133,12 @@ const INCLUDES = {
     form: true,
   },
   // Notebook 04's tables and charts for following several items through one replication.
+  // Notebook 05's reading of a request, its run through the chain, and the answer.
+  atp: {
+    title: "Available-to-promise helpers (run it; no need to read it)",
+    text: () => read(join(SRC, "common", "atp.py")),
+    form: true,
+  },
   trace: {
     title: "Trace helpers (run it; no need to read it)",
     text: () => read(join(SRC, "common", "trace.py")),
