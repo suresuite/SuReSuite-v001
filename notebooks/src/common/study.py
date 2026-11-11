@@ -188,7 +188,7 @@ def load_policies(api, project_id, source, pinned_id, scopes, label):
 
     if source == "pinned" or (pinned and not drift):
         if not pinned:
-            raise Stop("POLICY_SOURCE is \"pinned\" but this project has no saved policy version")
+            raise Stop("this project has no saved policy version to pin — use \"current\", or save one on /policies")
         pol = pinned
         print("using the saved version" + ("" if not drift else f" — {len(drift)} setting(s) differ from /policies now (below)"))
     elif "write:policies" in scopes:
@@ -250,18 +250,21 @@ def study_scenario(api, project_id, scenario_id, scopes, replications=None):
     return sc, frame, stress
 
 
-def ensure_engine(api, live):
-    """The platform's current engine on this machine: installed, or reinstalled when its version
-    is not the platform's. Demo mode hands out no engine."""
+def ensure_engine(api, live, version=None):
+    """The engine on this machine: the platform's current one, or `version` ("0.8.3", or the exact
+    build a run recorded as its code_version) to repeat an older study. Installed, or reinstalled
+    when the version here is another one. Demo mode hands out no engine."""
     try:
-        platform_engine = api.engine()
+        wanted = api.engine(version=version)
     except SuReSuiteError:
-        platform_engine = None
-    if platform_engine and live:
+        wanted = None
+    if wanted and live:
         import importlib.metadata as md
         have = md.version("scsim") if engine_available() else None
-        if have != platform_engine["engine_version"]:
-            install_engine(api)
+        if have != wanted["engine_version"]:
+            install_engine(api, version=version)
+            if "scsim" in sys.modules:
+                print("an engine was already loaded in this session — restart the runtime and run all cells again")
     if not engine_available():
         print("the engine is not installed — demo mode cannot hand it out. Add SURESUITE_API_KEY (see the Setup "
               "notes) and run all cells again; the simulation steps need it.")
