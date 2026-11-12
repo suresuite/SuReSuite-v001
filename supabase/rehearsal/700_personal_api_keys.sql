@@ -7,7 +7,8 @@
 --   §1 A PERSONAL key resolves to its owner; an ORG key resolves to nobody.
 --   §2 The owner DEACTIVATED → the key resolves to nobody (the gateway refuses it);
 --      reactivated → it works again.
---   §3 The owner MOVED to another organization → nobody.
+--   §3 The owner SWITCHED to another organization → still them (D321); LEFT the key's
+--      organization (membership removed) → nobody.
 --   §4 A super admin cannot mint a personal key for an organization they are not in.
 --   §5 ROTATION keeps the kind; an administrator may not rotate someone else's
 --      personal key (it would hand them a secret that acts as that person); the
@@ -69,12 +70,20 @@ BEGIN
     RAISE EXCEPTION '§2: the reactivated owner''s key does not resolve';
   END IF;
 
-  -- §3
+  -- §3 — since D210 setting `organization_id` SWITCHES the account (it adds a membership of
+  -- B and keeps A's), so the key must survive it (D321); LEAVING A is removing that membership.
   UPDATE public.approved_users SET organization_id = v_org_b, organization = 'D700 B' WHERE id = v_owner;
+  IF public.api_personal_key_actor(v_pkey) IS DISTINCT FROM v_owner THEN
+    RAISE EXCEPTION '§3: the key stopped acting when its owner only switched organization (D321)';
+  END IF;
+  SELECT org_role INTO v_kind FROM public.organization_members WHERE org_id = v_org_a AND user_id = v_owner;
+  DELETE FROM public.organization_members WHERE org_id = v_org_a AND user_id = v_owner;
   IF public.api_personal_key_actor(v_pkey) IS NOT NULL THEN
     RAISE EXCEPTION '§3: the key still acts for an owner who left its organization';
   END IF;
+  INSERT INTO public.organization_members (org_id, user_id, org_role) VALUES (v_org_a, v_owner, v_kind);
   UPDATE public.approved_users SET organization_id = v_org_a, organization = 'D700 A' WHERE id = v_owner;
+  v_kind := NULL;
 
   -- §4
   v_refused := false;
