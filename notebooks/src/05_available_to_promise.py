@@ -1,57 +1,41 @@
 # %% [markdown]
 # # SuReSuite 05 · Available to promise
 #
-# For a list of requests — *can Q units of this material leave stock in this week?* — it runs your
-# chain on **this machine** in several possible scenarios and gives one decision per request. The
-# materials, quantities and weeks can all differ, and a material can be asked for more than once.
+# *We need more of a material than planned. Can its suppliers deliver it by this week?*
 #
-# 1. **Versions** — the engine, data and policies the runs read (the latest, or pinned).
-# 2. **Scenarios** — the chain as it is, one run per scenario. Kept on disk: a new question runs nothing.
-# 3. **Requests** — one line each: the material, how much, and when.
-# 4. **Which case?** — **case 1**, the request is within what is available to promise (ATP): all of it
-#    in the week. **Case 2**, above ATP: the part ATP covers in the week, the rest later.
-# 5. **Decision** — that plan, simulated. **This is the answer**; ATP is the quick screen before it.
+# > **ATP** by a week = what each supplier of the material has spare (weekly capacity − what our
+# > planned orders already take), in every week it can ship in time, added over the suppliers.
 #
-# **ATP** in a week is what can leave stock then without production running short before a reorder
-# can arrive, in at least `CONFIDENCE` of the scenarios (0.9 = 9 of 10). Two things to know: the
-# requests are accepted **together**, and an accepted order is known from week 0, so your
-# replenishment may react before the week. Nothing here changes your project or uses quota.
+# - **Case 1 · the request is within ATP:** accept all of it by the week.
+# - **Case 2 · above ATP:** accept what the suppliers can deliver by the week, and the rest later.
+#
+# Run all cells once, then edit **Requests** and run again. Nothing here changes your project.
 
 # %% include: config
 
 # %% include: bundle setup library local study atp demo_data baseline
 
 # %% [markdown]
-# ## Settings
-# Everything you choose is in this one cell. Sections 1 and 2 cost a run per scenario; a new list of
-# requests in section 3 costs one more per scenario, for the decision.
+# ## 1 · Requests
+# The only cell you need to edit.
 
 # %%
-# 1 · Versions — "latest"/"current" follow the platform; pin a value to repeat a study exactly
-ENGINE = "latest"      # or "0.8.3", or a run's code_version ("scsim-0.8.3+…")
-DATA = "current"       # "current" = your data now | "latest" = the newest frozen version | a dataset version id
-POLICY = "current"     # "current" = /policies now | "latest" = the newest saved version | a policy version id
-
-# 2 · Scenarios — the horizon and warm-up are your scenario's (SCENARIO_ID above)
-N_SCENARIOS = 10       # possible courses of the year (one seed each); more = a steadier answer
-CONFIDENCE = 0.9       # promise only what holds in at least this share of them (0.9 = 9 of 10)
-
-# 3 · Requests — one line each: (material, quantity, when). `when` is a week number or a "YYYY-MM-DD" date.
-#     A material may appear several times, at different weeks and quantities.
+# One line each: (material, quantity, when). `when` is a week number or a "YYYY-MM-DD" date.
+# A material may appear several times, at different weeks and quantities.
 REQUESTS = [
     # ("M1", 400, 20),
     # ("M2", 300, "2027-03-31"),
     # ("M1", 250, 34),
 ]
-START_DATE = ""        # the date of week 0; "" = your earliest forecast period, else today
-TRY = dict(top_n=4, quantity=150, week=20)   # used only while REQUESTS is empty: the materials with the least cover
 
+# ── advanced: the defaults work ─────────────────────────────────────────────
+START_DATE = ""        # the date of week 0 (today's orders are placed in week 0); "" = your earliest forecast period, else today
+TRY = dict(top_n=2, quantity=150, week=8)   # used only while REQUESTS is empty
+SIMULATE = False       # True = also run the plan through the engine (step 5); adds a minute or two
+N_SCENARIOS = 10       # step 5 only: possible courses of the year
+CONFIDENCE = 0.9       # step 5 only: "delivered as planned" must hold in this share of them
+ENGINE, DATA, POLICY = "latest", "current", "current"   # pin a version to repeat a study exactly
 EXPORT = "available_to_promise.xlsx"   # "" = no export
-
-# %% [markdown]
-# ## 1 · Versions
-# **Expect:** your project, then one table: the engine, data, policies and scenario the runs read, and
-# whether each is the newest the platform has.
 
 # %%
 api = connect(BASE_URL, API_KEY, DEMO_DATA, needs=["read:data", "read:policies"], mode=MODE)
@@ -59,79 +43,81 @@ project = pick_project(api, PROJECT_ID)
 PID, MODEL, SCOPES = project["id"], project.get("supply_chain_model"), key_scopes(api)
 
 if not ensure_engine(api, api.live, None if ENGINE == "latest" else ENGINE):
-    raise Stop("this notebook runs the engine — add SURESUITE_API_KEY and run all cells again")
+    raise Stop("this notebook reads your data the way the engine does — add your API key and run all cells again")
 data = load_dataset(api, PID, DATA, SCOPES, api.live, "notebook 05")
 pol, drift, _ = load_policies(api, PID, "current" if POLICY == "current" else "pinned",
                               POLICY_VERSION_ID if POLICY == "current" else "" if POLICY == "latest" else POLICY,
                               SCOPES, "notebook 05")
 scenario, FRAME, _ = study_scenario(api, PID, SCENARIO_ID, SCOPES, N_SCENARIOS)
 RUN = {**scenario, **FRAME}
-display(styled(versions_table(api, PID, data, pol, scenario, FRAME)))
+HORIZON = int(round(float(RUN.get("horizon_days") or 364) / 7))
 
-# %% [markdown]
-# ## 2 · Scenarios
-# **Expect:** how many scenarios were run and how many came from the cache.
-
-# %%
 T = input_tables(data)
-EV = engine_view(data, pol, RUN, MODEL)   # what the engine receives: lead times, capacities, opening stock
-SEEDS = [int(RUN.get("seed", 42)) + i for i in range(N_SCENARIOS)]
-AS_IS = futures(data, pol, RUN, MODEL, SEEDS, flat_bom(T))
-
-# %% [markdown]
-# ## 3 · Requests
-# Week 0 is the start of the simulation: your opening stock as it is in the data. The data holds no
-# open purchase orders, so the first lead-time weeks can understate supply you have already ordered.
-# **Expect:** the requests as read, each with its week and date.
-
-# %%
-START = week_zero(T, START_DATE)
-POSITION = atp_position(AS_IS, EV, TRY["week"], CONFIDENCE)
-ASKED = read_requests(REQUESTS, POSITION, START, len(AS_IS[SEEDS[0]]["on_hand"]), **TRY)
+EV = engine_view(data, pol, RUN, MODEL)   # what the engine receives: capacities and lead times
+SUPPLIERS = supplier_table(EV, supply_lanes(T))
+ASKED = read_requests(REQUESTS, SUPPLIERS, week_zero(T, START_DATE), HORIZON, **TRY)
 display(styled(ASKED, fmt="{:,.0f}", caption=f"{len(ASKED)} requests for {ASKED['material'].nunique()} materials"))
 
 # %% [markdown]
-# ## 4 · Which case?
-# Requests for the same material are taken in order of their week, and each sees what is left after
-# the ones before it.
-# **Expect:** each request against its ATP, its case, and the plan that follows from it.
+# ## 2 · Answer
+# **Expect:** one row per request: its case, the decision, and how much each supplier delivers.
 
 # %%
-SCREEN, PLANS = plan_requests(AS_IS, EV, ASKED, CONFIDENCE)
-display(styled(SCREEN, fmt="{:,.0f}", caption="Each request against what is available to promise in its week"))
+ANSWER, WHY, PLANS = plan_requests(SUPPLIERS, ASKED, HORIZON)
+display(styled(ANSWER, fmt="{:,.0f}", caption="The answer"))
 
 # %% [markdown]
-# ## 5 · Decision
-# The plans above are taken out of stock, all together, in the same scenarios as step 2, so the only
-# difference is the decision. One more run per scenario, kept on disk like the others.
-# **Expect:** one row per request: the decision, in how many scenarios it is delivered as planned, and
-# `ok` or what goes wrong. Then what existing customers lose, and a chart per material.
+# ## 3 · Why
+# The sum behind each ATP, supplier by supplier. An order placed now (week 0) arrives one lead time
+# later, so a supplier has (week − lead time + 1) weeks in which it can ship in time, or none. Requests are taken in
+# order of their week; what one is promised is capacity the next no longer has. A supplier with no
+# capacity in your data shows empty cells and is not asked.
+# **Expect:** one row per request and supplier.
 
 # %%
-BEFORE, AFTER = decide(AS_IS, data, pol, RUN, MODEL, SEEDS, SCREEN, PLANS)
-DECISION, CUSTOMERS, DETAIL = decision(BEFORE, AFTER, SCREEN, PLANS, CONFIDENCE)
-display(styled(DECISION, fmt="{:,.0f}", caption=f"The decision — {N_SCENARIOS} scenarios, promised when it holds in {CONFIDENCE:.0%} of them"))
-print(CUSTOMERS)
-plot_decision(BEFORE, AFTER, EV, SCREEN, PLANS, CONFIDENCE)
+display(styled(WHY, fmt="{:,.0f}", caption="capacity − committed = spare; spare × the weeks it can ship in time = can deliver"))
 
 # %% [markdown]
-# **Reading it.** `ok`: promise it as written. `late`: the material is not there in the planned week
-# in enough scenarios; "complete by" is the week to quote instead. `stock runs out`: accepting empties
-# the stock for longer than today, and production waits for it. On the chart, the green line is what
-# can be promised each week and the dots are the plan: a dot under the line is safe by the screen, and
-# the orange line shows what the stock really does once the plan is in the books.
+# ## 4 · Chart
+# The green line is what the suppliers can deliver by each week on top of our planned orders. A ring
+# is a request, a dot is what the plan accepts: a ring under the line is case 1.
+
+# %%
+plot_supply(SUPPLIERS, ANSWER, PLANS, HORIZON)
+
+# %% [markdown]
+# ## 5 · Check by simulation (optional)
+# With `SIMULATE = True` the accepted plan is run through the engine as an extra need for the
+# material in the planned weeks, in `N_SCENARIOS` scenarios with and without it. **It is an
+# estimate:** the engine cannot place an extra order with a supplier directly, so the need is added
+# and your own replenishment policy does the ordering, within the suppliers' capacity.
+# **Expect:** per request, in how many scenarios the material was there as planned, the week it is
+# complete by, and `ok` or what goes wrong; then what existing customers lose.
+
+# %%
+if SIMULATE and PLANS:
+    SEEDS = [int(RUN.get("seed", 42)) + i for i in range(N_SCENARIOS)]
+    AS_IS = futures(data, pol, RUN, MODEL, SEEDS, flat_bom(T))
+    BEFORE, AFTER = decide(AS_IS, data, pol, RUN, MODEL, SEEDS, ANSWER, PLANS)
+    CHECK, CUSTOMERS, DETAIL = decision(BEFORE, AFTER, ANSWER, PLANS, CONFIDENCE)
+    display(styled(CHECK, fmt="{:,.0f}", caption=f"The plan in {N_SCENARIOS} scenarios"))
+    print(CUSTOMERS)
 
 # %% [markdown]
 # ## Export
-# **Expect:** one workbook: the versions, the decision for each request, and the detail behind it by material.
+# **Expect:** one workbook: the answer, the why, the suppliers, and the versions that produced them.
 
 # %%
+VERSIONS = versions_table(api, PID, data, pol, scenario, FRAME)
+display(styled(VERSIONS, caption="What produced this"))
 if EXPORT:
     with pd.ExcelWriter(EXPORT) as xw:
-        versions_table(api, PID, data, pol, scenario, FRAME).to_excel(xw, sheet_name="versions")
-        ASKED.join(DECISION.drop(columns="material")).assign(
-            confidence=CONFIDENCE, scenarios=N_SCENARIOS, customers=CUSTOMERS).to_excel(xw, sheet_name="decision")
-        DETAIL.to_excel(xw, sheet_name="detail by material")
+        ASKED[["date"]].join(ANSWER).to_excel(xw, sheet_name="answer")
+        WHY.to_excel(xw, sheet_name="why")
+        SUPPLIERS.to_excel(xw, sheet_name="suppliers", index=False)
+        if SIMULATE and PLANS:
+            CHECK.assign(customers=CUSTOMERS).to_excel(xw, sheet_name="simulation")
+        VERSIONS.to_excel(xw, sheet_name="versions")
     print("written:", EXPORT)
     try:
         from google.colab import files
@@ -141,5 +127,5 @@ if EXPORT:
 
 # %% [markdown]
 # ## Next
-# - **04** — follow the same materials week by week, with and without a supplier outage.
-# - **03** — try the fix on a local copy first: a second supplier lane, more safety stock.
+# - **04** — follow the same materials in our own stock, week by week, with and without a supplier outage.
+# - **03** — try a fix on a local copy first: a second supplier lane, more capacity.
