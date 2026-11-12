@@ -31,6 +31,15 @@ name: Nexus stress battery
 # — works from any branch — or run it by hand (default branch). Blank start_week
 # and durations mean the shared scenario (week 26, 2–9 weeks).
 # The writer exists in production only after migration `20261021000001` deploys.
+#
+# A LARGE PROJECT (2 300 targets: 500 suppliers + 1 800 materials ≈ 4 s per cell on the demo
+# dataset, ~21 CPU-hours): add `shards=`, `max_parallel=` and `keep_on_failure=1` to the
+# request. `shards=12 max_parallel=4` runs twelve ~1.7 h jobs, four at a time (about three
+# waves, a working day end to end), inside GitHub's 6 h job limit, and with
+# `keep_on_failure=1` one failed shard does NOT mark the battery failed: the run stays
+# claimed and "Re-run failed jobs" repeats only the missing shards (their artifacts last
+# 7 days), then publishes whole. Without the keys nothing changes: up to 20 shards of ~45
+# min, 20 at a time, and a failed shard frees the key.
 
 on:
   push:
@@ -65,6 +74,15 @@ on:
       actor_email:
         description: "Approved user the battery is attributed to (blank = the project's modeler)"
         default: ""
+      shards:
+        description: "Number of shard jobs (blank = sized for ~45 min each, at most 20)"
+        default: ""
+      max_parallel:
+        description: "Shard jobs running at once (blank = 20)"
+        default: ""
+      keep_on_failure:
+        description: "1 = a failed shard leaves the battery claimed so 'Re-run failed jobs' can finish it"
+        default: ""
 
 concurrency:
   group: nexus-stress
@@ -80,6 +98,8 @@ jobs:
     outputs:
       shards: ${{ steps.prepare.outputs.shards }}
       skip: ${{ steps.prepare.outputs.skip }}
+      max_parallel: ${{ steps.params.outputs.max_parallel }}
+      keep: ${{ steps.params.outputs.keep }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -101,6 +121,9 @@ jobs:
             echo "dataset_version_id=$(get dataset_version_id)" >> "$GITHUB_OUTPUT"
             echo "replications=$(get replications)" >> "$GITHUB_OUTPUT"
             echo "actor_email=$(get actor_email)" >> "$GITHUB_OUTPUT"
+            echo "shards=$(get shards)" >> "$GITHUB_OUTPUT"
+            mp=$(get max_parallel); echo "max_parallel=${mp:-20}" >> "$GITHUB_OUTPUT"
+            [ "$(get keep_on_failure)" = 1 ] && echo "keep=true" >> "$GITHUB_OUTPUT" || echo "keep=false" >> "$GITHUB_OUTPUT"
           else
             echo "project_name=${{ inputs.project_name }}" >> "$GITHUB_OUTPUT"
             echo "model_validation_id=${{ inputs.model_validation_id }}" >> "$GITHUB_OUTPUT"
@@ -111,6 +134,9 @@ jobs:
             echo "dataset_version_id=${{ inputs.dataset_version_id }}" >> "$GITHUB_OUTPUT"
             echo "replications=${{ inputs.replications }}" >> "$GITHUB_OUTPUT"
             echo "actor_email=${{ inputs.actor_email }}" >> "$GITHUB_OUTPUT"
+            echo "shards=${{ inputs.shards }}" >> "$GITHUB_OUTPUT"
+            mp="${{ inputs.max_parallel }}"; echo "max_parallel=${mp:-20}" >> "$GITHUB_OUTPUT"
+            [ "${{ inputs.keep_on_failure }}" = 1 ] && echo "keep=true" >> "$GITHUB_OUTPUT" || echo "keep=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Prepare the battery
         id: prepare
@@ -125,6 +151,7 @@ jobs:
           DATASET_ID: ${{ steps.params.outputs.dataset_version_id }}
           REPS: ${{ steps.params.outputs.replications }}
           ACTOR_EMAIL: ${{ steps.params.outputs.actor_email }}
+          SHARDS: ${{ steps.params.outputs.shards }}
         run: |
           if [ -z "$PROJECT_NAME" ]; then
             echo "::error::no project_name — add 'project_name=<exact name>' to .github/nexus-stress-request"; exit 1
@@ -137,6 +164,7 @@ jobs:
           [ -n "$DURATIONS" ] && ARGS+=(--durations "$DURATIONS")
           [ -n "$DATASET_ID" ] && ARGS+=(--dataset-version-id "$DATASET_ID")
           [ -n "$ACTOR_EMAIL" ] && ARGS+=(--actor-email "$ACTOR_EMAIL")
+          [ -n "$SHARDS" ] && ARGS+=(--shards "$SHARDS")
           python scripts/nexus/nexus_job.py prepare "${ARGS[@]}"
       - uses: actions/upload-artifact@v4
         with:
@@ -148,10 +176,10 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.skip != 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 345          # GitHub's limit is 360; a shard is sized well under it
     strategy:
-      fail-fast: true
-      max-parallel: 20
+      fail-fast: ${{ needs.prepare.outputs.keep != 'true' }}
+      max-parallel: ${{ fromJson(needs.prepare.outputs.max_parallel) }}
       matrix:
         index: ${{ fromJson(needs.prepare.outputs.shards) }}
     steps:
@@ -197,8 +225,13 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: python scripts/nexus/nexus_job.py publish --bundle bundle.json --rows-dir rows --summary-md "$GITHUB_STEP_SUMMARY"
+      - name: A shard failed — the battery stays claimed
+        if: needs.cells.result != 'success' && needs.prepare.outputs.keep == 'true'
+        run: |
+          echo "::error::A shard job failed. The battery is still claimed. Open this run and choose 'Re-run failed jobs': only the failed shards repeat, then this job publishes whole. To abandon it instead, the run must be marked failed in the database (analysis_fail_run) so its key is free."
+          exit 1
       - name: Mark the run failed (its key is free for a retry)
-        if: needs.cells.result != 'success' || failure()
+        if: (needs.cells.result != 'success' && needs.prepare.outputs.keep != 'true') || (failure() && needs.cells.result == 'success')
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           CELLS_RESULT: ${{ needs.cells.result }}
