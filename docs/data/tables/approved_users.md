@@ -66,7 +66,7 @@ READ THE POLICIES BEFORE TRUSTING THIS ROW. The table carries two policies and t
 
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
-| `DeveloperApi.tsx` | rpc list_api_keys | `src/pages/DeveloperApi.tsx:318` | yes |
+| `DeveloperApi.tsx` | rpc list_api_keys | `src/pages/DeveloperApi.tsx:326` | yes |
 | `Profile.tsx` | rpc change_own_password | `src/pages/Profile.tsx:146` | yes |
 
 Each row says the page READS the table by that path, at that line. It does
@@ -447,6 +447,6 @@ for one you did.
 
 ---
 
-*Generated from data contract `b6573a48d7c7`, engine `0.8.3`,
+*Generated from data contract `980ce9c339c2`, engine `0.8.3`,
 sidecar `supabase/contract/approved_users.contract.yaml`, table created by `20250815000000_approved_users_base.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

@@ -23,6 +23,7 @@
   "expect": {
     "proposal": {
       "new_scenario_name": "S1 outage — 6 weeks",
+      "new_scenario_outage": { "target": "S1", "duration_days": 42 },
       "new_scenario_horizon_days": 182,
       "new_scenario_events": 1,
       "replications": 30,

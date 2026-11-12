@@ -260,6 +260,23 @@ async function listProjectEntities(args: Record<string, unknown>, ctx: ToolConte
 
   if (out.length === 0) return empty("list_project_entities");
 
+  // §19.5 (ai-agents.md §10 entry 38(t)): label each master-backed entity with
+  // its master NAME, as resolveEntity already matches on — an id-only label
+  // left "what does acme supply?" unanswerable from this list, because the
+  // user's word ("ACME NORTH") never appeared in it. Names are enrichment: a
+  // failed read keeps the id label (masterNames logs and returns empty).
+  const MASTER: Record<string, [string, string]> = {
+    supplier: ["suppliers", "supplier_id"],
+    customer: ["customers", "customer_id"],
+    material: ["materials", "material_id"],
+    product: ["products", "product_id"],
+  };
+  for (const [type, [table, idCol]] of Object.entries(MASTER)) {
+    if (!out.some((r) => r.type === type)) continue;
+    const names = await masterNames(ctx, table, idCol);
+    for (const r of out) if (r.type === type && names.has(r.id)) r.label = names.get(r.id)!;
+  }
+
   const rows = out.slice(0, limit);
   return envelope("list_project_entities", "table", {
     columns: ["type", "id", "label"],
@@ -348,13 +365,16 @@ async function getSupplierRisk(args: Record<string, unknown>, ctx: ToolContext):
     });
 
     if (supplier) rows = rows.filter((r) => r.supplier.toLowerCase().includes(supplier));
-    // Rank: most sole-sourced exposure first, then criticality score, then spend.
+    // Rank by EXPOSURE: most sole-sourced first, then demand at risk, then
+    // spend. "Most critical" is get_critical_nodes' ranking (§28 decision 1);
+    // the declaration's wording is pinned by the flags-off golden transcripts,
+    // so the distinction is stated in the COLUMNS and in get_critical_nodes.
     rows.sort((x, y) => y.sole - x.sole || (y.score ?? 0) - (x.score ?? 0) || y.spend - x.spend);
     rows = rows.slice(0, topN);
     if (rows.length === 0) return empty("get_supplier_risk");
 
     return envelope("get_supplier_risk", "table", {
-      columns: ["Supplier", "Critical", "Score", "# Materials", "# Sole-sourced", "Avg Lead Time", "Spend"],
+      columns: ["Supplier", "Nexus", "Demand at risk", "# Materials", "# Sole-sourced", "Avg Lead Time", "Spend"],
       rows: rows.map((r) => [
         r.supplier,
         r.critical,

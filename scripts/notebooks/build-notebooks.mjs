@@ -22,8 +22,9 @@
  * Cell markers in a source:
  *   # %%                          a code cell
  *   # %% [markdown]               a markdown cell (each line starts with "# ")
- *   # %% include: config|setup|library|local|study
+ *   # %% include: config|setup|library|local|study|trace
  *   # %% include: demo_data <label> <label> …   the recordings the notebook replays
+ *   # %% include: bundle setup library … [demo_data <label> …]   several includes as ONE cell
  *
  * ── WHAT --check REFUSES ───────────────────────────────────────────────────
  *
@@ -131,6 +132,18 @@ const INCLUDES = {
     text: () => read(join(SRC, "common", "study.py")),
     form: true,
   },
+  // Notebook 04's tables and charts for following several items through one replication.
+  // Notebook 05's reading of a request, its run through the chain, and the answer.
+  atp: {
+    title: "Available-to-promise helpers (run it; no need to read it)",
+    text: () => read(join(SRC, "common", "atp.py")),
+    form: true,
+  },
+  trace: {
+    title: "Trace helpers (run it; no need to read it)",
+    text: () => read(join(SRC, "common", "trace.py")),
+    form: true,
+  },
 };
 
 const lines = (s) => {
@@ -159,6 +172,16 @@ function build(file) {
       const [name, ...args] = header.slice("# %% include:".length).trim().split(/\s+/);
       if (name === "demo_data") {
         cell = { cell_type: "code", metadata: { cellView: "form" }, source: lines(`# @title Demo data (recorded engine output)\n${demoCell(args)}`) };
+      } else if (name === "bundle") {
+        // Several includes as ONE collapsed cell: `# %% include: bundle setup library … demo_data <label> …`.
+        const at = args.indexOf("demo_data");
+        const names = at < 0 ? args : args.slice(0, at);
+        const parts = names.map((n) => {
+          if (!INCLUDES[n] || n === "config") throw new Error(`${file}: cannot bundle "${n}"`);
+          return INCLUDES[n].text().trimEnd();
+        });
+        if (at >= 0) parts.push(demoCell(args.slice(at + 1)));
+        cell = { cell_type: "code", metadata: { cellView: "form" }, source: lines(`# @title Setup and helpers (run it; no need to read it)\n${parts.join("\n\n\n")}`) };
       } else {
         const inc = INCLUDES[name];
         if (!inc) throw new Error(`${file}: unknown include "${name}"`);

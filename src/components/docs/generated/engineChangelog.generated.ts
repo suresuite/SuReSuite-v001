@@ -53,7 +53,14 @@ export const ENGINE_CHANGES: EngineChange[] = [
     "refs": [
       "D315"
     ],
-    "amendments": [],
+    "amendments": [
+      {
+        "date": "2026-11-07",
+        "commit": null,
+        "tier": 1,
+        "summary": "Decision traces, first slice (policy facet 11; platform blueprint §6.1, ai-agents.md §5.5). A single-replication inspection run (`trace_verbosity=full_debug`, one replication) now carries `ScenarioResult.decision_trace`: one record per policy decision with its week, policy, material, the rationale code that decided, the values the rule read and what it did. P-S.1 (backup supplier) is the first policy that records, including why it did NOT reroute. Each policy declares its rationale codes (`rationale_codes`), which the registry export publishes. Recording only reads values the policy already computed, so no KPI, series or frozen reference run moved, and an ordinary Monte Carlo run is unchanged."
+      }
+    ],
     "backfilled": false,
     "unrecordedChanges": null
   },

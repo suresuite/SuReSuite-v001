@@ -53,7 +53,7 @@ import {
 } from "../router.ts";
 import { executeTool, type ToolContext, type ToolEnvelope } from "../tools.ts";
 // Importing agentTurn.ts registers every staged draft tool (B1-B4 + memory).
-import { runAgentTurn, runDataStewardTurn } from "../agentTurn.ts";
+import { runAgentTurn } from "../agentTurn.ts";
 import { applyModeToRoute } from "../modes.ts";
 import { personaToolDeclarations } from "../personaTools.ts";
 import {
@@ -127,6 +127,10 @@ interface Fixture {
   mocked_llm?: { args?: Record<string, unknown>; reuse?: string };
   // deno-lint-ignore no-explicit-any
   expect: Record<string, any>;
+  /** false ⇒ deterministic tier only (a gate-refusal fixture only its mocked
+   * args can drive); the live tier skips it and says why. */
+  live_tier?: boolean;
+  live_tier_reason?: string;
 }
 
 /** The five suite-bearing agents the §23.2 agent:<slug> rows cover — a
@@ -284,8 +288,31 @@ interface RouteMetrics {
    * per enabled model — scored with ROUTER_V2_SIGNALS on. */
   needsRunRecall: number;
   cacheCheckablePrecision: number;
+  /** ai-agents.md §25.3 Q0: every golden row the router got wrong in ANY
+   * scored dimension, with what was expected and what came back — the
+   * per-class counts above say how much is wrong, these say what, so Q1 can
+   * triage utterances instead of guessing from aggregates. */
+  misses?: RouteMiss[];
   pass: boolean;
   failures: string[];
+}
+
+interface RouteMiss {
+  id: string;
+  utterance: string;
+  mode: string | null;
+  /** Which scored checks this row failed: `owner` (wrong/missing agent —
+   * drives per-class P/R), `advisory_false_artifact`, `mixed_missed`,
+   * `needs_run_missed`, `cache_checkable_false_positive`. */
+  kinds: string[];
+  expected: { route: string; agent_id: string | null; intent: string | null; needs_run: boolean; cache_checkable: boolean };
+  got: { route: string; agent_id: string | null; intent: string | null; needs_run: boolean; cache_checkable: boolean; confidence: number };
+  /** Why the deterministic wrapper demoted the classifier's answer to
+   * advisory (`low_confidence`, `agent_not_enabled`, `parse_failure`, …) —
+   * null when the classifier itself chose this route. A fallback zeroes
+   * `got.confidence`, so without this a demotion and a genuine advisory call
+   * are indistinguishable. */
+  fallback: string | null;
 }
 
 async function evalRouting(
@@ -339,6 +366,7 @@ async function evalRouting(
   // §6.6 metric counters: recall over labeled-true needs_run rows; precision
   // over cache_checkable=true predictions (absent labels mean expected false).
   let needsRunTrue = 0, needsRunHit = 0, cachePredicted = 0, cachePredictedRight = 0;
+  const misses: RouteMiss[] = [];
 
   try {
     for (const row of rows) {
@@ -357,7 +385,14 @@ async function evalRouting(
         ? applyModeToRoute(rawDecision, "ask").decision
         : rawDecision;
 
+      const kinds: string[] = [];
       // per-enabled-class precision/recall over the routed owner
+      const gotOwner = decision.route === "artifact" || decision.route === "mixed" ? decision.agent_id : null;
+      const expectedOwner = enabledExpected.agent_id;
+      if (gotOwner !== expectedOwner &&
+          (enabledAgents.includes(expectedOwner ?? "") || enabledAgents.includes(gotOwner ?? ""))) {
+        kinds.push("owner");
+      }
       for (const a of enabledAgents) {
         const expected = enabledExpected.agent_id === a;
         const got = decision.agent_id === a && (decision.route === "artifact" || decision.route === "mixed");
@@ -367,20 +402,50 @@ async function evalRouting(
       }
       if (enabledExpected.route === "advisory") {
         advisoryN++;
-        if (decision.route !== "advisory") advisoryFalse++;
+        if (decision.route !== "advisory") {
+          advisoryFalse++;
+          kinds.push("advisory_false_artifact");
+        }
       }
       if (enabledExpected.route === "mixed") {
         mixedN++;
         if (decision.route === "mixed") mixedHit++;
+        else kinds.push("mixed_missed");
       }
       // §6.6 signals (route-independent; the fallbacks carry them through).
       if (row.expect.needs_run === true) {
         needsRunTrue++;
         if (decision.needs_run) needsRunHit++;
+        else kinds.push("needs_run_missed");
       }
       if (decision.cache_checkable) {
         cachePredicted++;
         if (row.expect.cache_checkable === true) cachePredictedRight++;
+        else kinds.push("cache_checkable_false_positive");
+      }
+      if (kinds.length > 0) {
+        misses.push({
+          id: row.id,
+          utterance: row.utterance,
+          mode: row.mode ?? null,
+          kinds,
+          expected: {
+            route: enabledExpected.route,
+            agent_id: enabledExpected.agent_id,
+            intent: enabledExpected.intent,
+            needs_run: row.expect.needs_run === true,
+            cache_checkable: row.expect.cache_checkable === true,
+          },
+          got: {
+            route: decision.route,
+            agent_id: decision.agent_id,
+            intent: decision.intent,
+            needs_run: decision.needs_run === true,
+            cache_checkable: decision.cache_checkable === true,
+            confidence: decision.confidence,
+          },
+          fallback: rawDecision.short_circuit ?? null,
+        });
       }
     }
   } finally {
@@ -417,6 +482,7 @@ async function evalRouting(
     mixedRecall,
     needsRunRecall,
     cacheCheckablePrecision,
+    misses,
     pass: failures.length === 0,
     failures,
   };
@@ -426,13 +492,72 @@ async function evalRouting(
 
 interface StewardMetrics {
   model: string;
-  fixtures: Record<string, { pass: boolean; detail: string }>;
+  fixtures: Record<string, FixtureResult>;
   draftCalls: number;
   validDraftCalls: number;
   schemaValidity: number;
   gateViolationRate: number;
+  /** ai-agents.md §25.3 Q0: every live draft call that did NOT produce a
+   * proposal, with the arguments the model sent — the schema-validity rate
+   * says how often, these say which fields Q2 has to tighten. */
+  invalidDraftCalls?: InvalidDraftCall[];
+  /** Fixtures marked `live_tier: false` (gate-refusal fixtures only mocked
+   * args can drive), with the reason — reported, never counted as passes. */
+  liveSkipped?: string[];
   pass: boolean;
   failures: string[];
+}
+
+interface InvalidDraftCall {
+  fixture: string;
+  tool: string;
+  args: string;
+  /** The gate's own refusal (§4.5 failure envelope): its code — e.g.
+   * `invalid_params`, `dependency_missing` — and its reason text. Captured
+   * through the turn's onToolResult callback, so the production tool-call
+   * record is unchanged; null when no envelope was observed. */
+  code: string | null;
+  reason: string | null;
+}
+
+/** ai-agents.md §25.3 Q3: what the model actually did on a FAILED live
+ * fixture — its reply, the proposal it filed, the tools it called. A verdict
+ * line ("expected 1 sections, got 2") says that a fixture failed; this says
+ * why, so a persistent failure can be told apart from a too-strict fixture
+ * without re-running. Clipped, report-only, recorded on failure only. */
+interface Observed {
+  reply?: string;
+  proposal?: string;
+  tools?: string[];
+}
+
+type FixtureResult = { pass: boolean; detail: string; observed?: Observed };
+
+function clip(text: string | undefined | null, n: number): string | undefined {
+  if (!text) return undefined;
+  return text.length > n ? `${text.slice(0, n)}…(+${text.length - n} chars)` : text;
+}
+
+function observe(reply: string | undefined, proposals: Row[] | undefined, tools: string[]): Observed {
+  return {
+    reply: clip(reply, 1200),
+    proposal: clip(proposals && proposals.length > 0 ? JSON.stringify(proposals[0].payload) : undefined, 2000),
+    tools,
+  };
+}
+
+const NO_REFUSAL = { code: null, reason: null } as const;
+
+/** The refusal a draft tool returned: its §4.5 failure code and reason text. */
+function refusalOf(env: { data: unknown; meta: { note?: string } }): { code: string | null; reason: string | null } {
+  const reason = typeof env.data === "string" ? env.data : JSON.stringify(env.data) ?? null;
+  return { code: env.meta.note ?? null, reason: reason ? reason.slice(0, 500) : null };
+}
+
+/** Arguments as JSON, capped so one runaway payload cannot bloat the report. */
+function clipArgs(args: unknown): string {
+  const text = JSON.stringify(args) ?? "null";
+  return text.length > 2000 ? `${text.slice(0, 2000)}…(+${text.length - 2000} chars)` : text;
 }
 
 const STEWARD_FIXTURES = [
@@ -444,8 +569,11 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
   Deno.env.set("AGENT_ENABLED_IDS", "data-steward");
   const fixtures: StewardMetrics["fixtures"] = {};
   let draftCalls = 0, validDraftCalls = 0;
+  const invalidDraftCalls: InvalidDraftCall[] = [];
 
   for (const id of STEWARD_FIXTURES) {
+    let stewardReply = "";
+    let stewardTools: string[] = [];
     const fixture = await loadFixture(id);
     const tables = structuredClone(fixture.project_snapshot) as Record<string, Row[]>;
     const db = makeStubDb(tables, makeAgentRpcs(tables));
@@ -476,11 +604,23 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
         }
       }
     } else {
-      const turn = await runDataStewardTurn({ modelId: model.id, utterance: fixture.utterance, ctx });
+      const refusals: Array<{ code: string | null; reason: string | null }> = [];
+      const turn = await runAgentTurn({
+        agentId: "data-steward",
+        modelId: model.id,
+        utterance: fixture.utterance,
+        ctx,
+        onToolResult: (name, _args, env) => {
+          if (name === "draft_item_master_update" && env.meta.row_count === 0) refusals.push(refusalOf(env));
+        },
+      });
+      stewardReply = turn.reply;
+      stewardTools = turn.toolCalls.map((c) => `${c.name}:${c.row_count}`);
       for (const call of turn.toolCalls) {
         if (call.name !== "draft_item_master_update") continue;
         draftCalls++;
         if (call.row_count > 0) validDraftCalls++;
+        else invalidDraftCalls.push({ fixture: id, tool: call.name, args: clipArgs(call.args), ...(refusals.shift() ?? NO_REFUSAL) });
       }
     }
 
@@ -512,7 +652,9 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
       pass = false;
       detail = `expected ${exp.proposal_count} proposals, got ${proposals.length}`;
     }
-    fixtures[id] = { pass, detail };
+    fixtures[id] = !mock && !pass
+      ? { pass, detail, observed: observe(stewardReply, tables.proposals, stewardTools) }
+      : { pass, detail };
   }
 
   const schemaValidity = draftCalls === 0 ? 1 : validDraftCalls / draftCalls;
@@ -534,6 +676,7 @@ async function evalSteward(model: ModelSpec, mock: boolean): Promise<StewardMetr
     validDraftCalls,
     schemaValidity,
     gateViolationRate,
+    invalidDraftCalls,
     pass: failures.length === 0,
     failures,
   };
@@ -624,9 +767,25 @@ function scoreAgentOutcome(cfg: AgentEvalConfig, proposals: Row[], exp: Record<s
     if (exp.proposal.overrides !== undefined && (diff.overrides ?? []).length !== exp.proposal.overrides) {
       return { pass: false, detail: `expected ${exp.proposal.overrides} overrides, got ${(diff.overrides ?? []).length}` };
     }
-    if (exp.proposal.defaults_families &&
-        JSON.stringify(Object.keys(diff.defaults ?? {}).sort()) !== JSON.stringify([...exp.proposal.defaults_families].sort())) {
-      return { pass: false, detail: `defaults families mismatch: ${Object.keys(diff.defaults ?? {})}` };
+    // §10 entry 38(v): a count alone passes WRONG rows. When the fixture names
+    // the rows the ask must select, every one must be targeted.
+    if (Array.isArray(exp.proposal.override_targets)) {
+      const targets = new Set(((diff.overrides ?? []) as Array<{ target_key?: string }>).map((o) => String(o.target_key)));
+      const missing = (exp.proposal.override_targets as string[]).filter((t) => !targets.has(t));
+      if (missing.length > 0) {
+        return { pass: false, detail: `overrides miss the asked rows: ${missing.join(", ")} (got ${[...targets].join(", ")})` };
+      }
+    }
+    if (exp.proposal.defaults_families) {
+      // ai-agents.md §10 entry 38(s): a fixture may name further family sets
+      // the policy catalog makes equally valid (`defaults_families_also_accept`)
+      // — scored here only; the deterministic tier pins the primary set.
+      const got = JSON.stringify(Object.keys(diff.defaults ?? {}).sort());
+      const accepted = [exp.proposal.defaults_families, ...(exp.proposal.defaults_families_also_accept ?? [])]
+        .map((f: string[]) => JSON.stringify([...f].sort()));
+      if (!accepted.includes(got)) {
+        return { pass: false, detail: `defaults families mismatch: ${Object.keys(diff.defaults ?? {})}` };
+      }
     }
     if (exp.proposal.newly_required_includes &&
         !((payload.newly_required as string[]) ?? []).includes(exp.proposal.newly_required_includes)) {
@@ -639,9 +798,17 @@ function scoreAgentOutcome(cfg: AgentEvalConfig, proposals: Row[], exp: Record<s
     if (exp.proposal.format && payload.format !== exp.proposal.format) {
       return { pass: false, detail: `expected format ${exp.proposal.format}, got ${payload.format}` };
     }
-    if (exp.proposal.sections !== undefined &&
-        ((payload.sections as unknown[]) ?? []).length !== exp.proposal.sections) {
-      return { pass: false, detail: `expected ${exp.proposal.sections} sections, got ${((payload.sections as unknown[]) ?? []).length}` };
+    if (exp.proposal.sections !== undefined) {
+      const secs = (payload.sections as Array<{ kind: string; citations?: unknown[] }>) ?? [];
+      // §10 entry 38(t): an extra AI-commentary section is the template's own
+      // optional narrative (the tool accepts it, §16.1) — allowed only when it
+      // is CITED, because the §4.3 citation-mandatory rule is the point.
+      const extraCitedNarrative = exp.proposal.allow_cited_narrative === true &&
+        secs.length === exp.proposal.sections + 1 &&
+        secs.some((x) => x.kind === "narrative" && Array.isArray(x.citations) && x.citations.length > 0);
+      if (secs.length !== exp.proposal.sections && !extraCitedNarrative) {
+        return { pass: false, detail: `expected ${exp.proposal.sections} sections, got ${secs.length}` };
+      }
     }
     if (exp.proposal.narrative_cited) {
       const narrative = ((payload.sections as Array<{ kind: string; citations?: unknown[] }>) ?? [])
@@ -661,9 +828,24 @@ function scoreAgentOutcome(cfg: AgentEvalConfig, proposals: Row[], exp: Record<s
     if (exp.proposal.scenario_id && payload.scenario_id !== exp.proposal.scenario_id) {
       return { pass: false, detail: `expected scenario ${exp.proposal.scenario_id}, got ${payload.scenario_id}` };
     }
-    if (exp.proposal.new_scenario_name &&
-        (payload.new_scenario as { name?: string } | undefined)?.name !== exp.proposal.new_scenario_name) {
-      return { pass: false, detail: `expected new scenario "${exp.proposal.new_scenario_name}"` };
+    // §10 entry 38(s): the live tier scores what the ask MEANS — a new
+    // scenario carrying the asked outage (target + duration) — not the
+    // free-text name the mocked args happen to use. The deterministic tier
+    // (experiment_designer_test.ts) still pins the mocked name verbatim.
+    if (exp.proposal.new_scenario_name) {
+      const ns = payload.new_scenario as
+        | { name?: string; disruption_schedule?: Array<{ target?: string; duration_days?: number }> }
+        | undefined;
+      if (!ns || !ns.name) return { pass: false, detail: "expected a new scenario, none in the spec" };
+      const want = exp.proposal.new_scenario_outage as { target: string; duration_days: number } | undefined;
+      if (want && !(ns.disruption_schedule ?? []).some((e) =>
+        e.target === want.target && e.duration_days === want.duration_days)) {
+        return {
+          pass: false,
+          detail: `new scenario lacks the asked outage (${want.target}, ${want.duration_days} days): ` +
+            JSON.stringify(ns.disruption_schedule ?? []).slice(0, 200),
+        };
+      }
     }
     if (exp.proposal.grounding_policy_hash &&
         (p.grounding as Record<string, unknown> | null)?.policy_hash !== exp.proposal.grounding_policy_hash) {
@@ -712,9 +894,19 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
   if (cfg.agentId === "report-builder") Deno.env.set("FILE_WORKSPACE_ENABLED", "true");
   const fixtures: StewardMetrics["fixtures"] = {};
   let draftCalls = 0, validDraftCalls = 0;
+  const liveSkipped: string[] = [];
+  const invalidDraftCalls: InvalidDraftCall[] = [];
 
   for (const id of cfg.fixtures) {
     const fixture = await loadFixtureFrom(cfg.fixtureDir, id);
+    // §10 entry 38(s): a fixture that proves a GATE refuses bad arguments can
+    // only be driven by its mocked args — a correct model never produces them.
+    // `live_tier: false` (with its reason) keeps it in the deterministic tier
+    // and reports it as skipped here, never as a pass.
+    if (!mock && fixture.live_tier === false) {
+      liveSkipped.push(`${id}: ${String(fixture.live_tier_reason ?? "deterministic-tier only")}`);
+      continue;
+    }
     const tables = structuredClone(fixture.project_snapshot) as Record<string, Row[]>;
     const db = makeStubDb(tables, makeAgentRpcs(tables));
     const ctx: ToolContext = {
@@ -732,6 +924,7 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
     };
 
     let reply = "";
+    let toolsUsed: string[] = [];
     if (mock) {
       // offline: exercise the pipeline with the fixture's mocked args (the
       // adversarial fixtures inject deliberately bad args to prove the gate
@@ -744,12 +937,23 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
         }
       }
     } else {
-      const turn = await runAgentTurn({ agentId: cfg.agentId, modelId: model.id, utterance: fixture.utterance, ctx });
+      const refusals: Array<{ code: string | null; reason: string | null }> = [];
+      const turn = await runAgentTurn({
+        agentId: cfg.agentId,
+        modelId: model.id,
+        utterance: fixture.utterance,
+        ctx,
+        onToolResult: (name, _args, env) => {
+          if (name === cfg.draftTool && env.meta.row_count === 0) refusals.push(refusalOf(env));
+        },
+      });
       reply = turn.reply;
+      toolsUsed = turn.toolCalls.map((c) => `${c.name}:${c.row_count}`);
       for (const call of turn.toolCalls) {
         if (call.name !== cfg.draftTool) continue;
         draftCalls++;
         if (call.row_count > 0) validDraftCalls++;
+        else invalidDraftCalls.push({ fixture: id, tool: call.name, args: clipArgs(call.args), ...(refusals.shift() ?? NO_REFUSAL) });
       }
     }
 
@@ -766,7 +970,9 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
         }
       }
     }
-    fixtures[id] = { pass, detail };
+    fixtures[id] = !mock && !pass
+      ? { pass, detail, observed: observe(reply, tables.proposals, toolsUsed) }
+      : { pass, detail };
   }
 
   const schemaValidity = draftCalls === 0 ? 1 : validDraftCalls / draftCalls;
@@ -788,6 +994,8 @@ async function evalAgent(cfg: AgentEvalConfig, model: ModelSpec, mock: boolean):
     validDraftCalls,
     schemaValidity,
     gateViolationRate,
+    invalidDraftCalls,
+    ...(liveSkipped.length > 0 ? { liveSkipped } : {}),
     pass: failures.length === 0,
     failures,
   };
@@ -898,7 +1106,7 @@ async function judgeReply(
 
 interface CoverageMetrics {
   model: string;
-  battery: Record<string, { pass: boolean; detail: string; fabrications: number }>;
+  battery: Record<string, FixtureResult & { fabrications: number }>;
   fabrications: number;
   layer2Violations: number;
   judgedFaithful: number;
@@ -967,6 +1175,7 @@ async function evalCoverage(model: ModelSpec, mock: boolean): Promise<CoverageMe
       let pass = true;
       let detail = "ok";
       let fixtureFabrications = 0;
+      let liveReply = "";
       try {
         const result = await runChat(model.id, fixture.utterance, [], ctx, null, {
           tools: personaToolDeclarations(),
@@ -974,6 +1183,7 @@ async function evalCoverage(model: ModelSpec, mock: boolean): Promise<CoverageMe
             calls.push({ name, args, envelope });
           },
         });
+        liveReply = result.reply ?? "";
         const { citations, toolCallRefs } = await assembleCitations(calls);
         const verdict = await verifyReply({
           reply: result.reply ?? "", calls, citations,
@@ -1021,7 +1231,13 @@ async function evalCoverage(model: ModelSpec, mock: boolean): Promise<CoverageMe
         pass = false;
         detail = `turn failed: ${e instanceof Error ? e.message : e}`;
       }
-      battery[id] = { pass, detail, fabrications: fixtureFabrications };
+      battery[id] = pass
+        ? { pass, detail, fabrications: fixtureFabrications }
+        : {
+          pass, detail, fabrications: fixtureFabrications,
+          observed: observe(liveReply, undefined,
+            calls.map((c) => `${c.name}:${c.envelope.meta.row_count}${c.envelope.meta.note ? `:${String(c.envelope.meta.note).slice(0, 60)}` : ""}`)),
+        };
     }
   } finally {
     Deno.env.delete("COVERAGE_TOOLS_ENABLED");
@@ -1169,7 +1385,7 @@ function substituteTokens<T>(value: T, subs: Record<string, string>): T {
 }
 
 interface SuiteScore {
-  fixtures: Record<string, { pass: boolean; detail: string }>;
+  fixtures: Record<string, FixtureResult>;
   score: number;
 }
 
@@ -1197,9 +1413,10 @@ async function evalLoop(model: ModelSpec, mock: boolean): Promise<LoopMetrics> {
   const runNeeded: SuiteScore["fixtures"] = {};
   const planIntegrity: SuiteScore["fixtures"] = {};
 
-  const runSingleTurn = async (fixture: LoopFixture): Promise<{ pass: boolean; detail: string }> => {
+  const runSingleTurn = async (fixture: LoopFixture): Promise<FixtureResult> => {
     const h = makeLoopHarness(fixture, model);
     let reply = "";
+    let loopTools: string[] = [];
     try {
       if (mock) {
         // Replay the fixture's scripted calls through the REAL handlers —
@@ -1218,11 +1435,15 @@ async function evalLoop(model: ModelSpec, mock: boolean): Promise<LoopMetrics> {
         });
         if (!turn.ok) return { pass: false, detail: `turn failed: ${turn.error}` };
         reply = turn.reply;
+        loopTools = turn.toolCalls.map((c) => `${c.name}:${c.row_count}`);
       }
     } catch (e) {
       return { pass: false, detail: `turn failed: ${e instanceof Error ? e.message : e}` };
     }
-    return scoreLoopOutcome(fixture, h.tables, reply);
+    const scored = scoreLoopOutcome(fixture, h.tables, reply);
+    return !mock && !scored.pass
+      ? { ...scored, observed: observe(reply, h.tables.proposals, loopTools) }
+      : scored;
   };
 
   // The pi-* laws the MODEL owns, scored on the plan-shaped miss turn:
@@ -1230,7 +1451,7 @@ async function evalLoop(model: ModelSpec, mock: boolean): Promise<LoopMetrics> {
   // write legal (pi-02/03/04 — a rejection is an attempted violation); no
   // step left 'active' at turn end (pi-01, the model's side of the §21.3
   // law); the card step waiting on the filed proposal; nothing dispatched.
-  const runPlanTurn = async (fixture: LoopFixture): Promise<{ pass: boolean; detail: string }> => {
+  const runPlanTurn = async (fixture: LoopFixture): Promise<FixtureResult> => {
     const h = makeLoopHarness(fixture, model);
     const planEnvelopes: ToolEnvelope[] = [];
     try {
@@ -1271,7 +1492,14 @@ async function evalLoop(model: ModelSpec, mock: boolean): Promise<LoopMetrics> {
     if (!plan) return { pass: false, detail: "no plan filed (§20.4 step 2: the plan comes before any other tool)" };
     const rejected = planEnvelopes.filter((e) => e.kind !== "plan").length;
     if (rejected > 0) {
-      return { pass: false, detail: `${rejected} update_task_plan write(s) rejected — an attempted §21.1 rule violation` };
+      return {
+        pass: false,
+        detail: `${rejected} update_task_plan write(s) rejected — an attempted §21.1 rule violation`,
+        observed: {
+          tools: planEnvelopes.filter((e) => e.kind !== "plan")
+            .map((e) => `update_task_plan:${String(e.meta.note ?? "")}:${clip(typeof e.data === "string" ? e.data : JSON.stringify(e.data), 300)}`),
+        },
+      };
     }
     const steps = (plan.steps as PlanStep[]) ?? [];
     if (steps.length === 0) return { pass: false, detail: "the filed plan declares no steps" };
@@ -1626,6 +1854,13 @@ export async function runModelEval(opts: {
       `; needs-run-recall=${routing.needsRunRecall.toFixed(3)}` +
       `; cache-checkable-precision=${routing.cacheCheckablePrecision.toFixed(3)}`);
     for (const f of routing.failures) console.log(`  ✗ ${f}`);
+    if (routing.misses && routing.misses.length > 0) {
+      console.log(`  routing misses (${routing.misses.length}/${routing.n}) — full records in the report's routing[].misses:`);
+      for (const m of routing.misses) {
+        console.log(`    · ${m.id} [${m.kinds.join(",")}] expected ${m.expected.route}/${m.expected.agent_id ?? "-"} ` +
+          `got ${m.got.route}/${m.got.agent_id ?? "-"} (conf ${m.got.confidence.toFixed(2)}${m.fallback ? `, fallback ${m.fallback}` : ""}) — ${JSON.stringify(m.utterance)}`);
+      }
+    }
 
     let steward: StewardMetrics | null = null;
     if (agents.includes("data-steward")) {
@@ -1636,6 +1871,7 @@ export async function runModelEval(opts: {
         `gate-violation-attempts=${steward.gateViolationRate.toFixed(3)} ` +
         `fixtures=${Object.values(steward.fixtures).filter((f) => f.pass).length}/${Object.keys(steward.fixtures).length}`);
       for (const f of steward.failures) console.log(`  ✗ ${f}`);
+      for (const c of steward.invalidDraftCalls ?? []) console.log(`    · invalid draft ${c.fixture} ${c.tool} [${c.code ?? "?"}: ${c.reason ?? "-"}] ${c.args.slice(0, 300)}`);
     }
 
     // Stage 2/3 agents (§9.3/§9.4): score every enabled agent's suite.
@@ -1653,6 +1889,8 @@ export async function runModelEval(opts: {
         `gate-violation-attempts=${metrics.gateViolationRate.toFixed(3)} ` +
         `fixtures=${Object.values(metrics.fixtures).filter((f) => f.pass).length}/${Object.keys(metrics.fixtures).length}`);
       for (const f of metrics.failures) console.log(`  ✗ ${f}`);
+      for (const sk of metrics.liveSkipped ?? []) console.log(`    – skipped in the live tier: ${sk}`);
+      for (const c of metrics.invalidDraftCalls ?? []) console.log(`    · invalid draft ${c.fixture} ${c.tool} [${c.code ?? "?"}: ${c.reason ?? "-"}] ${c.args.slice(0, 300)}`);
     }
 
     // H1 (§7.7-1): the coverage battery + entity-fabrication metric (target

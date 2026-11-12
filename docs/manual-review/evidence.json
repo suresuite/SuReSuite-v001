@@ -78,7 +78,7 @@
       "path": "supabase/functions/_shared/dispatch.ts",
       "symbols": "dispatchExperimentRun",
       "manual_page": "roles-and-capabilities",
-      "sha256": "ab355628adac0125571a5cccdccbd4cb5291412ebefe735a5d7d5cffe6d2537a"
+      "sha256": "0720933398ef7dc6cec5734ad4edaede77d7605e5b7c6553e08b131a86c2fa81"
     },
     {
       "path": "supabase/migrations/20261002000007_project_role_decides.sql",

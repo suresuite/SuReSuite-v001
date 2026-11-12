@@ -34,7 +34,7 @@ surfaces:
   - page: "DataManager.tsx"
     via: "rpc get_project_dataset_status"
     grain: table
-    evidence: "src/pages/DataManager.tsx:447"
+    evidence: "src/pages/DataManager.tsx:446"
     confirmed: true
   - page: "ProductLevelNetwork.tsx"
     via: "rpc project_freshness (GraphVersionChip → FreshnessBadge, WP 10.1)"

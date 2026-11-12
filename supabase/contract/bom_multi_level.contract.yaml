@@ -40,7 +40,7 @@ surfaces:
   - page: "DataManager.tsx"
     via: "rpc get_project_dataset_status"
     grain: table
-    evidence: "src/pages/DataManager.tsx:447"
+    evidence: "src/pages/DataManager.tsx:446"
     confirmed: true
   - page: "InteractiveNetworkSpace.tsx"
     via: "table read"
@@ -55,12 +55,12 @@ surfaces:
   - page: "ProjectPolicies.tsx"
     via: "table read"
     grain: table
-    evidence: "src/lib/policies/projectLanes.ts:48"
+    evidence: "src/lib/policies/projectLanes.ts:49"
     confirmed: true
   - page: "SimulationLab.tsx"
     via: "table read"
     grain: table
-    evidence: "src/lib/policies/projectLanes.ts:48"
+    evidence: "src/lib/policies/projectLanes.ts:49"
     confirmed: true
 
 governance:

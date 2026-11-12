@@ -103,7 +103,7 @@ function storedProposal(db: StubDb, env: ToolEnvelope): Row {
   return row;
 }
 
-Deno.test("ed-01-simple-run: existing scenario + version → valid spec; reps = card recommendation; grounding = {policy_hash}", () =>
+Deno.test("ed-01-simple-run: existing scenario + version → valid spec; unstated reps capped at 5 (38(ad)); grounding = {policy_hash}", () =>
   withB4Enabled(async () => {
     const fixture = await loadFixture("ed-01-simple-run");
     const { ctx, db } = makeCtx(fixture);
@@ -113,7 +113,10 @@ Deno.test("ed-01-simple-run: existing scenario + version → valid spec; reps = 
     const exp = fixture.expect.proposal;
     assertEquals(payload.scenario_id, exp.scenario_id);
     assertEquals(payload.policy_version_id, exp.policy_version_id);
-    assertEquals(payload.replications, exp.replications, "the active card's recommendation (30)");
+    // §10 entry 38(ad): the user stated no count, so the model's 30 (the
+    // card's recommendation) is capped at the owner's default of 5.
+    assertEquals(exp.replications, 30, "the fixture's model asked for the card's 30");
+    assertEquals(payload.replications, 5, "an unstated count is capped at 5");
     assertEquals(payload.acknowledge_warnings, exp.acknowledge_warnings);
     assertEquals(payload.newer_version_exists, exp.newer_version_exists);
     assertEquals(stored.provenance, exp.provenance, "§5.4: the spec is llm_drafted — human must verify");
@@ -128,12 +131,26 @@ Deno.test("ed-01: replications clamp 1-200 (the dispatch.ts clamp restated at dr
   withB4Enabled(async () => {
     const fixture = await loadFixture("ed-01-simple-run");
     const { ctx, db } = makeCtx(fixture);
+    ctx.draft!.utterance = "run the outage scenario with 500 replications";
     const env = await executeTool("draft_experiment_spec", {
       ...fixture.mocked_llm!.args!,
       replications: 5000,
     }, ctx);
     const payload = storedProposal(db, env).payload as Record<string, unknown>;
-    assertEquals(payload.replications, 200, "5000 clamps to the 200 ceiling");
+    assertEquals(payload.replications, 200, "a STATED count lifts the 5 cap; 5000 still clamps to the 200 ceiling");
+  }));
+
+Deno.test("38(ad): the user's stated count is used; an unstated one is capped at 5", () =>
+  withB4Enabled(async () => {
+    const fixture = await loadFixture("ed-01-simple-run");
+    const stated = makeCtx(fixture);
+    stated.ctx.draft!.utterance = "simulate the outage with 30 replications";
+    const a = storedProposal(stated.db, await executeTool("draft_experiment_spec", { ...fixture.mocked_llm!.args!, replications: 30 }, stated.ctx));
+    assertEquals((a.payload as Record<string, unknown>).replications, 30, "the user asked for 30 — run 30");
+    const unstated = makeCtx(fixture);
+    unstated.ctx.draft!.utterance = "simulate the outage";
+    const b = storedProposal(unstated.db, await executeTool("draft_experiment_spec", { ...fixture.mocked_llm!.args!, replications: 3 }, unstated.ctx));
+    assertEquals((b.payload as Record<string, unknown>).replications, 3, "below the cap is left alone");
   }));
 
 Deno.test("ed-01: idempotency — the same substantive spec converges on one card (§4.5)", () =>

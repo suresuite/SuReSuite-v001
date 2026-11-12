@@ -25,6 +25,7 @@ from typing import Optional
 import numpy as np
 from scipy import sparse
 
+from scsim.core.decisions import DecisionLog
 from scsim.core.phases import (
     FG_FULFILLMENT,
     FULFILLMENT,
@@ -906,6 +907,9 @@ class SimContext:
         self.fg_target = np.zeros(model.n_prods)        # S^FG_p (ADR 0001)
         self.cost = CostLedger(T)
         self.policy_state: dict[str, dict] = {}
+        # Facet 11 decision traces — on for single-replication inspection runs
+        # only (the `keep_matrices` rule), behaviour-neutral (core/decisions.py).
+        self.decisions = DecisionLog(enabled=keep_matrices)
         self.policy_rng_created_week: dict[str, int] = {}
         # Forecast machinery (PH-10 mechanic state; no contract key needed for
         # the raw history — only the `forecast` transient is contractual).

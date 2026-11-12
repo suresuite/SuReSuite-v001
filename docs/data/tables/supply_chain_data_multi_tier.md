@@ -45,10 +45,10 @@ Written by `rebuild_supply_chain_lanes` — the ONE ETL since WP 8.2 — and nev
 
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
-| `DataManager.tsx` | rpc combine_project_into_supply_chain | `src/pages/DataManager.tsx:674` | yes |
+| `DataManager.tsx` | rpc combine_project_into_supply_chain | `src/pages/DataManager.tsx:673` | yes |
 | `InteractiveNetworkSpace.tsx` | table read | `src/pages/InteractiveNetworkSpace.tsx:350` | yes |
 | `ProcessLevelNetwork.tsx` | rpc get_supply_chain_data_multi_tier | `src/services/network.ts:38` | yes |
-| `ProjectPolicies.tsx` | rpc get_supply_chain_data_multi_tier | `src/hooks/useProjectContext.tsx:49` | yes |
+| `ProjectPolicies.tsx` | rpc get_supply_chain_data_multi_tier | `src/hooks/useProjectContext.tsx:48` | yes |
 
 Each row says the page READS the table by that path, at that line. It does
 not say every column below is displayed there — a column carries its own
@@ -347,6 +347,6 @@ How deep in the BILL OF MATERIALS this edge's UPSTREAM end sits — 0 a finished
 
 ---
 
-*Generated from data contract `b6573a48d7c7`, engine `0.8.3`,
+*Generated from data contract `980ce9c339c2`, engine `0.8.3`,
 sidecar `supabase/contract/supply_chain_data_multi_tier.contract.yaml`, table created by `20250908191450_810873d6-5329-4d67-80f4-e96bbe46c340.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

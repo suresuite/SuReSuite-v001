@@ -141,6 +141,7 @@
       "template_id": "run-results",
       "format": "xlsx",
       "sections": 1,
+      "allow_cited_narrative": true,
       "provenance": "llm_drafted",
       "evidence_runs": ["66666666-6666-4666-8666-666666666601"]
     },

@@ -48,6 +48,7 @@ import {
 } from "../_shared/policyFields.ts";
 import { canonicalJson, sha256Hex } from "./telemetry.ts";
 import { deploymentEnabledAgents } from "./router.ts";
+import { checkRunReadinessDiff, loadRunReadinessRows, runReadinessContextBlock } from "./runReadiness.ts";
 import {
   AGENT_COMMON,
   failureEnvelope,
@@ -153,7 +154,7 @@ export const draftPolicyBundleDeclaration: ToolDeclaration = {
       },
       base_policy_version_id: {
         type: "string",
-        description: "The saved policy version the diff was drafted against (from CONTEXT). Omit if none exists.",
+        description: "The id (a uuid) of the saved policy version the diff was drafted against, as CONTEXT lists it under the latest policy version. It is never the policy hash. Omit it if no version exists or you are unsure.",
       },
       title: { type: "string", description: "Card title (max 140 chars)." },
       rationale: { type: "string", description: "Why this change serves the ask (max 2000 chars)." },
@@ -186,6 +187,8 @@ export function buildConfiguratorPrompt(args: {
   overridesJson: string;
   catalogSliceJson: string;
   policyHash: string;
+  /** §10 entry 38(x): the rows a run-readiness selection may target. */
+  runReadinessBlock?: string;
   memoryBlock?: string;
 }): string {
   const memory = args.memoryBlock ? `\n${args.memoryBlock}` : "";
@@ -198,7 +201,8 @@ CONTEXT
 - Relevant overrides: ${args.overridesJson}
 - Registry catalog for the slots in scope (schemas, ranges, allowed values,
   data each policy requires): ${args.catalogSliceJson}
-- Current policy hash: ${args.policyHash}${memory}
+- Current policy hash: ${args.policyHash}
+${args.runReadinessBlock ?? "- RUN-READINESS ROWS: (not loaded)"}${memory}
 
 TASK
 - The user asked: "${args.utterance}"
@@ -220,6 +224,11 @@ TASK
 - If the ask targets a policy the catalog marks planned/not-yet-implemented,
   do NOT draft: name the catalog id and the milestone the catalog gives it,
   and say it is not configurable yet.
+- A primary supplier or a primary sourcing firm is a PER-ROW selection: an
+  override whose target_key is one of the RUN-READINESS ROWS in CONTEXT
+  (supplier::material for sourcing, customer::product for fulfillment), with
+  a firm listed for that row — never a family default, never a key or firm
+  that is not listed. If the rows you need are not listed, say so.
 - Call draft_policy_bundle ONCE. Then reply in 2-5 sentences: what changes,
   which slots/entities, what data it newly requires, and that applying will
   create a policy version snapshot for review.
@@ -276,6 +285,17 @@ export async function buildConfiguratorContext(
     "sourcing", "inventory", "transport", "fulfillment", "production", "recovery", "demand",
   ] as PolicyFamily[]);
 
+  // §10 entry 38(x): the rows a run-readiness selection may target — read from
+  // the same tables the /policies grid is keyed on. Context, not a gate: a
+  // failed read says so in the block and the draft handler re-checks.
+  let runReadinessBlock = "- RUN-READINESS ROWS: (could not be read — call get_policy_config)";
+  try {
+    const ds = await loadGateDataset(db, ctx.projectId);
+    runReadinessBlock = runReadinessContextBlock(await loadRunReadinessRows(db, ctx.projectId, ds));
+  } catch (e) {
+    console.warn("configurator run-readiness context failed:", (e as Error).message);
+  }
+
   let memoryBlock = "";
   if (memoryEnabled()) {
     try {
@@ -295,6 +315,7 @@ export async function buildConfiguratorContext(
     overridesJson: clampJson(overrides, CONFIGURATOR_OVERRIDES_BUDGET),
     catalogSliceJson: clampJson(slice, CONFIGURATOR_CATALOG_BUDGET),
     policyHash,
+    runReadinessBlock,
     memoryBlock,
   });
 }
@@ -513,6 +534,14 @@ async function draftPolicyBundle(
       `These override targets are not in this project: ${[...new Set(foreign)].slice(0, 10).join(", ")}`,
     );
   }
+
+  // §5.2 hard gate 3b (§10 entry 38(x)): a run-readiness selection (primary
+  // supplier, primary sourcing firm) must name a ROW the /policies grid is
+  // keyed on, and a firm that row's product ships from — "every token is a
+  // known id" let `S1` alone and an invented firm through (live pc-06). The
+  // browser still GRADES the gate; this only refuses a selection of no row.
+  const readiness = checkRunReadinessDiff(diff, await loadRunReadinessRows(ctx.supabase, ctx.projectId, dataset));
+  if (!readiness.ok) return failureEnvelope(tool, readiness.code, readiness.reason);
 
   // Base version lineage: verify a supplied id, else use the latest version.
   let baseVersionId: string | null = null;

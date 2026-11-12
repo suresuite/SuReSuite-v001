@@ -11,6 +11,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { runChat, resolveModel, type ChatRunResult, type ChatTurn,
   isKnownModelId,
+  isHiddenModelId,
 } from "./providers.ts";
 import { makeToolContext, type ToolContext, type ToolDeclaration, type ToolEnvelope } from "./tools.ts";
 // H2 (§6.6 rule 1): the cache reads that join the persona surface when the
@@ -36,7 +37,17 @@ import {
   OFFER_CHIP_TEXT,
   AGENT_NOT_ENABLED_TEXT,
   resolveRoutedUtterance,
+  routerEnabled,
 } from "./router.ts";
+// §20.8 (v1.6): the deterministic what-if loop — a disruption what-if is
+// parsed, resolved, cache-checked BY CONTENT and proposed in code; the model
+// only interprets a hit. Kill switch WHATIF_LOOP_ENABLED (default on).
+import { whatIfRouteDecision } from "./whatIf.ts";
+// §26 Phase M (v1.7): the modeler skills — fixed procedures in code for the
+// modeler's tasks (what-if, mitigation study, sensitivity, results, readiness,
+// setup, how-to, explain, capabilities). Kill switch MODELER_SKILLS.
+import { matchSkill, skillById } from "./skills/index.ts";
+import { closeSkillPlan, parseSkillNote, resumeInput, runSkillTurn, waitSkillPlanOn } from "./skills/runner.ts";
 // Importing agentTurn.ts registers the staged draft tools (draftTools.ts,
 // configuratorTools.ts, vvTools.ts, memory.ts) into the shared executeTool
 // registry (ai-agents.md §9.2–§9.4, §14.7).
@@ -313,6 +324,14 @@ serve(async (req) => {
         type: 'BAD_REQUEST',
       });
     }
+    // §25 Q0: a hidden model (unfunded provider account) is refused by name —
+    // a stale client may still send one from before the picker dropped it.
+    if (isHiddenModelId(typeof model === 'string' ? model : null)) {
+      return jsonResponse({
+        error: `${resolveModel(model).label} is temporarily unavailable. Pick GPT-5 or GPT-5 mini from the model menu.`,
+        type: 'BAD_REQUEST',
+      });
+    }
     const resolvedModel = resolveModel(model);
     // ai_models.code is provider-prefixed ('google/gemini-2.5-flash'); the
     // client sends the bare id ('gemini-2.5-flash'). CHAT_MODEL_CODES already
@@ -553,6 +572,85 @@ serve(async (req) => {
           });
         }
 
+        // --- §26 M.3: a skill-filed plan resumes through ITS SKILL, not the
+        // model-driven agent turn: the skill re-runs on the stored question
+        // (now a cache hit — the run it waited on is done), answers in code,
+        // and closes the plan. One model call at most (the interpretation).
+        const skillStep = outcome.plan.steps.find((st) => st.id === 'answer' && parseSkillNote(st.note));
+        const skillRef = skillStep ? parseSkillNote(skillStep.note) : null;
+        const resumeSkill = skillRef ? skillById(skillRef.skillId) : null;
+        if (resumeSkill && skillRef) {
+          const skillCtx: ToolContext = {
+            ...(ctx as ToolContext),
+            draft: {
+              userEmail: userEmail ?? null,
+              threadId: outcome.plan.thread_id,
+              modelCode: resolvedModel.id,
+              providerCode: resolvedModel.provider,
+              canProposals: capFeatures['agent_proposals'] === true,
+              utterance: skillRef.utterance,
+              mode: 'review',
+              agentId: planAgentId,
+            },
+          };
+          // The question AND the earlier message that named its subject: a
+          // follow-up ("how do I mitigate it?") has none of its own (38(ak)).
+          // A plan filed before the note carried its subject falls back to
+          // the thread's own history, which the resume request sends.
+          const input = skillRef.subject ? resumeInput(skillRef) : { utterance: skillRef.utterance, history };
+          const match = resumeSkill.recognize(input);
+          const turn = match === null || match === undefined
+            ? null
+            : await runSkillTurn({
+              skill: resumeSkill,
+              match,
+              input,
+              // A resume answers; it never files another card.
+              opts: { canDraft: false, draftBlockedReason: 'this is the answer to the run you approved', enabledAgents },
+              ctx: skillCtx,
+              modelId: model,
+              personaId: agentId ?? null,
+              budget,
+              verifierOn: verifierEnabled(),
+              projectId: projectId as string,
+              resuming: true,
+            });
+          // A study with arms still running is not a failed answer: wait on
+          // one of the unfinished arms and say how far it got.
+          const stillRunning = turn?.result.outcome === 'in_progress' ? (turn.result.pendingRunIds ?? []) : [];
+          if (stillRunning.length > 0) {
+            const planPartWait = await waitSkillPlanOn(
+              skillCtx,
+              outcome.plan as unknown as { id: string; steps: Array<Record<string, unknown>> },
+              outcome.stepId,
+              stillRunning[0],
+            );
+            return await finishResume({
+              reply: turn!.reply,
+              parts: [...turn!.parts, ...(planPartWait ? [planPartWait] : [])],
+              toolCalls: turn!.result.calls.map((c) => ({
+                name: c.name, args: c.args, ok: c.envelope.meta.note !== 'error', row_count: c.envelope.meta.row_count,
+              })),
+              model: resolvedModel.label,
+            });
+          }
+          const answered = !!turn && ['hit', 'answered'].includes(turn.result.outcome);
+          const planPartNow = await closeSkillPlan(
+            skillCtx,
+            outcome.plan as unknown as { id: string; steps: Array<Record<string, unknown>> },
+            answered,
+            outcome.stepId,
+          );
+          return await finishResume({
+            reply: turn?.reply ?? `The run finished, but I couldn't re-read the question "${skillRef.utterance}" — ask it again and I'll answer from the run.`,
+            parts: [...(turn?.parts ?? []), ...(planPartNow ? [planPartNow] : [])],
+            toolCalls: (turn?.result.calls ?? []).map((c) => ({
+              name: c.name, args: c.args, ok: c.envelope.meta.note !== 'error', row_count: c.envelope.meta.row_count,
+            })),
+            model: resolvedModel.label,
+          });
+        }
+
         const verifierOn = verifierEnabled();
         const agentCtx: ToolContext = {
           ...ctx,
@@ -719,12 +817,26 @@ serve(async (req) => {
         return baseClassifier(prompt);
       }
       : null;
-    const rawDecision = await decideRoute(routedUtterance, {
-      personaId: agentId ?? null,
-      hasProject: Boolean(projectId),
-      enabledAgents,
-      modelId: resolvedModel.id,
-    }, meteredClassifier);
+    // §20.8 / §26 M.1: a message a modeler skill claims is routed by the
+    // skill, not by a classifier call — the ask is already understood. A
+    // drafting skill routes to the Experiment Designer when routable (so the
+    // mode gate applies); a read-only skill is advisory.
+    const skillHit = ctx
+      ? matchSkill({ utterance: routedUtterance, history: history as Array<{ role: string; content: string }> })
+      : null;
+    const rawDecision = skillHit
+      ? {
+        ...whatIfRouteDecision(
+          skillHit.skill.drafts && routerEnabled() && enabledAgents.includes('experiment-designer'),
+        ),
+        short_circuit: `skill:${skillHit.skill.id}`,
+      }
+      : await decideRoute(routedUtterance, {
+        personaId: agentId ?? null,
+        hasProject: Boolean(projectId),
+        enabledAgents,
+        modelId: resolvedModel.id,
+      }, meteredClassifier);
     const { decision: routeDecision, blocked: modeBlocked } = applyModeToRoute(rawDecision, chatMode);
     telemetry.emit('router.decision', {
       route: routeDecision.route,
@@ -860,7 +972,10 @@ serve(async (req) => {
       // prompt and the §20.2 tool surface for every routed B4 turn. needs_run
       // on an *advisory* route changes nothing deterministic (the persona may
       // honestly say a run would be needed — §19.4's nearest-grounded-action).
+      // §20.8: a parsed what-if never takes the model-driven agent turn (nor
+      // the matrix gate that guards it — no model capability is exercised).
       const routedAgentId =
+        !skillHit &&
         (routeDecision.route === 'artifact' || routeDecision.route === 'mixed') && ctx !== null &&
         routeDecision.agent_id !== null && AGENT_TURNS[routeDecision.agent_id]
           ? routeDecision.agent_id
@@ -936,7 +1051,74 @@ serve(async (req) => {
         }
       }
 
-      if (routedAgentId) {
+      if (skillHit && ctx) {
+        // --- §26 the modeler skill turn (§20.8 generalized). Code decides
+        // every step; the one optional model call interprets, tools
+        // withdrawn, verified or dropped. A drafting skill files ONE card
+        // and, with the plan harness on, a plan that brings the answer back
+        // after approval and run completion (M.3).
+        const canDraft = skillHit.skill.drafts && routeDecision.agent_id === 'experiment-designer';
+        const draftBlockedReason = modeBlocked
+          ? 'this thread is in Ask mode, which never files proposals'
+          : !routerEnabled()
+          ? 'agent drafting is switched off in this deployment'
+          : !enabledAgents.includes('experiment-designer')
+          ? "the Experiment Designer agent isn't enabled for your account"
+          : undefined;
+        const skillCtx: ToolContext = {
+          ...ctx,
+          draft: {
+            userEmail: userEmail ?? null,
+            threadId: typeof threadId === 'string' ? threadId : null,
+            modelCode: resolvedModel.id,
+            providerCode: resolvedModel.provider,
+            canProposals: capFeatures['agent_proposals'] === true,
+            // The skill's own input: for a follow-up choice this is the
+            // earlier question joined with the choice (§27).
+            utterance: skillHit.input.utterance,
+            mode: chatMode,
+            agentId: 'experiment-designer',
+          },
+        };
+        const turn = await runSkillTurn({
+          skill: skillHit.skill,
+          match: skillHit.match,
+          input: skillHit.input,
+          opts: { canDraft, draftBlockedReason, enabledAgents },
+          ctx: skillCtx,
+          modelId: model,
+          personaId: agentId ?? null,
+          budget,
+          verifierOn,
+          projectId: projectId as string,
+        });
+        if (turn.planId) ctx.planTouchedId = turn.planId;
+        const skillToolCalls = turn.result.calls.map((c) => ({
+          name: c.name,
+          args: c.args,
+          ok: c.envelope.meta.note !== 'error',
+          row_count: c.envelope.meta.row_count,
+        }));
+        telemetryToolCalls = skillToolCalls;
+        if (turn.verdict) verdict = turn.verdict;
+        const proposal = turn.result.proposal;
+        if (proposal) {
+          proposalId = proposal.proposal_id;
+          if (!proposal.duplicate) {
+            makeTelemetry(supabaseAdmin, { ...telemetryBase, agent_id: 'experiment-designer' })
+              .emit('proposal.created', {
+                artifact_type: proposal.artifact_type,
+                provenance: proposal.provenance,
+              }, { proposal_id: proposalId });
+          }
+        }
+        result = {
+          reply: turn.reply,
+          parts: turn.parts,
+          toolCalls: skillToolCalls,
+          model: resolvedModel.label,
+        };
+      } else if (routedAgentId) {
         const agentUtterance = routeDecision.artifact_part ?? routedUtterance;
         const agentCtx: ToolContext = {
           ...(ctx as ToolContext),

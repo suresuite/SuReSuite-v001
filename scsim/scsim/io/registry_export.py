@@ -215,6 +215,9 @@ def build_registry() -> dict[str, Any]:
             "hooks": plugin_hooks,
             "params_schema": entry.params_model.model_json_schema(),
             "data_requirements": [r.as_dict() for r in entry.data_requirements],
+            # Facet 11: the closed vocabulary of this policy's decision-trace
+            # rationale codes (code → meaning); {} = records no decisions yet.
+            "rationale_codes": dict(entry.plugin_cls.rationale_codes) if entry.plugin_cls else {},
         })
     return {
         "engine_version": ENGINE_VERSION,

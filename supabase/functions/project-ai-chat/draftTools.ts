@@ -218,7 +218,8 @@ TASK
   set source "user_supplied" with a citation to the user message.
 - Then call draft_item_master_update ONCE with all rows. Rows without a
   candidate_value and without a user-stated value must be omitted and listed
-  in your reply as still-missing.
+  in your reply as still-missing. If NO row remains, do not call the tool at
+  all: reply that nothing can be filled yet and list what is missing.
 - After the tool returns, reply in 2-4 sentences: what the proposal covers,
   what remains missing, and that the card must be reviewed before it applies.
 

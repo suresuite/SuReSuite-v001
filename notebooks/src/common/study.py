@@ -36,6 +36,8 @@ def key_table(scopes, verify_use="VERIFY_ON_PLATFORM"):
 
 def styled(df, fmt=None, shade=(), cmap="Reds", caption=None):
     """A formatted table with value shading, or the plain table where the notebook cannot style."""
+    if isinstance(fmt, str):  # one format for every numeric column; text columns are left alone
+        fmt = {c: fmt for c in df.select_dtypes("number").columns}
     try:
         s = df.style.format(fmt or {}, na_rep="—")
         for c in shade:
@@ -188,7 +190,7 @@ def load_policies(api, project_id, source, pinned_id, scopes, label):
 
     if source == "pinned" or (pinned and not drift):
         if not pinned:
-            raise Stop("POLICY_SOURCE is \"pinned\" but this project has no saved policy version")
+            raise Stop("this project has no saved policy version to pin — use \"current\", or save one on /policies")
         pol = pinned
         print("using the saved version" + ("" if not drift else f" — {len(drift)} setting(s) differ from /policies now (below)"))
     elif "write:policies" in scopes:
@@ -250,23 +252,47 @@ def study_scenario(api, project_id, scenario_id, scopes, replications=None):
     return sc, frame, stress
 
 
-def ensure_engine(api, live):
-    """The platform's current engine on this machine: installed, or reinstalled when its version
-    is not the platform's. Demo mode hands out no engine."""
+def ensure_engine(api, live, version=None):
+    """The engine on this machine: the platform's current one, or `version` ("0.8.3", or the exact
+    build a run recorded as its code_version) to repeat an older study. Installed, or reinstalled
+    when the version here is another one. Demo mode hands out no engine."""
     try:
-        platform_engine = api.engine()
+        wanted = api.engine(version=version)
     except SuReSuiteError:
-        platform_engine = None
-    if platform_engine and live:
+        wanted = None
+    if wanted and live:
         import importlib.metadata as md
         have = md.version("scsim") if engine_available() else None
-        if have != platform_engine["engine_version"]:
-            install_engine(api)
+        if have != wanted["engine_version"]:
+            install_engine(api, version=version)
+            if "scsim" in sys.modules:
+                print("an engine was already loaded in this session — restart the runtime and run all cells again")
     if not engine_available():
         print("the engine is not installed — demo mode cannot hand it out. Add SURESUITE_API_KEY (see the Setup "
               "notes) and run all cells again; the simulation steps need it.")
         return False
     return True
+
+
+def versions_table(api, project_id, data, pol, scenario, frame):
+    """What the runs read, and whether each is the newest the platform has."""
+    from sim_worker.build import code_version
+    newest = lambda rows: max(rows, key=lambda v: v.get("created_at") or "")["id"] if rows else None
+    try:
+        engine_latest = api.engine().get("engine_version")
+    except SuReSuiteError:  # the offline demo hands out no engine
+        engine_latest = None
+    build = code_version()
+    is_latest = lambda mine, latest: "—" if latest is None else ("yes" if mine == latest else f"no — latest is {latest}")
+    return pd.DataFrame([
+        ("engine", build, is_latest(build.split("+")[0].removeprefix("scsim-"), engine_latest)),
+        ("data", f"v{data.version_no} · {data.label} · graph_hash {str(data.graph_hash)[:12]}",
+         is_latest(data.id, newest(api.dataset_versions(project_id)))),
+        ("policies", f"{pol.label} · policy_hash {str(pol.policy_hash)[:12]}" if pol.policy_hash else str(pol.label),
+         is_latest(pol.id, newest(api.policy_versions(project_id))) if pol.policy_hash else "not saved"),
+        ("scenario", f"{scenario['name']} · {frame.get('horizon_days')} days · {frame.get('replications')} replications "
+                     f"· seed {frame.get('seed')}", "—"),
+    ], columns=["", "version", "latest"]).set_index("")
 
 
 def engine_view(data, pol, scenario, project_model):

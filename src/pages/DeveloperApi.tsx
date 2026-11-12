@@ -147,8 +147,8 @@ const NOTEBOOKS = [
   { path: '/notebooks/suresuite_01_policy_experiment.ipynb', title: '01 · Policy experiment', mirrors: '/policies edit → Save version → Lab Compare, paired by replication', minutes: 15 },
   { path: '/notebooks/suresuite_02_disruption_resilience.ipynb', title: '02 · Disruption and resilience', mirrors: 'Lab stress tests: plant shutdown, supplier outage, recovery times', minutes: 15 },
   { path: '/notebooks/suresuite_03_local_simulation.ipynb', title: '03 · Simulate on your own machine', mirrors: 'Pull a dataset and policy version, run the engine locally, sweep for free', minutes: 15 },
-  { path: '/notebooks/suresuite_04_component_inventory.ipynb', title: '04 · Component inventory and disruptions', mirrors: 'Policies → Run & validate → Single (Inspection mode): every material week by week, then under each supplier outage', minutes: 20 },
-  { path: '/notebooks/suresuite_05_available_to_promise.ipynb', title: '05 · Available to promise', mirrors: 'Answer a make-to-order or material request: stock position, available to promise, partial delivery, pull in or push back', minutes: 10 },
+  { path: '/notebooks/suresuite_04_component_inventory.ipynb', title: '04 · Component inventory: trace materials week by week', mirrors: 'Policies → Run & validate → Single (Inspection mode): pick the versions, run or pull the baseline, knock out suppliers, and follow the materials you choose week by week with and without the disruption', minutes: 10 },
+  { path: '/notebooks/suresuite_05_available_to_promise.ipynb', title: '05 · Available to promise', mirrors: 'We need more of a material than planned: can its suppliers deliver it by a week? Spare supplier capacity per request, spread across the suppliers, with the sum shown', minutes: 5 },
 ] as const;
 type NotebookPath = (typeof NOTEBOOKS)[number]['path'];
 const COLAB_START_URL = 'https://colab.research.google.com/';
@@ -408,6 +408,7 @@ export default function DeveloperApi({ isCollapsed, setIsCollapsed }: Props) {
       'SCENARIO_ID = ""         # choose one from the Scenarios table on /developer; "" = pick a baseline (or create one)',
       'POLICY_VERSION_ID = ""   # choose one from the Policy versions table; "" = snapshot the current policies',
       'SUPPLIER_ID = ""         # a supplier id from your own data, for the disruption examples',
+      'API_KEY_NAME = "SURESUITE_API_KEY"   # the Colab secret or environment variable that holds your key; change it to use another of your keys',
       'MODE = "auto"            # "auto" = live when an API key is found, else the offline demo; "live"; "demo"',
       'ACKNOWLEDGE_WARNINGS = False  # True = run anyway when the pre-run data check only warns (missing values use the platform defaults)',
     ].join('\n');

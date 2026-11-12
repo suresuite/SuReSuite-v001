@@ -39,7 +39,7 @@ surfaces:
   - page: "DataManager.tsx"
     via: "rpc get_project_dataset_status"
     grain: table
-    evidence: "src/pages/DataManager.tsx:447"
+    evidence: "src/pages/DataManager.tsx:446"
     confirmed: true
   - page: "ProjectPolicies.tsx"
     via: "rpc ensure_item_masters"

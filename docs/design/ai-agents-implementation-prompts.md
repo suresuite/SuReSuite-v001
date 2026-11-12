@@ -960,3 +960,82 @@ ACCEPTANCE (verify each, show evidence):
   stops gating (proven by a clock-mocked test).
 - Golden-transcript byte-identity with the flag off.
 ```
+
+---
+
+## Phase Q — *Qualify*: one unattended session that moves Q1 and Q2 forward (ai-agents.md §25)
+
+Written 2026-11-06 for an overnight run that nobody watches. The prompt has
+to be safe to execute without a person present, so its limits are part of it.
+
+```
+Advance Phase Q of the SuReSuite AI-agent plan (docs/design/ai-agents.md §25)
+in one unattended session. The owner is asleep, so nobody can answer a
+question until morning. Leave everything in a state they can review in one
+sitting.
+
+AUTHORITY — read before changing anything:
+1. CLAUDE.md (the gate names, contract:check, npm run lint, commit convention)
+2. docs/design/ai-agents.md §25 IN FULL, and §10 entry 38 (every Phase Q
+   decision so far and its evidence), §6.2–§6.6 (the router contract and the
+   VERBATIM classifier prompt), §7.4 (the targets — Q-D3: they never move)
+3. The latest live eval on the eval-results branch (results/latest-report.json
+   and latest.log): routing[].misses (with .fallback) and invalidDraftCalls are
+   what you triage from — never guess a cause the records do not show
+4. supabase/functions/project-ai-chat/{router.ts,providers.ts,agentTurn.ts,
+   draftTools.ts,configuratorTools.ts} and eval/run_model_eval.ts
+
+HARD LIMITS (the owner is not there to catch a mistake):
+- Never merge, approve, or push to any branch but the designated one.
+- Never change a production flag: AGENT_ENABLED_IDS stays vv-analyst, and
+  HIDDEN_MODEL_IDS stays as it is.
+- Never lower a §7.4 / §6.5 threshold, relabel a golden row to make a
+  number pass, or skip/disable a test.
+- Tune against the golden set by MEANING, not by utterance: a prompt rule
+  must name a class of request, never quote a golden row. Overfitting the
+  set we score on would publish a number that does not hold for users.
+- Every prompt text in code that ai-agents.md carries verbatim changes in the
+  doc in the same commit (the CLAUDE.md doc-and-code law).
+- NEVER spend provider credits (owner directive 2026-11-07, ai-agents.md
+  §10 entry 38(z)). A live eval bills the owner's OpenAI/Gemini/DeepSeek
+  accounts; only the OWNER runs one, by dispatching ai-agent-model-eval.yml
+  with spend_provider_credits: true. Do not dispatch it, and do not ask for
+  one as a routine step — say what is unmeasured instead.
+
+WORK, IN ORDER:
+1. main must be green first (PLAN.md §4 D35: nothing merges over a red
+   main). If contract:check fails on main for reasons outside the agent
+   layer, fix them as a separate commit with its own evidence.
+2. Record the result of the newest live run in §10 entry 38 and §25.6 as a
+   before/after table against the previous run. Say plainly whether
+   production (which runs ONLY vv-analyst) is better or worse off. If worse,
+   the next commit reverts the prompt change that made it so.
+3. Q1 iteration: from routing[].misses, name the largest remaining CAUSE
+   (owner confusion between two agents, over-routing of advisory asks,
+   injection text treated as a request, mixed asks collapsed to one route)
+   and change the §6.3/§6.6 prompt for that cause. Per-agent ownership
+   notes belong in the prompt as a separate block generated from router.ts,
+   like the mission lines — not hand-written per row. Keep the router
+   deterministic wrapper unchanged unless a miss record shows a wrapper
+   fault (fallback != null).
+4. Q2 prerequisite: a draft call the gate refused must carry the refusal
+   text into the eval record (invalidDraftCalls[].error). The production
+   tool-call record may gain an optional field; its reply text must not
+   change (golden_transcript_test.ts pins it).
+5. Q2: fix the draft-validity causes the records show, smallest first —
+   e.g. a draft tool called with nothing to draft is a prompt rule, not a
+   validator change.
+6. Do NOT run a live eval (see the spend rule above). List, for the owner,
+   which changes are verified only by the deterministic tier and what a live
+   run would have to show; the owner decides whether and when to pay for it.
+7. Verify: contract:check, npm test, npm run typecheck, check:docs,
+   audit:ui, eslint on touched files, and the deterministic agent eval
+   (deno test in eval/). All green, or say exactly which is not and why.
+8. Open ONE pull request with every commit, listing per commit what it
+   changes, the evidence, and what the owner must decide. Do not merge.
+
+DONE WHEN: main's contract gate is green on the branch; every live run of
+the session is recorded in §10 entry 38 and §25.6; each prompt change is
+traceable to a named miss cause; the PR is open; and the final message says
+what improved, what did not, and the next decision.
+```

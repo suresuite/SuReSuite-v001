@@ -8,12 +8,26 @@ import {
   type ModelCapabilityRow,
 } from "@/lib/modelMatrix";
 
+// The models a user can PICK. Gemini 2.5 Flash and DeepSeek are hidden
+// (ai-agents.md §25 Q0, §10 entry 38(f)): their provider accounts are out of
+// quota / balance, so every turn on them failed with a provider error. They
+// stay in the server MODEL_REGISTRY (history, eval, matrix) and are refused
+// there with a clear message (providers.ts HIDDEN_MODEL_IDS). A preference
+// saved for a hidden model falls back to the default via getStoredModel().
+// To restore one: fund its account, pass the Q4 live eval, add it back here
+// and remove it from HIDDEN_MODEL_IDS in the same change.
 export const CHAT_MODELS = [
-  { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
   { id: "gpt-5", label: "GPT-5" },
   { id: "gpt-5-mini", label: "GPT-5 mini" },
-  { id: "deepseek-chat", label: "DeepSeek" },
 ] as const;
+
+// Labels for every model a past turn may name, hidden ones included, so an
+// old thread still says "Gemini 2.5 Flash" rather than a raw id.
+const MODEL_LABELS: Record<string, string> = {
+  "gemini-2.5-flash": "Gemini 2.5 Flash",
+  "deepseek-chat": "DeepSeek",
+  ...Object.fromEntries(CHAT_MODELS.map((m) => [m.id, m.label])),
+};
 
 // Mirrors providers.ts DEFAULT_MODEL_ID — keep the two in sync.
 export const DEFAULT_MODEL_ID = "gpt-5";
@@ -30,7 +44,7 @@ export function setStoredModel(id: string) {
 }
 
 export function getModelLabel(id: string): string {
-  return CHAT_MODELS.find((m) => m.id === id)?.label ?? id;
+  return MODEL_LABELS[id] ?? id;
 }
 
 /** H4 (ai-agents.md §23.3): the per-model capability rows from

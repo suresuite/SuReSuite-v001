@@ -13,17 +13,17 @@ name: AI Agent Eval (model-scored tier) + live deployment state
 # smoke probes) so a GA flip is verifiable from one log. mode=state-only
 # captures the state without spending an eval run.
 #
-# Triggers, matching the repo's git-native ops idiom (ops-request/seed-request):
-#   * workflow_dispatch with inputs, or
-#   * pushing a change to .github/model-eval-request (for environments that can
-#     push but cannot call the Actions API), or
+# Triggers: workflow_dispatch ONLY, and tier 2 (the paid half) only when the
+# dispatch sets `spend_provider_credits: true` — see the spend guard below.
+#   * The `.github/model-eval-request` push trigger was REMOVED 2026-11-07: any
+#     push or merge touching that file started a paid run.
 #   * NO NIGHTLY SCHEDULE — removed 2026-09-18, see below.
 #
 # §7.4 DEVIATION, RECORDED SO IT IS NOT SILENT. §7.4 asks for "nightly + before
-# any flag flip". The `schedule:` trigger (cron "17 3 * * *") is GONE; the two
-# on-demand triggers are kept, and they are the half that gates a release —
-# nothing flips a flag without a dispatch or a `.github/model-eval-request`
-# push, so the flag-flip evidence §7.4 actually depends on is unchanged.
+# any flag flip". The `schedule:` trigger (cron "17 3 * * *") is GONE, and so
+# is the push trigger. What remains is an owner dispatch — and nothing flips an
+# agent flag without one, so the flag-flip evidence §7.4 depends on is still
+# required; it is simply never produced by accident.
 #
 # WHY. 35 scheduled runs in the last 30 days, every one FAILED, and none of
 # them was a CI defect. Tier 1 (deterministic) passes in ~20s; tier 2 spends
@@ -51,9 +51,24 @@ name: AI Agent Eval (model-scored tier) + live deployment state
 # results/latest-report.json, plus per-run copies) so the outcome is readable
 # over plain git, like migration-results and seed-results.
 
+# ── PROVIDER SPEND GUARD (owner directive 2026-11-07; ai-agents.md §10 entry 38(z)).
+# Tier 2 calls the PAID provider APIs with the deployment's own keys. It ran
+# ~16 times in two days during Phase Q, three of them started by nothing more
+# than a MERGE (each merge carried a change to `.github/model-eval-request`),
+# and the owner's OpenAI account ran out. So:
+#   · the `push` trigger is GONE — no push and no merge can spend credits;
+#   · tier 2 runs ONLY on a manual dispatch with `spend_provider_credits: true`
+#     (default false). Without it, a dispatch runs the free half: tier 1
+#     (deterministic, mocked LLM) and the state capture (its provider probe is
+#     GET /v1/models, which is not billed).
+# An agent must never set that input itself; it is the owner's to set.
 on:
   workflow_dispatch:
     inputs:
+      spend_provider_credits:
+        description: "Run tier 2 against the PAID provider APIs (bills the deployment's OpenAI/Gemini/DeepSeek accounts). Owner only."
+        type: boolean
+        default: false
       agents:
         description: "Comma list of agents to score (§7.4: every enabled agent)"
         default: "data-steward,policy-configurator,vv-analyst,experiment-designer,report-builder"
@@ -65,9 +80,6 @@ on:
         type: choice
         options: [full, state-only]
         default: full
-  push:
-    paths:
-      - ".github/model-eval-request"
 
 # Model-scored runs are expensive (every golden row × every enabled model);
 # never overlap two.
@@ -82,7 +94,11 @@ jobs:
     # the longest real run is well under 20 minutes. 40 leaves generous headroom
     # for a slow provider while still capping a hung run at 40 wasted minutes
     # instead of 150.
-    timeout-minutes: 40
+    # 2026-11-06 (ai-agents.md §25.3 Q0): raised 40 → 75 because §7.4 scores
+    # EVERY enabled model and the registry serves four. ~14 min per model ×
+    # 4 ≈ 56 min of tier 2; 75 caps a hung run while letting the full roster
+    # finish. A one-model run still ends in ~15 min.
+    timeout-minutes: 75
     permissions:
       contents: write   # publish the report to the eval-results branch
     steps:
@@ -100,11 +116,7 @@ jobs:
           # account's 429/402 as an agent-quality failure and buries the real
           # signal. Add them back here once their billing is live.
           DEFAULT_MODELS="gpt-5"
-          if [ "${{ github.event_name }}" = "push" ]; then
-            AGENTS=$(grep -oP '^agents=\K.+' .github/model-eval-request | tail -1 || true)
-            MODELS=$(grep -oP '^models=\K.+' .github/model-eval-request | tail -1 || true)
-            MODE=$(grep -oP '^mode=\K.+' .github/model-eval-request | tail -1 || true)
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             AGENTS="${{ inputs.agents }}"
             MODELS="${{ inputs.models }}"
             MODE="${{ inputs.mode }}"
@@ -214,7 +226,8 @@ jobs:
       # absent — "every model enabled in this deployment" is what remains.
       - name: "Tier 2: model-scored eval (live)"
         id: tier2
-        if: steps.params.outputs.mode != 'state-only'
+        # PAID: only on an explicit owner dispatch (see the spend guard above).
+        if: steps.params.outputs.mode != 'state-only' && github.event_name == 'workflow_dispatch' && inputs.spend_provider_credits == true
         working-directory: supabase/functions/project-ai-chat/eval
         env:
           GH_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

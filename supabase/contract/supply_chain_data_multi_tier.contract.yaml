@@ -28,7 +28,7 @@ surfaces:
   - page: "DataManager.tsx"
     via: "rpc combine_project_into_supply_chain"
     grain: table
-    evidence: "src/pages/DataManager.tsx:674"
+    evidence: "src/pages/DataManager.tsx:673"
     confirmed: true
   - page: "InteractiveNetworkSpace.tsx"
     via: "table read"
@@ -43,7 +43,7 @@ surfaces:
   - page: "ProjectPolicies.tsx"
     via: "rpc get_supply_chain_data_multi_tier"
     grain: table
-    evidence: "src/hooks/useProjectContext.tsx:49"
+    evidence: "src/hooks/useProjectContext.tsx:48"
     confirmed: true
 
 governance:

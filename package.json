@@ -17,6 +17,7 @@
     "verify:mobile": "node scripts/audit-adaptive-ui.mjs",
     "check:docs": "node scripts/check-docs-single-source.mjs",
     "docs:index": "DOCS_INDEX_WRITE=1 vitest run src/components/docs/__tests__/docsIndex.test.tsx",
+    "knowledge:generate": "KNOWLEDGE_WRITE=1 vitest run src/components/docs/__tests__/platformKnowledge.test.tsx",
     "notebooks:build": "node scripts/notebooks/build-notebooks.mjs",
     "notebooks:check": "node scripts/notebooks/build-notebooks.mjs --check",
     "contract:introspect": "node scripts/data-contract/introspect.mjs",

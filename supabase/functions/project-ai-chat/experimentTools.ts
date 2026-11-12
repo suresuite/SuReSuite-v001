@@ -35,6 +35,13 @@ import { findReuseCandidates, type ReuseCandidate } from "../_shared/dispatch.ts
 import { canonicalJson, sha256Hex } from "./telemetry.ts";
 import { deploymentEnabledAgents } from "./router.ts";
 import {
+  cardProtocol,
+  modelDisplayName,
+  protocolDeviations,
+  scenarioFromModel,
+  type Deviation,
+} from "../_shared/modelRules.ts";
+import {
   AGENT_COMMON,
   failureEnvelope,
   MAX_CITATIONS,
@@ -80,6 +87,95 @@ export const EXPERIMENT_CONTEXT_BUDGET = 64 * 1024;
 export const REPLICATIONS_MIN = 1;
 export const REPLICATIONS_MAX = 200;
 export const DISRUPTION_EVENTS_MAX = 5;
+
+/** OWNER DECISION 2026-11-09 (ai-agents.md §10 entry 38(ad)): a run proposed
+ * from the chat uses at most this many replications unless the user's own
+ * message states a count — then that count is used (still ≤ the 200 clamp).
+ * Enforced in the draft handler, so neither the §20.8 loop nor the
+ * model-driven B4 turn can exceed it on its own judgement (before this, the
+ * default was the validated card's recommendation: 161 on the owner's project). */
+export const AGENT_REPLICATIONS_DEFAULT_CAP = 5;
+
+/** OWNER DECISION 2026-11-10 (ai-agents.md §10 entry 38(al)): a HARD limit on
+ * the replications of any run proposed from the chat — per arm, and for a run
+ * that follows a Validated Model as much as an exploratory one. A model whose
+ * protocol asks for more (161 on the owner's project, ×6 arms = 966) is run at
+ * this count and the card shows the protocol's count as a deviation. Only a
+ * count the user states in their own message goes above it (still ≤ 200). */
+export const AGENT_REPLICATIONS_HARD_CAP = 30;
+
+/** The most replications a chat-proposed run may use. Unstated: the 5 default
+ * for an exploratory run, the 30 hard cap for a model-following one. Stated:
+ * the user's count when it is larger (never above REPLICATIONS_MAX). */
+export function agentReplicationsLimit(stated: number | null, followsModel: boolean): number {
+  const unstated = followsModel ? AGENT_REPLICATIONS_HARD_CAP : AGENT_REPLICATIONS_DEFAULT_CAP;
+  return stated === null ? unstated : Math.min(REPLICATIONS_MAX, Math.max(unstated, stated));
+}
+
+/** §26 M.2: a comparison spec runs 2-6 arms (one card, owner decision 4). */
+export const COMPARISON_ARMS_MIN = 2;
+export const COMPARISON_ARMS_MAX = 6;
+
+export interface ComparisonArm {
+  label: string;
+  disruption_schedule?: Array<Record<string, unknown>>;
+  recovery_overrides?: Record<string, unknown>;
+  recovery_playbook_id?: string;
+}
+
+/** Deterministic §5.4-style validation of the arms list. */
+export function validateArms(raw: unknown): { ok: true; value: ComparisonArm[] } | { ok: false; reason: string } {
+  if (!Array.isArray(raw)) return { ok: false, reason: "arms must be an array" };
+  if (raw.length < COMPARISON_ARMS_MIN || raw.length > COMPARISON_ARMS_MAX) {
+    return { ok: false, reason: `a comparison runs ${COMPARISON_ARMS_MIN}-${COMPARISON_ARMS_MAX} arms (got ${raw.length})` };
+  }
+  const out: ComparisonArm[] = [];
+  const labels = new Set<string>();
+  for (const a of raw) {
+    if (!a || typeof a !== "object" || Array.isArray(a)) return { ok: false, reason: "each arm must be an object" };
+    const o = a as Record<string, unknown>;
+    for (const k of Object.keys(o)) {
+      if (!["label", "disruption_schedule", "recovery_overrides", "recovery_playbook_id"].includes(k)) {
+        return { ok: false, reason: `unknown arm field "${k}"` };
+      }
+    }
+    const label = typeof o.label === "string" ? o.label.trim() : "";
+    if (!label || label.length > 60) return { ok: false, reason: "each arm needs a label (max 60 chars)" };
+    if (labels.has(label.toLowerCase())) return { ok: false, reason: `duplicate arm label "${label}"` };
+    labels.add(label.toLowerCase());
+    const arm: ComparisonArm = { label };
+    if (o.disruption_schedule !== undefined) {
+      if (!Array.isArray(o.disruption_schedule) || o.disruption_schedule.length > DISRUPTION_EVENTS_MAX ||
+        o.disruption_schedule.some((e) => !e || typeof e !== "object" || Array.isArray(e))) {
+        return { ok: false, reason: `arm "${label}": disruption_schedule must be ≤ ${DISRUPTION_EVENTS_MAX} event objects` };
+      }
+      arm.disruption_schedule = o.disruption_schedule as Array<Record<string, unknown>>;
+    }
+    if (o.recovery_overrides !== undefined) {
+      if (!o.recovery_overrides || typeof o.recovery_overrides !== "object" || Array.isArray(o.recovery_overrides)) {
+        return { ok: false, reason: `arm "${label}": recovery_overrides must be an object` };
+      }
+      arm.recovery_overrides = o.recovery_overrides as Record<string, unknown>;
+    }
+    if (o.recovery_playbook_id !== undefined) {
+      if (typeof o.recovery_playbook_id !== "string" || !uuidRe.test(o.recovery_playbook_id)) {
+        return { ok: false, reason: `arm "${label}": recovery_playbook_id must be a uuid` };
+      }
+      arm.recovery_playbook_id = o.recovery_playbook_id;
+    }
+    out.push(arm);
+  }
+  return { ok: true, value: out };
+}
+
+/** A replication count the user stated in their own words ("with 30
+ * replications", "50 reps"), or null. Only the user's message counts —
+ * never the model's arguments. */
+export function statedReplications(utterance: string | null | undefined): number | null {
+  const m = String(utterance ?? "").match(/\b(\d{1,3})\s*(?:replications?|reps?)\b/i);
+  const n = m ? Number(m[1]) : NaN;
+  return Number.isFinite(n) && n >= 1 ? n : null;
+}
 
 const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -138,7 +234,7 @@ export const DRAFT_EXPERIMENT_SPEC_SCHEMA = {
 export const draftExperimentSpecDeclaration: ToolDeclaration = {
   name: "draft_experiment_spec",
   description:
-    "File ONE reviewable experiment-specification proposal: a single scenario run bound to a SAVED policy version (never live tables). Provide EITHER scenario_id (an existing scenario from CONTEXT) OR new_scenario (name + horizon_days, optional disruption_schedule of at most 5 events). Replications 1-200 — default to the active validated card's recommendation when one exists. The platform pre-checks the dispatch gate and attaches the findings; you cannot acknowledge warnings — only the approving reviewer can. Call this once per design ask.",
+    "File ONE reviewable experiment-specification proposal: a single scenario run bound to a SAVED policy version (never live tables). Provide EITHER scenario_id (an existing scenario from CONTEXT) OR new_scenario (name + horizon_days, optional disruption_schedule of at most 5 events). Replications: use 5 unless the user's message states a count, then use that count (1-200); the platform caps an unstated count at 5. The platform pre-checks the dispatch gate and attaches the findings; you cannot acknowledge warnings — only the approving reviewer can. Call this once per design ask.",
   parameters: {
     type: "object",
     properties: {
@@ -173,6 +269,30 @@ export const draftExperimentSpecDeclaration: ToolDeclaration = {
       },
       title: { type: "string", description: "Card title (max 140 chars)." },
       question: { type: "string", description: "The decision question this run answers (max 500 chars)." },
+      experiment_type: {
+        type: "string",
+        description:
+          "'single' (default) or 'comparison' (ai-agents.md §26 M.2): ONE card whose 2-6 arms run on the same seed and replications, compared pairwise. A comparison needs new_scenario as the shared base.",
+      },
+      validated_model_id: {
+        type: "string",
+        description:
+          "The Validated Model this run FOLLOWS (ai-agents.md §27): the run then uses the model's policy and data versions and its protocol; differences are recorded as deviations. Omit only for an exploratory run.",
+      },
+      exploratory: {
+        type: "boolean",
+        description: "true = an exploratory run that follows no Validated Model. Only when the user asked for one.",
+      },
+      base_scenario_id: {
+        type: "string",
+        description: "For a new exploratory scenario: the existing scenario whose world (demand model, seed, warm-up) it copies.",
+      },
+      arms: {
+        type: "array",
+        description:
+          "comparison only, 2-6 arms: {label, disruption_schedule?, recovery_overrides?, recovery_playbook_id?}. An arm's schedule/overrides replace the base scenario's. The FIRST arm is the reference every other arm is compared against.",
+        items: { type: "object" },
+      },
     },
     required: ["policy_version_id", "replications"],
   },
@@ -253,14 +373,18 @@ CONTEXT
 TASK
 - The user asked: "${args.utterance}"
 - Design asks: choose or define the scenario, bind a SAVED policy version
-  (never live tables), set replications (1-200; default to the validated
-  card's recommendation when one is active), and call draft_experiment_spec
+  (never live tables), set replications (5, or the model's protocol count
+  up to 30 for a run that follows a Validated Model, unless the user stated a
+  count — then that count, 1-200), and call draft_experiment_spec
   ONCE.
 - Do NOT draft, and do not reshape the ask into one you can draft:
   If the ask needs an experiment type the platform has not shipped
   (comparison, DOE, battery), say exactly that and offer the nearest single
   run. "Compare A against B" is a comparison — offering it as one run is
-  the failure this rule exists to prevent, not a workaround for it.
+  the failure this rule exists to prevent, not a workaround for it. So is
+  drafting ONE arm of it now (a "baseline", a "control arm", a "checkpoint
+  for a later comparison"): say the comparison is not shipped, and draft
+  nothing unless the user then asks for that single run on its own.
 - Brief asks: report ONLY numbers present in run results from CONTEXT or
   tools, each with its run id and credibility badge. Differences between
   runs are DESCRIPTIVE unless a paired statistic is persisted — say which.
@@ -319,8 +443,10 @@ THE LOOP — follow these steps IN ORDER, one at a time:
    conversation resumes after approval and run completion.
 5. ANSWER FROM EVIDENCE. Report ONLY numbers present in tool results from
    THIS turn. Cite every factual sentence with [n] markers bound to the
-   evidence list (run id + hashes). Name the run's credibility badge and,
-   if the run's engine code_version is not the current one, say so.
+   evidence list (run id + hashes). Name the run's credibility badge, and
+   name the engine that produced it in the words "engine version
+   <the Engine column>" — you are not told which engine is deployed now,
+   so say the result is from that engine version, never that it is current.
    Close every plan step (done / failed / refused) via update_task_plan.
 
 ${AGENT_COMMON}`;
@@ -798,6 +924,11 @@ export async function experimentIdempotencyKey(core: {
   new_scenario?: NormalizedNewScenario;
   policy_version_id: string;
   replications: number;
+  experiment_type?: string;
+  arms?: ComparisonArm[];
+  validated_model_id?: string;
+  run_mode?: string;
+  base_scenario_id?: string;
 }): Promise<string> {
   return await sha256Hex(
     `${EXPERIMENT_AGENT_ID} ${EXPERIMENT_ARTIFACT_TYPE} ${canonicalJson({ schema_version: 1, ...core })}`,
@@ -873,7 +1004,7 @@ async function draftExperimentSpec(
 
   // §5.4 schema, enforced deterministically (additionalProperties: false).
   for (const k of Object.keys(args)) {
-    if (!["scenario_id", "new_scenario", "policy_version_id", "replications", "acknowledge_warnings", "title", "question"].includes(k)) {
+    if (!["scenario_id", "new_scenario", "policy_version_id", "replications", "acknowledge_warnings", "title", "question", "experiment_type", "arms", "validated_model_id", "exploratory", "base_scenario_id"].includes(k)) {
       return failureEnvelope(tool, "invalid_params", `unknown parameter "${k}"`);
     }
   }
@@ -883,16 +1014,41 @@ async function draftExperimentSpec(
     // the §5.4 oneOf: exactly one of the two.
     return failureEnvelope(tool, "invalid_params", "provide exactly ONE of scenario_id or new_scenario");
   }
-  const policyVersionId = String(args.policy_version_id ?? "");
+  let policyVersionId = String(args.policy_version_id ?? "");
   if (!uuidRe.test(policyVersionId)) {
     return failureEnvelope(tool, "invalid_params", "policy_version_id must be a uuid of a SAVED policy version");
+  }
+  // §27: a run either FOLLOWS a Validated Model or is exploratory — never both.
+  const modelIdArg = args.validated_model_id === undefined || args.validated_model_id === null || args.validated_model_id === ""
+    ? null
+    : String(args.validated_model_id);
+  if (modelIdArg !== null && !uuidRe.test(modelIdArg)) {
+    return failureEnvelope(tool, "invalid_params", "validated_model_id must be a uuid");
+  }
+  if (modelIdArg !== null && args.exploratory === true) {
+    return failureEnvelope(tool, "invalid_params", "a run follows a Validated Model or is exploratory — not both");
+  }
+  const baseScenarioId = args.base_scenario_id === undefined || args.base_scenario_id === null || args.base_scenario_id === ""
+    ? null
+    : String(args.base_scenario_id);
+  if (baseScenarioId !== null && !uuidRe.test(baseScenarioId)) {
+    return failureEnvelope(tool, "invalid_params", "base_scenario_id must be a uuid");
   }
   const rawReps = typeof args.replications === "number" ? args.replications : Number(args.replications);
   if (!Number.isFinite(rawReps)) {
     return failureEnvelope(tool, "invalid_params", "replications must be a number (1-200)");
   }
   // §5.4 hard gate: the dispatch.ts clamp restated at draft time.
-  const replications = Math.max(REPLICATIONS_MIN, Math.min(REPLICATIONS_MAX, Math.floor(rawReps)));
+  // §10 entry 38(ad): an unstated count is capped at the owner's default (5)
+  // for a run that follows NO model. §10 entry 38(al): a run that follows a
+  // Validated Model takes its protocol's count (§27.3 decision 1) but never
+  // more than the 30 hard cap — the difference is shown as a deviation. Only
+  // a count the USER states goes higher; never the model's own argument.
+  const stated = statedReplications(ctx.draft.utterance);
+  const replications = Math.max(
+    REPLICATIONS_MIN,
+    Math.min(agentReplicationsLimit(stated, modelIdArg !== null), Math.floor(rawReps)),
+  );
 
   let newScenario: NormalizedNewScenario | null = null;
   if (hasNewScenario) {
@@ -901,7 +1057,68 @@ async function draftExperimentSpec(
     newScenario = v.value;
   }
 
+  // §26 M.2: the comparison type — ONE card, 2-6 arms on one seed.
+  const experimentType = args.experiment_type === undefined || args.experiment_type === null ||
+      args.experiment_type === ""
+    ? "single"
+    : String(args.experiment_type);
+  if (experimentType !== "single" && experimentType !== "comparison") {
+    return failureEnvelope(tool, "invalid_params", `experiment_type must be "single" or "comparison"`);
+  }
+  let arms: ComparisonArm[] | null = null;
+  if (experimentType === "comparison") {
+    if (!experimentTypesEnabled().includes("comparison")) {
+      return failureEnvelope(
+        tool,
+        "agent_disabled",
+        "Comparison experiments are not enabled in this deployment (AGENT_EXPERIMENT_TYPES lacks \"comparison\").",
+      );
+    }
+    if (!newScenario) {
+      return failureEnvelope(tool, "invalid_params", "a comparison needs new_scenario as the shared base of its arms");
+    }
+    const av = validateArms(args.arms);
+    if (!av.ok) return failureEnvelope(tool, "invalid_params", av.reason);
+    arms = av.value;
+  } else if (args.arms !== undefined) {
+    return failureEnvelope(tool, "invalid_params", "arms are only valid with experiment_type \"comparison\"");
+  }
+
   const db = ctx.supabase as unknown as Db;
+
+  // §27 WP V.3: the followed model must be this project's, in force and
+  // validated; the run then binds the MODEL's policy version, whatever was sent.
+  let modelCard: Record<string, unknown> | null = null;
+  let modelEvidenceScenario: Record<string, unknown> | null = null;
+  if (modelIdArg !== null) {
+    const { data: card } = await db.from("model_validations").select("*").eq("id", modelIdArg).maybeSingle();
+    if (!card || String((card as Record<string, unknown>).project_id) !== ctx.projectId) {
+      return failureEnvelope(tool, "project_scope_violation", `validated model ${modelIdArg} is not in this project`);
+    }
+    modelCard = card as Record<string, unknown>;
+    if (modelCard.status !== "active" || modelCard.verdict !== "validated") {
+      return failureEnvelope(tool, "invalid_params", "that model is not a Validated Model in force — choose the one that is, or run exploratory");
+    }
+    if (typeof modelCard.policy_version_id === "string" && uuidRe.test(modelCard.policy_version_id)) {
+      policyVersionId = modelCard.policy_version_id;
+    }
+    if (typeof modelCard.evidence_run_id === "string") {
+      try {
+        const { data: er } = await db.from("simulation_runs").select("scenario_id").eq("id", modelCard.evidence_run_id).maybeSingle();
+        const sid = (er as Record<string, unknown> | null)?.scenario_id;
+        if (sid) {
+          const { data: sc } = await db.from("scenarios").select("*").eq("id", sid).maybeSingle();
+          modelEvidenceScenario = (sc as Record<string, unknown> | null) ?? null;
+        }
+      } catch { /* the protocol still applies */ }
+    }
+  }
+  if (baseScenarioId !== null) {
+    const { data: bs } = await db.from("scenarios").select("id,project_id").eq("id", baseScenarioId).maybeSingle();
+    if (!bs || String((bs as Record<string, unknown>).project_id) !== ctx.projectId) {
+      return failureEnvelope(tool, "project_scope_violation", `scenario ${baseScenarioId} is not in this project`);
+    }
+  }
 
   // §5.4 hard gate 1: the policy version exists and belongs to this project —
   // no dispatch without a SAVED policy_version_id (mirrors dispatch.ts's own
@@ -1001,16 +1218,29 @@ async function draftExperimentSpec(
     const snapshot = (version.snapshot ?? {}) as Record<string, unknown>;
     const snapshotDefaults = ("defaults" in snapshot ? snapshot.defaults : snapshot) as Record<string, unknown>;
     const dataset = await loadGateDataset(ctx.supabase, ctx.projectId);
-    const gate = runValidationGate({
-      dataset,
-      snapshotDefaults: snapshotDefaults ?? {},
-      disruptionSchedule,
-      acknowledgeWarnings: false,
-    });
-    if (gate) {
-      gateStatus = gate.status;
-      findingsPreview = gate.findings.slice(0, 200);
+    // A comparison is checked once per distinct arm schedule; findings merge
+    // (deduped by field + message) and the worst status wins.
+    const schedules = arms
+      ? arms.map((a) => a.disruption_schedule ?? disruptionSchedule)
+      : [disruptionSchedule];
+    const seen = new Set<string>();
+    for (const sched of schedules) {
+      const gate = runValidationGate({
+        dataset,
+        snapshotDefaults: snapshotDefaults ?? {},
+        disruptionSchedule: sched,
+        acknowledgeWarnings: false,
+      });
+      if (!gate) continue;
+      if (gateStatus !== "blocked") gateStatus = gate.status;
+      for (const f of gate.findings) {
+        const key = `${f.field}|${f.message}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        findingsPreview.push(f);
+      }
     }
+    findingsPreview = findingsPreview.slice(0, 200);
   } catch {
     gateStatus = "preview_unavailable"; // preview only — apply re-runs the authoritative gate
   }
@@ -1043,9 +1273,55 @@ async function draftExperimentSpec(
     ...(newScenario ? { new_scenario: newScenario } : {}),
     policy_version_id: policyVersionId,
     replications,
+    // Only a comparison adds keys, so a single spec's idempotency key — and
+    // every card already filed — is unchanged.
+    ...(arms ? { experiment_type: "comparison", arms } : {}),
+    // §27: which model it follows (or that it is exploratory) is part of WHAT
+    // the card runs; absent on cards filed before Phase V.
+    ...(modelCard ? { validated_model_id: String(modelCard.id) } : {}),
+    ...(args.exploratory === true ? { run_mode: "exploratory" } : {}),
+    ...(baseScenarioId ? { base_scenario_id: baseScenarioId } : {}),
   };
+
+  // §27 WP V.3: what this run deviates from the model's protocol — computed
+  // here, by the Lab's rule, and shown on the card before anyone approves.
+  let deviations: Deviation[] = [];
+  const protocol = modelCard ? cardProtocol(modelCard) : null;
+  if (modelCard && protocol) {
+    if (newScenario) {
+      deviations = scenarioFromModel(
+        protocol,
+        modelEvidenceScenario,
+        (modelCard.scenario_fingerprint ?? null) as Record<string, unknown> | null,
+        { horizon_days: newScenario.horizon_days, replications },
+      ).deviations;
+    } else if (scenario) {
+      deviations = protocolDeviations(protocol, {
+        replications,
+        horizon_days: Number(scenario.horizon_days ?? 0),
+        seed: Number((scenario as Record<string, unknown>).seed ?? 42),
+        crn: (scenario as Record<string, unknown>).crn !== false,
+        warmup_mode: ((scenario as Record<string, unknown>).warmup_mode as string | undefined) ?? "auto",
+        warmup_days: ((scenario as Record<string, unknown>).warmup_days as number | undefined) ?? null,
+        stopping_rule: ((scenario as Record<string, unknown>).stopping_rule as { kind?: string } | undefined) ?? null,
+      });
+    }
+  }
+  // §10 entry 38(al): say so on the card when the hard cap cut the protocol.
+  const protocolReps = Number(protocol?.replications ?? NaN);
+  const cappedProtocolReps = stated === null && Number.isFinite(protocolReps) && protocolReps > replications &&
+      replications === AGENT_REPLICATIONS_HARD_CAP
+    ? protocolReps
+    : null;
+  const runModeLabel = modelCard
+    ? `follows Validated Model "${modelDisplayName(modelCard)}"${deviations.length ? ` with ${deviations.length} deviation${deviations.length === 1 ? "" : "s"}` : ""}`
+    : args.exploratory === true
+    ? "EXPLORATORY (follows no Validated Model)"
+    : null;
   const title = (typeof args.title === "string" && args.title.trim()
     ? args.title.trim()
+    : arms
+    ? `Compare ${arms.length}: ${newScenario!.name} (${arms.length} arms × ${replications} reps)`
     : `Run: ${scenario ? scenario.name : newScenario!.name} × ${version.label ?? policyVersionId.slice(0, 8)} (${replications} reps)`)
     .slice(0, 140);
   const question = typeof args.question === "string" ? args.question.slice(0, 500) : null;
@@ -1067,6 +1343,13 @@ async function draftExperimentSpec(
     newer_version_exists: newerVersionExists,
     gate_status: gateStatus,
     findings_preview: findingsPreview,
+    // §27 display + audit: the model, its protocol, and every deviation.
+    ...(modelCard
+      ? { model_name: modelDisplayName(modelCard), protocol, deviations }
+      : {}),
+    // §10 38(al): the replications deviation came from the chat's hard cap,
+    // not from the user — the card says so (display only; apply recomputes).
+    ...(cappedProtocolReps !== null ? { replications_cap: AGENT_REPLICATIONS_HARD_CAP } : {}),
   };
   if (canonicalJson(payload).length > MAX_PAYLOAD_BYTES) {
     return failureEnvelope(tool, "too_large", "The spec payload exceeds the 256 KB limit — narrow the disruption schedule.");
@@ -1091,9 +1374,15 @@ async function draftExperimentSpec(
     ? "gate pre-check unavailable (apply re-runs it)"
     : `gate pre-check: ${gateStatus} (${blockCount} block / ${warnCount} warn)`;
   const summary =
+    (runModeLabel ? `${runModeLabel} · ` : "") +
+    (arms ? `comparison of ${arms.length} arms (${arms.map((a) => a.label).join(" / ")}) · ${arms.length * replications} replications in all · ` : "") +
     `scenario "${scenario ? scenario.name : newScenario!.name}"${newScenario ? " (new)" : ""} · ` +
     `policy version ${version.label ?? policyVersionId.slice(0, 8)} (${policyHash.slice(0, 12)}) · ` +
-    `${replications} replications · ${gateNote}`;
+    `${replications} replications · ${gateNote}` +
+    (cappedProtocolReps !== null
+      ? ` · the model's protocol asks for ${cappedProtocolReps} replications; chat runs are capped at ${AGENT_REPLICATIONS_HARD_CAP} — ` +
+        `say "with ${cappedProtocolReps} replications" to run the full protocol`
+      : "");
 
   const idemKey = await experimentIdempotencyKey(specCore);
   try {

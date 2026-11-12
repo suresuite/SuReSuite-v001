@@ -48,12 +48,29 @@ class QueryBuilder implements PromiseLike<QueryResult> {
   in(col: string, value: unknown[]) { this.filters.push({ kind: "in", col, value }); return this; }
   gte(col: string, value: unknown) { this.filters.push({ kind: "gte", col, value }); return this; }
   lte(col: string, value: unknown) { this.filters.push({ kind: "lte", col, value }); return this; }
+  /** PostgREST .or("a.eq.x,b.eq.y") — eq conditions only, which is all the
+   * callers use (recovery_playbooks: project_id.eq.<id>,is_system.eq.true). */
+  or(expr: string) {
+    const conds = expr.split(",").map((c) => {
+      const [col, op, ...rest] = c.split(".");
+      return { col, op, value: rest.join(".") };
+    });
+    this.orConds.push(conds);
+    return this;
+  }
+  private orConds: Array<Array<{ col: string; op: string; value: string }>> = [];
+  private orOk(r: Row): boolean {
+    return this.orConds.every((group) => group.some((c) => c.op === "eq" && String(r[c.col]) === c.value));
+  }
   order(col: string, opts?: { ascending?: boolean }) {
     this.orderCol = col;
     this.orderAsc = opts?.ascending !== false;
     return this;
   }
   limit(n: number) { this.limitN = n; return this; }
+  /** PostgREST .range(from, to), inclusive. */
+  range(from: number, to: number) { this.rangeFrom = from; this.limitN = to - from + 1; return this; }
+  private rangeFrom = 0;
   maybeSingle() { this.wantSingle = true; return this; }
   /** supabase-js .single(): here identical to maybeSingle (callers assert). */
   single() { this.wantSingle = true; return this; }
@@ -86,7 +103,7 @@ class QueryBuilder implements PromiseLike<QueryResult> {
       for (const r of touched) Object.assign(r, this.updatePatch ?? {});
       return { data: structuredClone(touched), error: null };
     }
-    let out = this.rows.filter((r) =>
+    let out = this.rows.filter((r) => this.orOk(r) &&
       this.filters.every((f) => {
         const v = r[f.col];
         switch (f.kind) {
@@ -104,7 +121,7 @@ class QueryBuilder implements PromiseLike<QueryResult> {
         return this.orderAsc ? d : -d;
       });
     }
-    if (this.limitN != null) out = out.slice(0, this.limitN);
+    if (this.limitN != null) out = out.slice(this.rangeFrom, this.rangeFrom + this.limitN);
     // Clone like the wire would: callers must never hold references into the
     // store (the apply path's `before` snapshot depends on this).
     if (this.wantSingle) return { data: out[0] ? structuredClone(out[0]) : null, error: null };

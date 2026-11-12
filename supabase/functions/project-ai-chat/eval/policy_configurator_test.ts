@@ -395,3 +395,70 @@ Deno.test("scope gate: an override targeting a foreign entity ⇒ project_scope_
     assertEquals(env.meta.note, "project_scope_violation");
     assertEquals(db.tables.proposals.length, 0);
   }));
+
+// ── §5.2 hard gate 3b (ai-agents.md §10 entry 38(x)): run-readiness selections
+// must name a grid row. Each case below is a card a live gpt-5 run filed.
+
+const runReadinessCase = async (diff: Record<string, unknown>) => {
+  const fx = await loadFixture("pc-06-run-ready");
+  const { ctx, db } = makeCtx(fx);
+  const env = await executeTool("draft_policy_bundle", { diff, title: "t" }, ctx);
+  return { env, db };
+};
+
+Deno.test("gate 3b: the live pc-06 wrong card (target 'S1', invented firm 'Acme') is refused, nothing filed", () =>
+  withConfiguratorEnabled(async () => {
+    const { env, db } = await runReadinessCase({
+      overrides: [
+        { scope: "node", target_key: "S1", family: "sourcing", patch: { primary_source: true } },
+        { scope: "node", target_key: "S1", family: "fulfillment", patch: { sourcing_firm: "Acme" } },
+      ],
+    });
+    assertEquals(env.meta.note, "invalid_params");
+    assertStringIncludes(String(env.data), "supplier::material lane");
+    assertStringIncludes(String(env.data), "S1::MAT-4");
+    assertEquals(db.tables.proposals.length, 0);
+  }));
+
+Deno.test("gate 3b: primary_source as a family DEFAULT (runs 87/88) is refused — it would mark every row", () =>
+  withConfiguratorEnabled(async () => {
+    const { env, db } = await runReadinessCase({
+      defaults: { sourcing: { primary_source: true }, fulfillment: { primary_source: true } },
+    });
+    assertEquals(env.meta.note, "invalid_params");
+    assertStringIncludes(String(env.data), "per-row run-readiness selection");
+    assertEquals(db.tables.proposals.length, 0);
+  }));
+
+Deno.test("gate 3b: a firm the product does not ship from is refused, naming the real firms", () =>
+  withConfiguratorEnabled(async () => {
+    const { env } = await runReadinessCase({
+      overrides: [
+        { scope: "node", target_key: "C1::P1", family: "fulfillment", patch: { sourcing_firm: "Acme", primary_source: true } },
+      ],
+    });
+    assertEquals(env.meta.note, "invalid_params");
+    assertStringIncludes(String(env.data), "PLANT-1");
+  }));
+
+Deno.test("gate 3b: the right rows still file (the pc-06 mocked selections)", () =>
+  withConfiguratorEnabled(async () => {
+    const { env, db } = await runReadinessCase({
+      overrides: [
+        { scope: "node", target_key: "S1::MAT-4", family: "sourcing", patch: { primary_source: true } },
+        { scope: "node", target_key: "C1::P1", family: "fulfillment", patch: { sourcing_firm: "PLANT-1", primary_source: true } },
+      ],
+    });
+    assertEquals(env.kind, "proposal");
+    assertEquals(db.tables.proposals.length, 1);
+  }));
+
+Deno.test("configurator CONTEXT lists the run-readiness rows and each product's firms", async () => {
+  const fx = await loadFixture("pc-06-run-ready");
+  const { ctx } = makeCtx(fx);
+  const { buildConfiguratorContext } = await import("../configuratorTools.ts");
+  const context = await buildConfiguratorContext(ctx, { utterance: fx.utterance });
+  assertStringIncludes(context, "RUN-READINESS ROWS");
+  assertStringIncludes(context, "S1::MAT-4 (volume 300)");
+  assertStringIncludes(context, "C1::P1: firms PLANT-1");
+});

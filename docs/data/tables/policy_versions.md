@@ -66,7 +66,7 @@ Tier 4 — the DECISION plane: what a person or an agent CHOSE, as against the d
 
 | Page | Via | Evidence | Confirmed |
 |---|---|---|---|
-| `ProjectPolicies.tsx` | table read | `src/hooks/usePolicies.tsx:514` | yes |
+| `ProjectPolicies.tsx` | table read | `src/hooks/usePolicies.tsx:512` | yes |
 | `SimulationLab.tsx` | table read | `src/hooks/useVerifiableExports.tsx:239` | yes |
 
 Each row says the page READS the table by that path, at that line. It does
@@ -321,6 +321,6 @@ Free text a person wrote about why. The only column here that carries a REASON r
 
 ---
 
-*Generated from data contract `b6573a48d7c7`, engine `0.8.3`,
+*Generated from data contract `980ce9c339c2`, engine `0.8.3`,
 sidecar `supabase/contract/policy_versions.contract.yaml`, table created by `20260609000002_policy_versions.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*
