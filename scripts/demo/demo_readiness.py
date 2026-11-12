@@ -89,6 +89,13 @@ def project_report(p: dict) -> list[str]:
         out(f"| {t} | {counts.get(t)} |")
     pd, _ = safe(f"SELECT count(*)::int AS n FROM public.policy_defaults WHERE project_id = '{pid}'")
     out(f"| policy_defaults | {pd[0]['n'] if pd else '?'} |")
+    r, e = safe(f"SELECT fulfillment::text AS f, demand::text AS d FROM public.policy_defaults WHERE project_id = '{pid}'")
+    out(f"\n**Fulfillment defaults (live):** `{r[0]['f'] if r else e}`")
+    r, e = safe(f"SELECT version_no, label, left((snapshot->'defaults'->'fulfillment')::text, 600) AS f, "
+                f"left((SELECT string_agg(k, ',') FROM jsonb_object_keys(snapshot) k), 300) AS keys "
+                f"FROM public.policy_versions WHERE project_id = '{pid}' ORDER BY version_no")
+    for x in r or []:
+        out(f"- policy v{x['version_no']} {x['label']}: fulfillment `{x['f']}` · snapshot keys `{x['keys']}`")
 
     out("\n**Empty master cells (NULL count / rows)**\n")
     for t, cols in NULL_CHECKS.items():
