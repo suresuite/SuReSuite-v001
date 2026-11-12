@@ -1,0 +1,58 @@
+name: Demo readiness (read-only)
+
+# Reports what each demo project holds and what /policies and the Simulation Lab
+# still lack (masters, lanes, derived lanes, policy and data versions, scenarios,
+# runs and their errors, the Validated Model, network analyses).
+#
+# READ-ONLY: scripts/demo/demo_readiness.py sends only SELECT and refuses anything
+# else before it reaches the wire. The report lands on the `demo-readiness-results`
+# branch, readable over plain git by a session that cannot reach the database.
+#
+# TRIGGER: push `.github/demo-readiness-request` (optional `name_prefix=` line,
+# default "Demo") from any branch, or run it by hand.
+
+on:
+  push:
+    paths:
+      - ".github/demo-readiness-request"
+  workflow_dispatch:
+    inputs:
+      name_prefix:
+        description: "Project name prefix"
+        default: "Demo"
+
+concurrency:
+  group: demo-readiness
+  cancel-in-progress: false
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write   # publish the report to the demo-readiness-results branch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Read both demo projects
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          prefix="${{ inputs.name_prefix }}"
+          if [ -z "$prefix" ] && [ -f .github/demo-readiness-request ]; then
+            prefix=$(grep -oP '^name_prefix=\K.+' .github/demo-readiness-request | tail -1 || true)
+          fi
+          python scripts/demo/demo_readiness.py "${prefix:-Demo}"
+      - name: Publish to the demo-readiness-results branch
+        if: always()
+        run: |
+          [ -f demo-readiness.md ] || exit 0
+          mkdir -p /tmp/pubfiles && cp demo-readiness.md demo-readiness.json /tmp/pubfiles/
+          git worktree add --detach pub
+          cd pub && git checkout -q --orphan demo-readiness-results-new && git rm -rfq . || true
+          cp /tmp/pubfiles/* . && git add -A
+          git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "demo readiness (run ${{ github.run_id }})"
+          git push -f origin HEAD:demo-readiness-results
