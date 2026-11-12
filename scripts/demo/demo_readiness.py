@@ -114,8 +114,9 @@ def project_report(p: dict) -> list[str]:
     # What the finished runs actually hold — an empty KPI block is "no value" on the page.
     r, e = safe(f"""SELECT r.created_at::text AS at, s.name AS scenario, pv.label AS policy,
                            r.rep_count_done, r.rep_count_target, r.code_version,
-                           left(coalesce(r.aggregate_kpis::text, 'NULL'), 900) AS kpis,
-                           left(coalesce(r.mapping_warnings::text, 'NULL'), 600) AS warnings
+                           left(coalesce((r.aggregate_kpis - '_meta' - '_range')::text, 'NULL'), 1500) AS kpis,
+                           r.series_object IS NOT NULL AS has_series, r.series_expired_at::text AS series_expired, r.retention,
+                           left(coalesce(r.mapping_warnings::text, 'NULL'), 2500) AS warnings
                       FROM public.simulation_runs r
                       LEFT JOIN public.scenarios s ON s.id = r.scenario_id
                       LEFT JOIN public.policy_versions pv ON pv.id = r.policy_version_id
@@ -123,7 +124,7 @@ def project_report(p: dict) -> list[str]:
     if e:
         out(f"  (run detail unreadable: {e[:200]})")
     for x in r or []:
-        out(f"\n- run {x['at'][:19]} · {x['scenario']} · {x['policy']} · reps {x['rep_count_done']}/{x['rep_count_target']} · {x['code_version']}")
+        out(f"\n- run {x['at'][:19]} · {x['scenario']} · {x['policy']} · reps {x['rep_count_done']}/{x['rep_count_target']} · {x['code_version']} · series {'stored' if x['has_series'] else 'NONE'}{' (expired ' + x['series_expired'][:10] + ')' if x['series_expired'] else ''} · {x['retention']}")
         out(f"  - kpis: `{x['kpis']}`")
         out(f"  - mapping warnings: `{x['warnings']}`")
     r, e = safe(f"""SELECT count(*)::int AS n FROM public.run_replications rr
