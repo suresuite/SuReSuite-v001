@@ -136,6 +136,7 @@ if (DRY_RUN) {
   console.log("SuReSuite demo runs seed — DRY RUN (nothing is called)\n");
   console.log(`  API: ${BASE}`);
   console.log(`  demo: ${DEMO}   project: "${PROJECT_NAME}"   frame: ${JSON.stringify(FRAME)}`);
+  if (process.env.FOLLOW_MODEL === "1") console.log("  FOLLOW_MODEL=1: scenarios, calendar and runs are derived from the project's active Validated Model when it runs");
   console.log(`  calendar: week 0 = ${CALENDAR_START}, week ${WARMUP_WEEKS} = 2026-01-01, run ends ${CALENDAR_END} (${HORIZON_WEEKS} weeks)`);
   console.log(`  customer terms: ${CUSTOMER_TERMS.length} row(s), e.g. ${JSON.stringify(CUSTOMER_TERMS[0])}`);
   console.log(`  policy versions: A "${POLICY_LABELS.A}", B "${POLICY_LABELS.B}" (inventory.safety_stock_method=fixed_days, safety_stock_days=28)`);
@@ -221,6 +222,10 @@ const app = {
     return (Array.isArray(list) ? list : []).find((p) => p.name === PROJECT_NAME) ?? null;
   },
   // Run week 0. A run stamps the calendar it was dispatched against, so this comes first.
+  setCalendarDates: (p, start, end) => appRpc("update_project", {
+    p_project_id: p.id, p_name: p.name, p_plant: p.plant_name, p_model: p.supply_chain_model, p_bom_level: p.bom_level,
+    p_user_id: USER_ID, p_user_email: USER_EMAIL, p_simulation_start: start, p_simulation_end: end,
+  }),
   setCalendar: (p) => appRpc("update_project", {
     p_project_id: p.id, p_name: p.name, p_plant: p.plant_name, p_model: p.supply_chain_model, p_bom_level: p.bom_level,
     p_user_id: USER_ID, p_user_email: USER_EMAIL, p_simulation_start: CALENDAR_START, p_simulation_end: CALENDAR_END,
@@ -236,27 +241,34 @@ const app = {
     const id = await appRpc("snapshot_policy", { p_project_id: pid, p_label: label, p_user_id: USER_ID, p_user_email: USER_EMAIL, p_user_name: "Demo seed" });
     return { id: String(id) };
   },
+  // The newest active Validated Model — what the Lab's picker offers first.
+  async model(pid) {
+    const r = await rest("GET", `/rest/v1/model_validations?project_id=eq.${pid}&status=eq.active&revoked_at=is.null` +
+      `&select=id,model_code,name,policy_version_id,dataset_version_id,protocol,adopted_warmup_days,validated_at&order=validated_at.desc&limit=1`);
+    if (r.status >= 300) throw new Error(`model_validations read → HTTP ${r.status}: ${JSON.stringify(r.body)}`);
+    return (Array.isArray(r.body) && r.body[0]) || null;
+  },
   async scenarios(pid) {
-    const r = await rest("GET", `/rest/v1/scenarios?project_id=eq.${pid}&select=id,name`);
+    const r = await rest("GET", `/rest/v1/scenarios?project_id=eq.${pid}&select=id,name,role,horizon_days,warmup_mode,warmup_days,replications,seed,crn,disruption_schedule`);
     if (r.status >= 300) throw new Error(`scenarios read → HTTP ${r.status}: ${JSON.stringify(r.body)}`);
     return r.body;
   },
-  async createScenario(pid, s) {
+  async createScenario(pid, s, frame = FRAME) {
     // The Lab's own defaults (useScenarios.tsx SCENARIO_ENGINE_DEFAULTS) with the frame above.
     const row = {
       project_id: pid, name: s.name, description: s.description, role: "experiment",
       time_step: "day", warmup_mode: "manual", demand_model: { kind: "poisson", lambda: 50 },
       recovery_overrides: {}, stopping_rule: { kind: "fixed_horizon", max_wall_seconds: 600 }, primary_kpi: "fill_rate",
-      ...FRAME, disruption_schedule: s.events,
+      ...frame, disruption_schedule: s.events,
     };
     const r = await rest("POST", "/rest/v1/scenarios", row, { Prefer: "return=representation" });
     if (r.status >= 300) throw new Error(`scenario insert → HTTP ${r.status}: ${JSON.stringify(r.body)}`);
     return r.body[0];
   },
-  async dispatch(pid, scenarioId, versionId, ack) {
+  async dispatch(pid, scenarioId, versionId, ack, extra = {}) {
     return rest("POST", "/functions/v1/sim-command", {
       project_id: pid, scenario_id: scenarioId, kind: "experiment.run",
-      payload: { policy_version_id: versionId, acknowledge_warnings: ack, actor_user_id: USER_ID },
+      payload: { policy_version_id: versionId, acknowledge_warnings: ack, actor_user_id: USER_ID, ...extra },
       client_ts: Date.now(),
     });
   },
@@ -451,7 +463,103 @@ async function main() {
   console.log("  /policies → Run & Validate and run one baseline.");
 }
 
-(VIA_APP ? mainViaApp() : main()).catch((err) => {
+// ── Scenarios ON a Validated Model — what the Lab's "Run this model" does ─────────────
+// The run follows the MODEL: dispatch uses the model's own policy version and dataset
+// version, names the model, and records deviations from its protocol. The scenarios are
+// therefore built FROM the protocol (replications, root seed, CRN, warm-up week, horizon),
+// so there is none to record. The calendar follows the model too: its warm-up ends on
+// MEASURE_FROM, and the 52 weeks measured after it are that calendar year.
+const MEASURE_FROM = "2026-01-01";
+const DISRUPTION_AFTER_WEEKS = 20;     // into the measured year: 21 May 2026
+const addDays = (iso, n) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+
+async function mainFollowModel() {
+  console.log(`SuReSuite demo scenarios on the Validated Model — LIVE, as ${USER_EMAIL}`);
+  const project = await app.project();
+  if (!project) throw new Error(`no project named "${PROJECT_NAME}" is visible to ${USER_EMAIL}`);
+  const pid = project.id;
+  const model = await app.model(pid);
+  if (!model) throw new Error("this project has no active Validated Model — run Run & Validate in /policies first");
+  const pr = model.protocol ?? {};
+  const warmupWeek = Math.round(Number(pr.warmup_week ?? model.adopted_warmup_days / 7));
+  const horizonWeeks = Number(pr.horizon_weeks ?? 104);
+  const reps = Number(pr.replications ?? 10);
+  const seed = Number(pr.root_seed ?? 42);
+  const crn = pr.crn ?? true;
+  console.log(`  model ${model.model_code} "${model.name}" — ${reps} replications, ${horizonWeeks} weeks, warm-up ${warmupWeek} weeks, seed ${seed}`);
+  console.log(`  protocol: ${JSON.stringify(pr)}`);
+
+  const start = addDays(MEASURE_FROM, -warmupWeek * 7);
+  const end = addDays(start, horizonWeeks * 7);
+  await app.setCalendarDates(project, start, end);
+  console.log(`  calendar: week 0 = ${start}, week ${warmupWeek} = ${MEASURE_FROM}, run ends ${end}`);
+
+  const day = (warmupWeek + DISRUPTION_AFTER_WEEKS) * 7;
+  const when = addDays(start, day);
+  const ev = (target, days) => [{ target, target_type: "node", start_day: day, duration_days: days, magnitude_pct: 100 }];
+  const frame = { horizon_days: horizonWeeks * 7, warmup_days: warmupWeek * 7, replications: reps, seed, crn };
+  const wanted = DEMO === "small"
+    ? [["Normal 2026", "Calendar 2026, no disruption.", []],
+       ["Microcontroller outage May 2026 (10 wk)", `Kestrel Microsystems ships nothing for ten weeks from ${when}.`, ev("S-MCU", 70)],
+       ["Plant shutdown May 2026 (3 wk)", `The plant makes nothing for three weeks from ${when}.`, ev("plant", 21)]]
+    : [["Normal 2026", "Calendar 2026, no disruption.", []],
+       ["Sensor supplier outage May 2026 (10 wk)", `Husan Sensor Tech (S-0198) ships nothing for ten weeks from ${when}.`, ev("S-0198", 70)],
+       ["Plant shutdown May 2026 (3 wk)", `The plant makes nothing for three weeks from ${when}.`, ev("plant", 21)]];
+
+  const existing = await app.scenarios(pid);
+  const scenarios = [];
+  for (const [name, description, events] of wanted) {
+    let sc = existing.find((x) => x.name === name);
+    if (sc) {
+      const same = sc.horizon_days === frame.horizon_days && sc.warmup_mode === "manual" && sc.warmup_days === frame.warmup_days &&
+        sc.replications === reps && sc.seed === seed && sc.crn === crn && JSON.stringify(sc.disruption_schedule ?? []) === JSON.stringify(events);
+      if (!same) throw new Error(`scenario "${name}" exists with other settings — delete it in the Lab first, so a run is never filed under a scenario it did not use`);
+      console.log(`  reusing scenario "${name}"`);
+    } else {
+      sc = await app.createScenario(pid, { name, description, events }, frame);
+      console.log(`  created scenario "${name}"`);
+    }
+    scenarios.push(sc);
+  }
+
+  const results = [];
+  for (const sc of scenarios) {
+    const label = `${sc.name} · ${model.model_code}`;
+    const extra = { validated_model_id: model.id, protocol_overrides: {} };
+    let r = await app.dispatch(pid, sc.id, model.policy_version_id, false, extra);
+    if (r.status === 422 && r.body?.validation === "ack_required") {
+      for (const f of r.body.findings ?? []) console.log(`      [${f.severity}] ${f.message}`);
+      r = await app.dispatch(pid, sc.id, model.policy_version_id, true, extra);
+    }
+    if (r.status === 409 && r.body?.reuse_available) {
+      console.log(`  ✓ ${label}: an identical run already exists (${String(r.body.reuse_candidate?.run_id).slice(0, 8)})`);
+      results.push({ label, status: "done" });
+      continue;
+    }
+    if (r.status >= 300) {
+      for (const f of r.body?.findings ?? []) console.error(`      [${f.severity}] ${f.message}`);
+      throw new Error(`${label}: sim-command HTTP ${r.status}: ${JSON.stringify(r.body?.error ?? r.body).slice(0, 400)}`);
+    }
+    const id = r.body.run_id;
+    process.stdout.write(`  ${label}: waiting for run ${String(id).slice(0, 8)}`);
+    let run = await app.run(id);
+    const t0 = Date.now();
+    while (!["done", "failed", "cancelled"].includes(run.status)) {
+      if (Date.now() - t0 > 40 * 60 * 1000) throw new Error(`${label}: still ${run.status} after 40 minutes`);
+      process.stdout.write("."); await sleep(10000); run = await app.run(id);
+    }
+    const k = run.aggregate_kpis ?? {};
+    console.log(` ${run.status}${k.fill_rate != null ? ` — fill ${(k.fill_rate * 100).toFixed(1)}%, revenue ${Math.round(k.revenue ?? 0).toLocaleString("en")}, lost sales ${Math.round(k.lost_sales_value ?? 0).toLocaleString("en")}` : ""}${run.error_message ? ` — ${run.error_message}` : ""}`);
+    results.push({ label, status: run.status });
+  }
+  const failed = results.filter((x) => x.status !== "done");
+  console.log(`\n${results.length - failed.length} of ${results.length} runs done.`);
+  if (failed.length) { console.error("✗ not done:\n" + failed.map((f) => `    - ${f.label}: ${f.status}`).join("\n")); process.exit(1); }
+  console.log("✓ the Lab has the scenarios, each run following the Validated Model.");
+}
+
+
+(VIA_APP ? (process.env.FOLLOW_MODEL === "1" ? mainFollowModel() : mainViaApp()) : main()).catch((err) => {
   console.error(`\n✗ ${err.message ?? err}`);
   process.exit(1);
 });

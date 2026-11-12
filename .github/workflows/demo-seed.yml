@@ -19,6 +19,9 @@ name: Demo seed (data, policies, scenarios, runs)
 #   demos=small,large          which demos get policies, scenarios and runs
 #   large_data=1               also (re)load the large demo's data first
 #   replications=10
+#   follow_model=1             scenarios ON the project's active Validated Model: built from its
+#                              protocol, the calendar set so its warm-up ends on 1 Jan 2026, runs
+#                              dispatched as the Lab's "Run this model" does
 
 on:
   push:
@@ -39,6 +42,7 @@ jobs:
       demos: ${{ steps.p.outputs.demos }}
       large_data: ${{ steps.p.outputs.large_data }}
       replications: ${{ steps.p.outputs.replications }}
+      follow_model: ${{ steps.p.outputs.follow_model }}
     steps:
       - uses: actions/checkout@v4
       - id: p
@@ -47,6 +51,7 @@ jobs:
           echo "demos=$(get demos)" >> "$GITHUB_OUTPUT"
           echo "large_data=$(get large_data)" >> "$GITHUB_OUTPUT"
           r=$(get replications); echo "replications=${r:-10}" >> "$GITHUB_OUTPUT"
+          echo "follow_model=$(get follow_model)" >> "$GITHUB_OUTPUT"
 
   large-data:
     needs: params
@@ -119,6 +124,7 @@ jobs:
         env:
           DEMO: ${{ matrix.demo }}
           REPLICATIONS: ${{ needs.params.outputs.replications }}
+          FOLLOW_MODEL: ${{ needs.params.outputs.follow_model }}
         run: node scripts/seed_demo_runs.mjs
 
   readiness:
