@@ -1,15 +1,15 @@
 {
   "$generator": "scripts/data-contract/introspect.mjs",
   "$doc": "EFFECTIVE schema replayed from supabase/migrations/*.sql in filename order. Generated — do not edit; `npm run contract:introspect -- --check` fails on drift.",
-  "migrations_found": 415,
-  "migrations_applied": 407,
+  "migrations_found": 416,
+  "migrations_applied": 408,
   "first_migration": "20250815000000_approved_users_base.sql",
-  "last_migration": "20261105000001_lane_rebuild_scales.sql",
+  "last_migration": "20261112000001_personal_key_owner_by_membership.sql",
   "counts": {
     "tables": 94,
     "views": 8,
     "enums": 4,
-    "functions": 436,
+    "functions": 437,
     "shadowed_definitions": 4,
     "phantom_tables": 0,
     "unparsed_statements": 0,
@@ -24920,7 +24920,20 @@
       "security_definer": true,
       "volatility": null,
       "comment": null,
-      "defined_by": "20260711000001_api_access_control.sql"
+      "defined_by": "20261112000001_personal_key_owner_by_membership.sql"
+    },
+    {
+      "name": "_api_key_manages_org",
+      "signature": "_api_key_manages_org(uuid, uuid)",
+      "args": [
+        "p_user_id uuid",
+        "p_org_id uuid"
+      ],
+      "returns": "boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO",
+      "security_definer": true,
+      "volatility": "STABLE",
+      "comment": "D321 — the one rule for whether an account manages an organization's API keys: a super ",
+      "defined_by": "20261112000001_personal_key_owner_by_membership.sql"
     },
     {
       "name": "_assert_super_admin",
@@ -26715,8 +26728,8 @@
       "returns": "uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO",
       "security_definer": true,
       "volatility": "STABLE",
-      "comment": "The active user a personal key acts as, or NULL — the gateway refuses a personal key ",
-      "defined_by": "20261002000001_personal_api_keys.sql"
+      "comment": "WP 12.3, D321 — the person a personal key acts as: its creator, while active and a member ",
+      "defined_by": "20261112000001_personal_key_owner_by_membership.sql"
     },
     {
       "name": "api_personal_key_grant",
@@ -26728,7 +26741,7 @@
       "security_definer": true,
       "volatility": null,
       "comment": "The active user a personal key acts as and the scopes it may use now — cut to ",
-      "defined_by": "20261002000005_personal_keys_for_every_user.sql"
+      "defined_by": "20261112000001_personal_key_owner_by_membership.sql"
     },
     {
       "name": "append_chat_message",
