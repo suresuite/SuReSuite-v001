@@ -146,6 +146,10 @@ const INCLUDES = {
   },
 };
 
+// A collapsed Colab cell: the title line must carry `display-mode: "form"`. Current Colab
+// ignores the `cellView: "form"` metadata alone and shows the code under the title.
+const formTitle = (title) => `# @title ${title} { display-mode: "form" }`;
+
 const lines = (s) => {
   const ls = s.replace(/\s+$/, "").split("\n");
   return ls.map((l, i) => (i < ls.length - 1 ? `${l}\n` : l));
@@ -171,7 +175,7 @@ function build(file) {
     } else if (header.startsWith("# %% include:")) {
       const [name, ...args] = header.slice("# %% include:".length).trim().split(/\s+/);
       if (name === "demo_data") {
-        cell = { cell_type: "code", metadata: { cellView: "form" }, source: lines(`# @title Demo data (recorded engine output)\n${demoCell(args)}`) };
+        cell = { cell_type: "code", metadata: { cellView: "form" }, source: lines(`${formTitle("Demo data (recorded engine output)")}\n${demoCell(args)}`) };
       } else if (name === "bundle") {
         // Several includes as ONE collapsed cell: `# %% include: bundle setup library … demo_data <label> …`.
         const at = args.indexOf("demo_data");
@@ -181,11 +185,11 @@ function build(file) {
           return INCLUDES[n].text().trimEnd();
         });
         if (at >= 0) parts.push(demoCell(args.slice(at + 1)));
-        cell = { cell_type: "code", metadata: { cellView: "form" }, source: lines(`# @title Setup and helpers (run it; no need to read it)\n${parts.join("\n\n\n")}`) };
+        cell = { cell_type: "code", metadata: { cellView: "form" }, source: lines(`${formTitle("Setup and helpers (run it; no need to read it)")}\n${parts.join("\n\n\n")}`) };
       } else {
         const inc = INCLUDES[name];
         if (!inc) throw new Error(`${file}: unknown include "${name}"`);
-        const src = inc.form ? `# @title ${inc.title}\n${inc.text()}` : inc.text();
+        const src = inc.form ? `${formTitle(inc.title)}\n${inc.text()}` : inc.text();
         cell = { cell_type: "code", metadata: inc.form ? { cellView: "form" } : {}, source: lines(src) };
       }
       if (body) throw new Error(`${file}: an include line takes no body (found: ${body.slice(0, 40)}…)`);
