@@ -1,0 +1,53 @@
+name: Demo clean-up (named items only)
+
+# Removes the demo data named in scripts/demo/cleanup_plan.py — each entry by id prefix AND
+# exact name, verified against the database first — through the app's own paths, then re-reads
+# both demos into `demo-readiness-results`. TRIGGER: push `.github/demo-cleanup-request`
+# (line `apply=1`; anything else is a dry run that only prints the plan).
+
+on:
+  push:
+    paths:
+      - ".github/demo-cleanup-request"
+
+concurrency:
+  group: demo-seed
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Resolve and verify the plan
+        run: python scripts/demo/cleanup_plan.py
+      - name: Apply
+        run: |
+          if grep -qx 'apply=1' .github/demo-cleanup-request; then node scripts/demo/cleanup_demo.mjs plan.json
+          else node scripts/demo/cleanup_demo.mjs plan.json --dry-run; fi
+      - name: Re-read both demos
+        if: always()
+        run: python scripts/demo/demo_readiness.py Demo
+      - name: Publish to the demo-readiness-results branch
+        if: always()
+        run: |
+          [ -f demo-readiness.md ] || exit 0
+          mkdir -p /tmp/pubfiles && cp -r demo-readiness.md demo-readiness.json /tmp/pubfiles/ && { [ -d snapshots ] && cp -r snapshots /tmp/pubfiles/ || true; }
+          git worktree add --detach pub
+          cd pub && git checkout -q --orphan demo-readiness-results-new && git rm -rfq . || true
+          cp -r /tmp/pubfiles/* . && git add -A
+          git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "demo readiness after clean-up (run ${{ github.run_id }})"
+          git push -f origin HEAD:demo-readiness-results
