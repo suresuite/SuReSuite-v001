@@ -45,16 +45,30 @@ def week_zero(T, start_date):
     return pd.Timestamp.today().normalize() if pd.isna(start) else start
 
 
-def supplier_table(ev, lanes):
+def supplier_table(ev, lanes, assume_spare=None, seed=0):
     """One row per supplier and material it delivers: weekly capacity, what our planned orders already
-    take from that supplier (all its materials together), what is spare, and the lead time. A supplier
-    with no capacity in the data has none of the three and cannot be asked."""
+    take from that supplier (all its materials together), what is spare, and the lead time.
+    A supplier with no capacity in the data cannot be asked — unless `assume_spare` = (low, high):
+    then its capacity is ASSUMED to be what it already delivers plus a buffer, a share of that volume
+    drawn between the two (whole units; the same draws for the same `seed`), and the "capacity"
+    column says so."""
     cap = {s["id"]: s.get("capacity_per_week") for s in ev["network"]["suppliers"]}
     committed = lanes.groupby("supplier_id")["per_week"].sum()
     t = pd.DataFrame(ev["network"]["supplier_links"])[["material_id", "supplier_id", "lead_time_weeks"]].rename(
         columns={"material_id": "material", "supplier_id": "supplier", "lead_time_weeks": "lead time (wk)"})
     t["capacity / wk"] = pd.to_numeric(t["supplier"].map(cap), errors="coerce")
     t["committed / wk"] = t["supplier"].map(committed).fillna(0.0)
+    t["capacity"] = np.where(t["capacity / wk"].notna(), "your data", "not set")
+    missing = t["capacity / wk"].isna()
+    if assume_spare and missing.any():
+        low, high = assume_spare
+        names = sorted(t.loc[missing, "supplier"].unique())           # one draw per supplier, in a fixed order
+        share = dict(zip(names, np.random.default_rng(seed).uniform(low, high, len(names))))
+        buffer = t["supplier"].map(share)
+        t.loc[missing, "capacity / wk"] = np.round(t["committed / wk"] * (1 + buffer))[missing]
+        t.loc[missing, "capacity"] = [f"assumed: committed + {x:.0%}" for x in buffer[missing]]
+        print(f"note: {len(names)} of {t['supplier'].nunique()} suppliers have no capacity in your data — it is ASSUMED: "
+              f"what they already deliver plus a buffer of {low:.0%}–{high:.0%} (seed {seed}). Enter real capacities to replace it.")
     t["spare / wk"] = (t["capacity / wk"] - t["committed / wk"]).clip(lower=0)
     return t.sort_values(["material", "supplier"]).reset_index(drop=True)
 
@@ -79,10 +93,14 @@ def read_requests(requests, suppliers, start, horizon, top_n, quantity, week):
     for i, line in enumerate(lines, 1):
         try:
             m, q, when = line
-            w = int(when) if not isinstance(when, str) else int((pd.Timestamp(when) - start).days // 7)
             q = float(q)
         except (TypeError, ValueError):
             print(f"request {i}: expected (material, quantity, week or date), got {line!r} — left out")
+            continue
+        try:
+            w = int(when) if not isinstance(when, str) else int((pd.Timestamp(when) - start).days // 7)
+        except (TypeError, ValueError):
+            print(f"request {i} ({m}): {when!r} is not a week number or a real date (YYYY-MM-DD) — left out")
             continue
         problem = ("not a material with a supplier in your data" if m not in known else
                    "the quantity must be above zero" if q <= 0 else
@@ -152,7 +170,8 @@ def plan_requests(suppliers, requests, horizon):
         answer[r] = {"material": m, "requested": Q, "week": week, "ATP": atp, "case": case, "decision": decision,
                      "from": " · ".join(f"{s} {u:,.0f}" for s, u in split.items()) or "—"}
         for i, row in rows.iterrows():
-            why.append({"request": r, "material": m, "supplier": row["supplier"], "capacity / wk": row["capacity / wk"],
+            why.append({"request": r, "material": m, "supplier": row["supplier"], "capacity": row["capacity"],
+                        "capacity / wk": row["capacity / wk"],
                         "− committed / wk": row["committed / wk"], "= spare / wk": row["spare / wk"],
                         "lead time (wk)": row["lead time (wk)"],
                         "weeks it can ship in time": max(week - int(row["lead time (wk)"]) + 1, 0),

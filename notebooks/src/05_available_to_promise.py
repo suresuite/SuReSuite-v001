@@ -31,6 +31,9 @@ REQUESTS = [
 # ── advanced: the defaults work ─────────────────────────────────────────────
 START_DATE = ""        # the date of week 0 (today's orders are placed in week 0); "" = your earliest forecast period, else today
 TRY = dict(top_n=2, quantity=150, week=8)   # used only while REQUESTS is empty
+ASSUME_SPARE = (0.05, 0.20)   # a supplier with no capacity in your data: capacity is ASSUMED = what it already delivers
+#                               plus a buffer drawn in this range (whole units); None = do not ask such a supplier
+ASSUME_SEED = 0               # the draw's seed: the same seed gives the same assumed capacities every run
 SIMULATE = False       # True = also run the plan through the engine (step 5); adds a minute or two
 N_SCENARIOS = 10       # step 5 only: possible courses of the year
 CONFIDENCE = 0.9       # step 5 only: "delivered as planned" must hold in this share of them
@@ -54,7 +57,7 @@ HORIZON = int(round(float(RUN.get("horizon_days") or 364) / 7))
 
 T = input_tables(data)
 EV = engine_view(data, pol, RUN, MODEL)   # what the engine receives: capacities and lead times
-SUPPLIERS = supplier_table(EV, supply_lanes(T))
+SUPPLIERS = supplier_table(EV, supply_lanes(T), ASSUME_SPARE, ASSUME_SEED)
 ASKED = read_requests(REQUESTS, SUPPLIERS, week_zero(T, START_DATE), HORIZON, **TRY)
 display(styled(ASKED, fmt="{:,.0f}", caption=f"{len(ASKED)} requests for {ASKED['material'].nunique()} materials"))
 
@@ -70,8 +73,9 @@ display(styled(ANSWER, fmt="{:,.0f}", caption="The answer"))
 # ## 3 · Why
 # The sum behind each ATP, supplier by supplier. An order placed now (week 0) arrives one lead time
 # later, so a supplier has (week − lead time + 1) weeks in which it can ship in time, or none. Requests are taken in
-# order of their week; what one is promised is capacity the next no longer has. A supplier with no
-# capacity in your data shows empty cells and is not asked.
+# order of their week; what one is promised is capacity the next no longer has. The "capacity"
+# column says where each capacity comes from: your data, or **assumed** (`ASSUME_SPARE`, `ASSUME_SEED`) where your
+# data has none — an answer resting on an assumed capacity is only as good as the assumption.
 # **Expect:** one row per request and supplier.
 
 # %%
