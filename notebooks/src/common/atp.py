@@ -73,13 +73,13 @@ def supplier_table(ev, lanes, assume_spare=None, seed=0):
     return t.sort_values(["material", "supplier"]).reset_index(drop=True)
 
 
-def _can_deliver(row, week, used):
-    """What one supplier can still deliver of a material by `week`: its spare capacity in every week
-    it can ship in time (an order placed now, in week 0, arrives one lead time later)."""
-    last = week - int(row["lead time (wk)"])
-    if last < 0 or pd.isna(row["spare / wk"]):
+def _free(row, week, used):
+    """What one supplier can still deliver of a material IN `week`: that week's spare capacity, less
+    what earlier requests were promised from it. Nothing before one lead time has passed (an order
+    placed now, in week 0, arrives one lead time later). Capacity not used in a week is gone."""
+    if week < int(row["lead time (wk)"]) or pd.isna(row["spare / wk"]):
         return 0.0
-    return float((row["spare / wk"] - used[row["supplier"]].loc[0:last]).clip(lower=0).sum())
+    return max(float(row["spare / wk"] - used[row["supplier"]].loc[week]), 0.0)
 
 
 def read_requests(requests, suppliers, start, horizon, top_n, quantity, week):
@@ -119,71 +119,63 @@ def plan_requests(suppliers, requests, horizon):
     """Sort each request into its case and spread it across the material's suppliers. Returns
     (the answer, a row per request · why, a row per request and supplier · {request: {week: units}}).
 
-    ATP by a week = for each supplier of the material, its spare capacity per week (capacity less
-    what our planned orders take) in every week it can ship in time, added over the suppliers.
+    ATP in a week = for each supplier of the material, that week's capacity less what our planned
+    orders take in that week, added over the suppliers. It is a weekly amount: capacity a supplier
+    does not use in a week is gone, so ATP does not add up from week to week.
 
-    Case 1, the request is within ATP: all of it by the week, shared between the suppliers in
-    proportion to what each can deliver.
-    Case 2, above ATP: everything the suppliers can deliver by the week, and the rest in the first
-    later week by which their spare capacity has covered it.
-    Requests are taken in order of their week; what one is promised is capacity the next no longer has."""
+    Case 1, the request is within the week's ATP: all of it in the week, shared between the
+    suppliers in proportion to what each has spare.
+    Case 2, above it: the week's ATP in the week, and the rest from each following week's ATP
+    until it is complete.
+    Requests are taken in order of their week; what one is promised in a week is capacity the next
+    no longer has in that week."""
     used = {s: pd.Series(0.0, index=range(horizon)) for s in suppliers["supplier"].unique()}
     answer, why, plans = {}, [], {}
     for r, (m, Q, week) in requests.sort_values("week", kind="stable")[["material", "quantity", "week"]].iterrows():
         week, rows = int(week), suppliers[suppliers["material"] == m]
-        can = {i: _can_deliver(row, week, used) for i, row in rows.iterrows()}
-        atp = sum(can.values())
-        share = min(Q / atp, 1.0) if atp > 0 else 0.0                 # of what each can deliver by the week
-        by_week = {i: can[i] * share for i in can}
-        for i, row in rows.iterrows():                                # that share of each week's spare capacity
-            if by_week[i] > 0:
-                ship = slice(0, week - int(row["lead time (wk)"]))
-                used[row["supplier"]].loc[ship] += share * (row["spare / wk"] - used[row["supplier"]].loc[ship]).clip(lower=0)
-        rest, after, later = Q - sum(by_week.values()), {i: 0.0 for i in can}, None
-        if rest > 0.5:
-            trial = {s: u.copy() for s, u in used.items()}
-            for t in range(week + 1, horizon):                        # an arrival week, one at a time
-                free = {i: max(float(row["spare / wk"] - trial[row["supplier"]].loc[t - int(row["lead time (wk)"])]), 0.0)
-                        for i, row in rows.iterrows() if t - int(row["lead time (wk)"]) >= 0 and pd.notna(row["spare / wk"])}
-                take = min(rest - sum(after.values()), sum(free.values()))
+        atp = sum(_free(row, week, used) for _, row in rows.iterrows())
+        plan, given, in_week, left = {}, {i: 0.0 for i in rows.index}, {i: 0.0 for i in rows.index}, Q
+        for t in range(week, horizon):
+            free = {i: _free(row, t, used) for i, row in rows.iterrows()}
+            take = min(left, sum(free.values()))
+            if take > 0.5 or (take > 0 and take >= left):
+                plan[t] = take
                 for i, f in free.items():
-                    if take > 0:
-                        part = take * f / sum(free.values())
-                        after[i] += part
-                        trial[rows.loc[i, "supplier"]].loc[t - int(rows.loc[i, "lead time (wk)"])] += part
-                if rest - sum(after.values()) <= 0.5:
-                    later, used = t, trial
-                    break
-            if later is None:
-                after = {i: 0.0 for i in can}
-        first = sum(by_week.values())
-        plans[r] = {w: u for w, u in ((week, first), (later, rest)) if w is not None and u > 0.5}
-        case = "1 · within ATP" if rest <= 0.5 else "2 · above ATP"
-        if not plans[r]:
-            decision = f"Decline: no supplier can deliver by week {week}, or later"
+                    part = take * f / sum(free.values())
+                    used[rows.loc[i, "supplier"]].loc[t] += part
+                    given[i] += part
+                    if t == week:
+                        in_week[i] = part
+                left -= take
+            if left <= 0.5:
+                break
+        plans[r], first, last = plan, plan.get(week, 0.0), max(plan) if plan else None
+        case = "1 · within ATP" if Q <= atp + 0.5 else "2 · above ATP"
+        if not plan:
+            decision = f"Decline: no supplier has spare capacity in week {week} or later"
+        elif case.startswith("1"):
+            decision = f"Accept {Q:,.0f} in week {week}"
         else:
-            decision = (f"Accept all {Q:,.0f} by week {later}; nothing can arrive by week {week}" if first <= 0.5 else
-                        f"Accept {first:,.0f} by week {week}" + (
-                            "" if rest <= 0.5 else f", the remaining {rest:,.0f} by week {later}" if later is not None else
-                            f"; the remaining {rest:,.0f} cannot be delivered within the horizon"))
-        split = {rows.loc[i, "supplier"]: by_week[i] + after[i] for i in can if by_week[i] + after[i] > 0.5}
-        answer[r] = {"material": m, "requested": Q, "week": week, "ATP": atp, "case": case, "decision": decision,
+            done = f"complete in week {last}" if left <= 0.5 else f"only {Q - left:,.0f} of {Q:,.0f} by the end of the horizon"
+            decision = (f"Accept {first:,.0f} in week {week}, the rest week by week, {done}" if first > 0.5 else
+                        f"Nothing is spare in week {week}; accept it from week {min(plan)}, {done}")
+        split = {rows.loc[i, "supplier"]: u for i, u in given.items() if u > 0.5}
+        answer[r] = {"material": m, "requested": Q, "week": week, "ATP in the week": atp, "case": case, "decision": decision,
+                     "complete in week": last if plan and left <= 0.5 else np.nan,
                      "from": " · ".join(f"{s} {u:,.0f}" for s, u in split.items()) or "—"}
         for i, row in rows.iterrows():
             why.append({"request": r, "material": m, "supplier": row["supplier"], "capacity": row["capacity"],
-                        "capacity / wk": row["capacity / wk"],
-                        "− committed / wk": row["committed / wk"], "= spare / wk": row["spare / wk"],
-                        "lead time (wk)": row["lead time (wk)"],
-                        "weeks it can ship in time": max(week - int(row["lead time (wk)"]) + 1, 0),
-                        "can deliver by the week": can[i], "asked by the week": by_week[i], "asked after": after[i]})
+                        "capacity / wk": row["capacity / wk"], "− committed / wk": row["committed / wk"],
+                        "= spare / wk": row["spare / wk"], "lead time (wk)": row["lead time (wk)"],
+                        "asked in the week": in_week[i], "asked in later weeks": given[i] - in_week[i]})
     answer = pd.DataFrame.from_dict(answer, orient="index").rename_axis("request").loc[requests.index]
     why = pd.DataFrame(why).set_index(["request", "supplier"]).loc[requests.index.tolist()]
     return answer, why, {r: p for r, p in plans.items() if p}
 
 
 def plot_supply(suppliers, answer, plans, horizon):
-    """A panel per material: what its suppliers can deliver by each week on top of our planned orders
-    (before any request), each request, and what the plan accepts."""
+    """A panel per material: what its suppliers have spare in each week (before any request), each
+    request, and what the plan takes week by week."""
     mats = list(dict.fromkeys(answer["material"]))
     ncols = min(3, len(mats))
     nrows = -(-len(mats) // ncols)
@@ -191,17 +183,21 @@ def plot_supply(suppliers, answer, plans, horizon):
     weeks = np.arange(horizon)
     for ax, m in zip(axes.flat, mats):
         rows = suppliers[suppliers["material"] == m].dropna(subset=["spare / wk"])
-        line = sum(row["spare / wk"] * np.clip(weeks - row["lead time (wk)"] + 1, 0, None) for _, row in rows.iterrows())
-        ax.step(weeks, np.zeros(horizon) + line, where="post", color=ATP_COLORS["atp"], linewidth=1.6,
-                label="suppliers can deliver by this week (ATP)")
+        line = np.zeros(horizon) + sum(row["spare / wk"] * (weeks >= row["lead time (wk)"]) for _, row in rows.iterrows())
+        ax.step(weeks, line, where="mid", color=ATP_COLORS["atp"], linewidth=1.6, label="ATP: what the suppliers have spare in the week")
         asked = answer[answer["material"] == m]
+        taken = pd.Series(0.0, index=weeks)
+        for r in asked.index:
+            for w, u in plans.get(r, {}).items():
+                taken.loc[w] += u
+        ax.bar(weeks, taken, width=0.8, color=ATP_COLORS["request"], alpha=0.55, label="accepted, week by week")
         ax.scatter(asked["week"], asked["requested"], facecolors="none", edgecolors=ATP_COLORS["request"], s=40, zorder=5,
                    label="requested")
-        parts = [(w, u) for r in asked.index for w, u in plans.get(r, {}).items()]
-        if parts:
-            ax.scatter(*zip(*parts), color=ATP_COLORS["request"], s=40, zorder=6, label="accepted")
-        top = 1.3 * max([asked["requested"].max()] + [u for _, u in parts])
-        ax.set_ylim(0, top)
+        ax.set_ylim(0, 1.25 * max(line.max(), 1.0))                    # a request far above ATP is clipped to the top
+        for w, q in zip(asked["week"], asked["requested"]):
+            if q > ax.get_ylim()[1]:
+                ax.annotate(f"{q:,.0f} requested", (w, ax.get_ylim()[1]), ha="center", va="top", fontsize=7,
+                            color="#495057")
         ax.set_title(m, fontsize=9)
         ax.yaxis.set_major_formatter(lambda v, _: f"{v:,.0f}")
         ax.tick_params(labelsize=8)
@@ -297,7 +293,7 @@ def decision(before, after, screen, plans, confidence):
             problems = (["late"] if as_planned.mean() < confidence else []) + (
                 [f"our stock runs out {more_empty:,.0f} more week(s)"] if more_empty >= 1 else [])
             rows[r] = {"material": m, "case": screen.loc[r, "case"], "decision": screen.loc[r, "decision"],
-                       "ATP": screen.loc[r, "ATP"], "delivered as planned": f"{int(as_planned.sum())} of {n} scenarios",
+                       "ATP in the week": screen.loc[r, "ATP in the week"], "delivered as planned": f"{int(as_planned.sum())} of {n} scenarios",
                        "complete by": f"week {int(by)}" if by == by else "not within the horizon",
                        "check": "ok" if not problems else ", ".join(problems)}
         detail.append({"material": m, "accepted": sum(total.values()),
@@ -312,7 +308,7 @@ def decision(before, after, screen, plans, confidence):
     for r in screen.index.difference(list(rows)):                          # nothing could be planned
         rows[r] = {"material": screen.loc[r, "material"], "case": screen.loc[r, "case"],
                    "decision": screen.loc[r, "decision"],
-                   "ATP": screen.loc[r, "ATP"], "delivered as planned": "—", "complete by": "—", "check": "—"}
+                   "ATP in the week": screen.loc[r, "ATP in the week"], "delivered as planned": "—", "complete by": "—", "check": "—"}
     table = pd.DataFrame.from_dict(rows, orient="index").rename_axis("request").loc[screen.index]
     return table, customers if plans else "", pd.DataFrame(detail, columns=["material"] if not detail else None).set_index("material")
 

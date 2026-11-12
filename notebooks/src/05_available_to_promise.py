@@ -3,11 +3,14 @@
 #
 # *We need more of a material than planned. Can its suppliers deliver it by this week?*
 #
-# > **ATP** by a week = what each supplier of the material has spare (weekly capacity − what our
-# > planned orders already take), in every week it can ship in time, added over the suppliers.
+# > **ATP** in a week = what each supplier of the material has spare in that week (its weekly
+# > capacity − what our planned orders take), added over the suppliers.
 #
-# - **Case 1 · the request is within ATP:** accept all of it by the week.
-# - **Case 2 · above ATP:** accept what the suppliers can deliver by the week, and the rest later.
+# ATP is a weekly amount: capacity a supplier does not use in a week is gone, it does not add up.
+#
+# - **Case 1 · the request is within the week's ATP:** accept all of it in the week.
+# - **Case 2 · above it:** accept the week's ATP in the week, and the rest from each following
+#   week's ATP until it is complete.
 #
 # Run all cells once, then edit **Requests** and run again. Nothing here changes your project.
 
@@ -63,7 +66,8 @@ display(styled(ASKED, fmt="{:,.0f}", caption=f"{len(ASKED)} requests for {ASKED[
 
 # %% [markdown]
 # ## 2 · Answer
-# **Expect:** one row per request: its case, the decision, and how much each supplier delivers.
+# **Expect:** one row per request: its case, the decision, the week it is complete, and how much each
+# supplier delivers.
 
 # %%
 ANSWER, WHY, PLANS = plan_requests(SUPPLIERS, ASKED, HORIZON)
@@ -71,20 +75,21 @@ display(styled(ANSWER, fmt="{:,.0f}", caption="The answer"))
 
 # %% [markdown]
 # ## 3 · Why
-# The sum behind each ATP, supplier by supplier. An order placed now (week 0) arrives one lead time
-# later, so a supplier has (week − lead time + 1) weeks in which it can ship in time, or none. Requests are taken in
-# order of their week; what one is promised is capacity the next no longer has. The "capacity"
-# column says where each capacity comes from: your data, or **assumed** (`ASSUME_SPARE`, `ASSUME_SEED`) where your
-# data has none — an answer resting on an assumed capacity is only as good as the assumption.
+# The sum behind each ATP, supplier by supplier: capacity − committed = spare, per week. An order
+# placed now (week 0) arrives one lead time later, so a supplier delivers nothing before then.
+# Requests are taken in order of their week; what one takes in a week the next no longer has in
+# that week. The "capacity" column says where each capacity comes from: your data, or **assumed**
+# (`ASSUME_SPARE`, `ASSUME_SEED`) where your data has none — an answer resting on an assumed
+# capacity is only as good as the assumption.
 # **Expect:** one row per request and supplier.
 
 # %%
-display(styled(WHY, fmt="{:,.0f}", caption="capacity − committed = spare; spare × the weeks it can ship in time = can deliver"))
+display(styled(WHY, fmt="{:,.0f}", caption="capacity − committed = spare, per week"))
 
 # %% [markdown]
 # ## 4 · Chart
-# The green line is what the suppliers can deliver by each week on top of our planned orders. A ring
-# is a request, a dot is what the plan accepts: a ring under the line is case 1.
+# The green line is ATP: what the suppliers have spare in each week. A ring is a request; the bars
+# are what the plan takes, week by week. A ring under the line is case 1.
 
 # %%
 plot_supply(SUPPLIERS, ANSWER, PLANS, HORIZON)
