@@ -1,0 +1,12 @@
+run_id: 43277139643  outcome: success
+trigger: push  ref: main  sha: ea1ed506e00a650ae7ffdbee895661d02c33c8c4
+──────────────────────────────────────
+Connecting to remote database...
+Do you want to push these migrations to the remote database?
+ • 20261112000001_personal_key_owner_by_membership.sql
+
+ [Y/n] y
+Applying migration 20261112000001_personal_key_owner_by_membership.sql...
+Finished supabase db push.
+A new version of Supabase CLI is available: v3.1.0 (currently installed v2.84.2)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
