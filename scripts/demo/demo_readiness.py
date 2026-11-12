@@ -175,6 +175,34 @@ def project_report(p: dict) -> list[str]:
     return gaps
 
 
+def export_snapshots(p: dict) -> None:
+    """The project's frozen inputs, so a run can be replayed locally with
+    `sim_worker.local.run_from_snapshots` (latest data version, every policy
+    version, every scenario row). Skipped above 8 MB so the report stays small."""
+    pid = p["id"]
+    slug = re.sub(r"[^a-z0-9]+", "-", p["name"].lower()).strip("-")[:40]
+    d = Path("snapshots") / slug
+    size, _ = safe(f"SELECT pg_column_size(snapshot)::int AS b, version_no FROM public.dataset_versions "
+                   f"WHERE project_id = '{pid}' ORDER BY version_no DESC LIMIT 1")
+    if not size or size[0]["b"] > 8_000_000:
+        out(f"\n_snapshots of {p['name']} not exported ({size[0]['b'] if size else 'none'} bytes)_")
+        return
+    d.mkdir(parents=True, exist_ok=True)
+    ds, _ = safe(f"SELECT id::text, version_no, snapshot FROM public.dataset_versions WHERE project_id = '{pid}' "
+                 f"ORDER BY version_no DESC LIMIT 1")
+    (d / "dataset.json").write_text(json.dumps(ds[0], indent=1))
+    pv, _ = safe(f"SELECT id::text, version_no, label, snapshot FROM public.policy_versions "
+                 f"WHERE project_id = '{pid}' ORDER BY version_no")
+    (d / "policy_versions.json").write_text(json.dumps(pv or [], indent=1))
+    sc, _ = safe(f"SELECT to_jsonb(s) AS s FROM public.scenarios s WHERE project_id = '{pid}' ORDER BY created_at")
+    (d / "scenarios.json").write_text(json.dumps([x["s"] for x in sc or []], indent=1))
+    pd, _ = safe(f"SELECT to_jsonb(x) AS x FROM public.policy_defaults x WHERE project_id = '{pid}'")
+    po, _ = safe(f"SELECT to_jsonb(x) AS x FROM public.policy_overrides x WHERE project_id = '{pid}'")
+    (d / "live_policies.json").write_text(json.dumps({"defaults": [x["x"] for x in pd or []],
+                                                      "overrides": [x["x"] for x in po or []]}, indent=1))
+    out(f"\n_snapshots of {p['name']} exported to `{d}`_")
+
+
 def main() -> None:
     out(f"# Demo readiness — projects named `{NAME_PREFIX}*`\n")
     projects = sql(f"""SELECT p.id::text, p.name, p.supply_chain_model, p.bom_level, p.plant_name,
@@ -189,6 +217,8 @@ def main() -> None:
                 "WHERE created_at > now() - interval '14 days' GROUP BY status")
     out(f"Runs on the whole platform, last 14 days: {r if r is not None else e}")
     summary = {p["name"]: project_report(p) for p in projects}
+    for p in projects:
+        export_snapshots(p)
     Path("demo-readiness.md").write_text("\n".join(OUT) + "\n")
     Path("demo-readiness.json").write_text(json.dumps(summary, indent=2) + "\n")
 

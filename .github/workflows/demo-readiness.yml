@@ -49,10 +49,10 @@ jobs:
         if: always()
         run: |
           [ -f demo-readiness.md ] || exit 0
-          mkdir -p /tmp/pubfiles && cp demo-readiness.md demo-readiness.json /tmp/pubfiles/
+          mkdir -p /tmp/pubfiles && cp -r demo-readiness.md demo-readiness.json /tmp/pubfiles/ && { [ -d snapshots ] && cp -r snapshots /tmp/pubfiles/ || true; }
           git worktree add --detach pub
           cd pub && git checkout -q --orphan demo-readiness-results-new && git rm -rfq . || true
-          cp /tmp/pubfiles/* . && git add -A
+          cp -r /tmp/pubfiles/* . && git add -A
           git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
             commit -q -m "demo readiness (run ${{ github.run_id }})"
           git push -f origin HEAD:demo-readiness-results
