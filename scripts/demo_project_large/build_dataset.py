@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the LARGE demo dataset: 100 products, 1 000 suppliers, a multi-level bill of materials.
+"""Build the LARGE demo dataset: 100 products, 500 suppliers, a multi-level bill of materials.
 
     python3 scripts/demo_project_large/build_dataset.py                 # write out/dataset.json + out/csv/
     python3 scripts/demo_project_large/build_dataset.py --check        # build and self-check only
@@ -24,11 +24,11 @@ SHAPE (defaults)
   * 1 800 purchased materials, every one used by at least one product and sourced by 1-3
     suppliers (shares sum to 1). About 5 000 BOM rows in all — kept well under 10 000, the
     most any unpaged read returns from production.
-  * 1 000 suppliers in 16 specialities, each supplying at least one material; a few supply many
+  * 500 suppliers (the engine's limit per network) in 16 specialities, each supplying at least one material; a few supply many
     (supplier choice is skewed, so concentration shows up). Capacity is set from what each
     supplier is asked to ship, so the baseline is feasible rather than starved.
   * 25 customers; each product is sold to 1-3 of them.
-  * A deep-tier firm graph: the plant, the 1 000 suppliers as tier 1, then ~1 400 tier-2 and
+  * A deep-tier firm graph: the plant, the 500 suppliers as tier 1, then ~1 400 tier-2 and
     ~700 tier-3 firms, with shared upstream hubs (a few firms feed many). Every firm is
     reachable from the plant, every edge goes exactly one tier down.
 
@@ -53,7 +53,7 @@ HERE = Path(__file__).resolve().parent
 NS = uuid.uuid5(uuid.NAMESPACE_DNS, "demo-large.suresuite.example")
 
 PROJECT = {
-    "name": "Demo — Large Network (100 products, 1 000 suppliers)",
+    "name": "Demo — Large Network (100 products, 500 suppliers)",
     "plant": "Stuttgart Plant",
     "model": "Make-To-Order",
     "bom_level": "multi",
@@ -330,7 +330,7 @@ def build(n_products: int, n_suppliers: int, n_materials: int, n_customers: int,
         lt = rng.randint(1, 12)
         materials.append({
             "material_id": mid(m), "name": f"{CATEGORIES[mat_cat[m]][0]} item {m + 1:05d}", "cost": cost,
-            "holding_cost_pct": 0.2, "moq": 1, "initial_on_hand": int(round(use_per_week[mid(m)] * 2)),
+            "holding_cost_pct": 0.2, "moq": 1, "initial_on_hand": int(round(use_per_week[mid(m)] * (lt + 3))),
             "lead_time_dist": "deterministic", "lead_time_cv": 0, "_lt": lt, "_cat": mat_cat[m],
         })
 
@@ -359,9 +359,13 @@ def build(n_products: int, n_suppliers: int, n_materials: int, n_customers: int,
                 "time_unit": "week", "lead_time": max(1, mt["_lt"] + rng.choice([-1, 0, 0, 1])), "lead_time_unit": "week",
                 "unit_price": round(mt["cost"] * rng.uniform(0.92, 1.12), 2), "_share": share,
             })
-    shipped: dict[str, int] = {}
+    # A supplier's capacity covers the WHOLE of every material it ships, not only its share:
+    # the engine buys a material from one supplier at a time (single sourcing), so sized to
+    # its share a second source starved as soon as it was the one chosen (fill rate 43% in a
+    # normal year). Starting stock covers the lead time plus three weeks for the same reason.
+    shipped: dict[str, float] = {}
     for lane in inbound:
-        shipped[lane["supplier_id"]] = shipped.get(lane["supplier_id"], 0) + lane["volume"]
+        shipped[lane["supplier_id"]] = shipped.get(lane["supplier_id"], 0) + use_per_week[lane["material_id"]]
 
     d: dict = {
         "_about": (
@@ -629,7 +633,7 @@ def split_files(d: dict, out: Path, size: int) -> dict[Path, str]:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--products", type=int, default=100)
-    ap.add_argument("--suppliers", type=int, default=1000)
+    ap.add_argument("--suppliers", type=int, default=500)
     ap.add_argument("--materials", type=int, default=1800)
     ap.add_argument("--customers", type=int, default=25)
     ap.add_argument("--seed", type=int, default=7)

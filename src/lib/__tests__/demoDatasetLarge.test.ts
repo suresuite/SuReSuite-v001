@@ -38,9 +38,9 @@ describe.skipIf(!python)("large demo dataset", () => {
 
   it("is the size the demo promises", () => {
     expect(data.products).toHaveLength(100);
-    expect(data.suppliers).toHaveLength(1000);
+    expect(data.suppliers).toHaveLength(500);
     expect(data.materials).toHaveLength(1800);
-    expect(data.network_nodes.length).toBeGreaterThan(3000);
+    expect(data.network_nodes.length).toBeGreaterThan(1500);
   });
 
   it("stays under production's 10 000-row read ceiling on every table the engine reads", () => {
@@ -82,7 +82,7 @@ describe.skipIf(!python)("large demo dataset", () => {
     expect([...parents.entries()].filter(([id, n]) => id.startsWith("M-") && n > 1).length).toBeGreaterThan(300);
     const perSupplier = new Map<string, number>();
     for (const i of data.inbound) perSupplier.set(i.supplier_id, (perSupplier.get(i.supplier_id) ?? 0) + 1);
-    expect(perSupplier.size).toBe(1000);
+    expect(perSupplier.size).toBe(500);
     expect(Math.max(...perSupplier.values())).toBeGreaterThanOrEqual(8);
   });
 

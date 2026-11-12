@@ -1,8 +1,8 @@
-# Large demo dataset — 100 products, 1 000 suppliers
+# Large demo dataset — 100 products, 500 suppliers
 
 The same story as `scripts/demo_project`, at the size where the three network lenses stop
 being readable as one graph: a multi-level bill of materials four levels deep, thousands of
-nodes and edges, and a deep-tier firm graph of about three thousand firms. Entirely
+nodes and edges, and a deep-tier firm graph of about fifteen hundred firms. Entirely
 fictional. It exists to try the lenses' large-network views (`src/lib/network/scale.ts`) and
 to see how the rest of the app behaves on a project this size.
 
@@ -10,11 +10,11 @@ to see how the rest of the app behaves on a project this size.
 |---|---|
 | Finished products (10 families) | 100 |
 | Purchased materials (shared across products) | 1 800 |
-| Suppliers (16 specialities, 22 countries) | 1 000 |
+| Suppliers (16 specialities, 22 countries) | 500 — the engine's limit per network (`scsim/scsim/entities/network.py`) |
 | BOM rows (levels 1–4) | ~4 900 |
-| Inbound lanes | ~3 050 |
-| Customers / outbound lanes | 25 / ~190 |
-| Firm graph: nodes / edges | ~3 100 / ~5 200 |
+| Inbound lanes | ~3 070 |
+| Customers / outbound lanes | 25 / ~175 |
+| Firm graph: nodes / edges | ~1 550 / ~2 600 |
 
 The BOM is kept under 10 000 rows on purpose: production returns at most that many rows
 from one unpaged read, and a project past it would be simulated on a slice.

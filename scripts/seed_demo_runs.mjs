@@ -48,36 +48,84 @@ const BASE = `${SUPABASE_URL}/functions/v1/api/v1`;
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const API_KEY = process.env.SURESUITE_API_KEY || "";
-const dataset = JSON.parse(readFileSync(join(repoRoot, "scripts/demo_project/dataset.json"), "utf8"));
+// DEMO=small (default) is scripts/demo_project; DEMO=large is scripts/demo_project_large, read
+// from its generated out/ (run its build_dataset.py first).
+const DEMO = (process.env.DEMO || "small").toLowerCase();
+if (!["small", "large"].includes(DEMO)) {
+  console.error(`DEMO must be small or large, not ${DEMO}`);
+  process.exit(2);
+}
+const datasetPath = DEMO === "large"
+  ? join(repoRoot, "scripts/demo_project_large/out/dataset.json")
+  : join(repoRoot, "scripts/demo_project/dataset.json");
+const dataset = JSON.parse(readFileSync(datasetPath, "utf8"));
 const PROJECT_NAME = process.env.PROJECT_NAME || dataset.project.name;
 const REPLICATIONS = Number(process.env.REPLICATIONS || 10);
 
 // ── The plan ─────────────────────────────────────────────────────────────────────
-// The microcontroller has two sources; Kestrel (S-MCU) ships 70% of it.
-const MAIN_MCU_SUPPLIER = "S-MCU";
+// Every figure below was checked by replaying the project's own frozen inputs through the
+// engine (sim_worker.local.run_from_snapshots) before it was written here.
 const FRAME = { horizon_days: 364, replications: REPLICATIONS, seed: 42, crn: true };
 const outage = (target, start_day, duration_days) =>
   ({ target, target_type: "node", start_day, duration_days, magnitude_pct: 100 });
 
-const SCENARIOS = [
-  { name: "Normal year", description: "52 weeks, no disruption.", events: [] },
-  {
-    name: "Microcontroller supplier outage (6 weeks)",
-    description: "Kestrel Microsystems ships nothing for six weeks from week 20.",
-    events: [outage(MAIN_MCU_SUPPLIER, 140, 42)],
-  },
-  {
-    name: "Plant shutdown (3 weeks)",
-    description: "The plant makes nothing for three weeks from week 20.",
-    events: [outage("plant", 140, 21)],
-  },
-];
-const POLICY_LABELS = { A: "Baseline policies", B: "Safety stock 28 days" };
+// Customer terms: how long each customer × product row waits for a late order. With the
+// project-wide 14 days every late order still shipped inside the window, so a 3-week plant
+// shutdown showed a 51% fill rate and an unchanged revenue. These terms make a late order
+// a lost one, as it would be for these customers.
+const customerRow = (key, patch) => ({ scope: "node", family: "fulfillment", target_key: key, patch });
+
+let SCENARIOS;
+let CUSTOMER_TERMS;
+if (DEMO === "small") {
+  // The microcontroller is single-sourced from Kestrel (S-MCU, lead time 8 weeks): a 6-week
+  // outage is covered by what is already in transit, so the outage runs 10 weeks.
+  SCENARIOS = [
+    { name: "Normal year", description: "52 weeks, no disruption.", events: [] },
+    {
+      name: "Microcontroller supplier outage (10 weeks)",
+      description: "Kestrel Microsystems ships nothing for ten weeks from week 20.",
+      events: [outage("S-MCU", 140, 70)],
+    },
+    {
+      name: "Plant shutdown (3 weeks)",
+      description: "The plant makes nothing for three weeks from week 20.",
+      events: [outage("plant", 140, 21)],
+    },
+  ];
+  CUSTOMER_TERMS = [
+    // Spare-parts service: a late order is lost.
+    customerRow("C-SERVICE::P-CONTROL", { backorder_allowed: false }),
+    // The OEM line waits one week at most.
+    customerRow("C-ASSEMBLY::P-CONTROL", { backorder_allowed: true, max_backorder_days: 7 }),
+  ];
+} else {
+  // S-0198 (Husan Sensor Tech) is the single source whose outage costs the most lost sales
+  // of the twelve largest, measured with the engine on this dataset (seed 7, 500 suppliers).
+  SCENARIOS = [
+    { name: "Normal year", description: "52 weeks, no disruption.", events: [] },
+    {
+      name: "Sensor supplier outage (10 weeks)",
+      description: "Husan Sensor Tech (S-0198) ships nothing for ten weeks from week 20.",
+      events: [outage("S-0198", 140, 70)],
+    },
+    {
+      name: "Plant shutdown (3 weeks)",
+      description: "The plant makes nothing for three weeks from week 20.",
+      events: [outage("plant", 140, 21)],
+    },
+  ];
+  // Every customer waits one week at most.
+  const rows = [...new Set(dataset.outbound.map((o) => `${o.customer_id}::${o.product_id}`))].sort();
+  CUSTOMER_TERMS = rows.map((k) => customerRow(k, { backorder_allowed: true, max_backorder_days: 7 }));
+}
+const POLICY_LABELS = { A: "Baseline — customer terms", B: "Safety stock 28 days — customer terms" };
 
 if (DRY_RUN) {
   console.log("SuReSuite demo runs seed — DRY RUN (nothing is called)\n");
   console.log(`  API: ${BASE}`);
-  console.log(`  project: "${PROJECT_NAME}"   frame: ${JSON.stringify(FRAME)}`);
+  console.log(`  demo: ${DEMO}   project: "${PROJECT_NAME}"   frame: ${JSON.stringify(FRAME)}`);
+  console.log(`  customer terms: ${CUSTOMER_TERMS.length} row(s), e.g. ${JSON.stringify(CUSTOMER_TERMS[0])}`);
   console.log(`  policy versions: A "${POLICY_LABELS.A}", B "${POLICY_LABELS.B}" (inventory.safety_stock_method=fixed_days, safety_stock_days=28)`);
   for (const s of SCENARIOS) console.log(`  scenario "${s.name}" — ${s.events.length} event(s): ${JSON.stringify(s.events)}`);
   console.log(`  runs: ${SCENARIOS.length} scenarios × 2 policy versions = ${SCENARIOS.length * 2}, one at a time`);
@@ -143,6 +191,9 @@ async function main() {
   // 1 · data and policies
   const frozen = await api("POST", `/projects/${pid}/datasets:freeze`, { label: "demo dataset" });
   console.log(`  dataset version ${frozen.id}`);
+  // The customer terms stay on the project: they are its policies from now on.
+  await api("PUT", `/projects/${pid}/policies`, { overrides: CUSTOMER_TERMS });
+  console.log(`  customer terms saved on ${CUSTOMER_TERMS.length} row(s)`);
   const original = (await api("GET", `/projects/${pid}/policies`)).defaults?.inventory ?? {};
   const versionA = await api("POST", `/projects/${pid}/policy-versions`, { label: POLICY_LABELS.A });
   let versionB;
@@ -178,7 +229,8 @@ async function main() {
   for (const sc of scenarios) {
     for (const [tag, version] of [["A", versionA], ["B", versionB]]) {
       const label = `${sc.name} · ${POLICY_LABELS[tag]}`;
-      const idem = `demo-seed-${sc.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${tag}`;
+      // Keyed on the policy VERSION too: a new version of the same scenario is a new run.
+      const idem = `demo-seed-${sc.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${tag}-${version.id.slice(0, 8)}`;
       const body = { scenario_id: sc.id, policy_version_id: version.id };
       let run;
       try {
