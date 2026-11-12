@@ -1,5 +1,4 @@
-project_name=Project TRON - version 2
-replications=3
+project_name=Demo — Control Unit Supply Network
+replications=10
 seed=1
-start_week=26
-durations=4
+start_week=70
