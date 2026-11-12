@@ -111,6 +111,27 @@ def project_report(p: dict) -> list[str]:
                 f"ORDER BY created_at DESC LIMIT 3")
     for x in r or []:
         out(f"  - {x['at'][:19]} {x['status']}: {x['err']}")
+    # What the finished runs actually hold — an empty KPI block is "no value" on the page.
+    r, e = safe(f"""SELECT r.created_at::text AS at, s.name AS scenario, pv.label AS policy,
+                           r.rep_count_done, r.rep_count_target, r.code_version,
+                           left(coalesce(r.aggregate_kpis::text, 'NULL'), 900) AS kpis,
+                           left(coalesce(r.mapping_warnings::text, 'NULL'), 600) AS warnings
+                      FROM public.simulation_runs r
+                      LEFT JOIN public.scenarios s ON s.id = r.scenario_id
+                      LEFT JOIN public.policy_versions pv ON pv.id = r.policy_version_id
+                     WHERE r.project_id = '{pid}' ORDER BY r.created_at DESC LIMIT 8""")
+    if e:
+        out(f"  (run detail unreadable: {e[:200]})")
+    for x in r or []:
+        out(f"\n- run {x['at'][:19]} · {x['scenario']} · {x['policy']} · reps {x['rep_count_done']}/{x['rep_count_target']} · {x['code_version']}")
+        out(f"  - kpis: `{x['kpis']}`")
+        out(f"  - mapping warnings: `{x['warnings']}`")
+    r, e = safe(f"""SELECT count(*)::int AS n FROM public.run_replications rr
+                      JOIN public.simulation_runs r ON r.id = rr.run_id WHERE r.project_id = '{pid}'""")
+    out(f"\n**Replication rows:** {r[0]['n'] if r else e}")
+    r, e = safe(f"""SELECT count(*)::int AS n FROM public.run_item_series ri
+                      JOIN public.simulation_runs r ON r.id = ri.run_id WHERE r.project_id = '{pid}'""")
+    out(f"**Item series rows:** {r[0]['n'] if r else e}")
     r, _ = safe(f"SELECT name, role, horizon_days, replications, jsonb_array_length(coalesce(disruption_schedule,'[]'::jsonb)) AS events "
                 f"FROM public.scenarios WHERE project_id = '{pid}' ORDER BY created_at")
     out("\n**Scenarios:** " + ("; ".join(f"{x['name']} ({x['role']}, {x['horizon_days']} d, {x['replications']} reps, {x['events']} events)" for x in r) if r else "none"))
@@ -153,8 +174,8 @@ def main() -> None:
                          FROM public.projects p LEFT JOIN public.approved_users u ON u.id = p.modeler_id
                         WHERE p.name LIKE {lit(NAME_PREFIX + '%')} ORDER BY p.created_at""")
     out(f"{len(projects)} project(s).")
-    w, e = safe("SELECT engine_version, code_version, created_at::text AS at FROM public.sim_engine_builds "
-                "ORDER BY created_at DESC LIMIT 1")
+    w, e = safe("SELECT to_jsonb(b) AS b FROM public.sim_engine_builds b "
+                "LIMIT 1")
     out(f"Latest engine build recorded: {w[0] if w else e}")
     r, e = safe("SELECT status, count(*)::int AS n, max(created_at)::text AS last FROM public.simulation_runs "
                 "WHERE created_at > now() - interval '14 days' GROUP BY status")
