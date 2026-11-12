@@ -203,6 +203,51 @@ def export_snapshots(p: dict) -> None:
     out(f"\n_snapshots of {p['name']} exported to `{d}`_")
 
 
+def inventory(p: dict) -> None:
+    """Everything a clean-up would touch, with who references it — read-only."""
+    pid = p["id"]
+    out(f"\n### Inventory — {p['name']}\n")
+    r, e = safe(f"""SELECT id::text, model_code, name, status, revoked_at::text AS revoked, superseded_by::text AS superseded_by,
+                           policy_version_id::text AS pv, dataset_version_id::text AS dv, evidence_run_id::text AS ev,
+                           (protocol->>'horizon_days') AS horizon, adopted_warmup_days, validated_at::text AS at
+                      FROM public.model_validations WHERE project_id = '{pid}' ORDER BY created_at""")
+    out("**Validated Models**")
+    for x in r or []:
+        out(f"- `{x['id'][:8]}` {x['model_code']} \"{x['name']}\" [{x['status']}{' revoked' if x['revoked'] else ''}] policy `{(x['pv'] or '')[:8]}` data `{(x['dv'] or '')[:8]}` evidence-run `{(x['ev'] or '')[:8]}` warm-up {x['adopted_warmup_days']} d horizon {x['horizon']} · {x['at']}")
+    if e: out(f"  ({e[:200]})")
+    r, e = safe(f"""SELECT s.id::text, s.name, s.role, s.horizon_days, s.created_at::text AS at,
+                           (SELECT count(*)::int FROM public.simulation_runs r WHERE r.scenario_id = s.id) AS runs,
+                           (SELECT count(*)::int FROM public.model_validations m WHERE m.evidence_run_id IN
+                              (SELECT id FROM public.simulation_runs r WHERE r.scenario_id = s.id)) AS evidence_for_models
+                      FROM public.scenarios s WHERE s.project_id = '{pid}' ORDER BY s.created_at""")
+    out("\n**Scenarios** (runs cascade with their scenario)")
+    for x in r or []:
+        out(f"- `{x['id'][:8]}` {x['name']} · {x['role']} · {x['horizon_days']} d · {x['runs']} runs · evidence for {x['evidence_for_models']} model(s) · {x['at'][:16]}")
+    r, e = safe(f"""SELECT v.id::text, v.version_no, v.label, v.created_at::text AS at,
+                           (SELECT count(*)::int FROM public.simulation_runs r WHERE r.policy_version_id = v.id) AS runs,
+                           (SELECT count(*)::int FROM public.model_validations m WHERE m.policy_version_id = v.id) AS models
+                      FROM public.policy_versions v WHERE v.project_id = '{pid}' ORDER BY v.version_no""")
+    out("\n**Policy versions**")
+    for x in r or []:
+        out(f"- `{x['id'][:8]}` v{x['version_no']} {x['label']} · {x['runs']} runs · {x['models']} model(s) · {x['at'][:16]}")
+    r, e = safe(f"""SELECT v.id::text, v.version_no, v.label, v.created_at::text AS at,
+                           (SELECT count(*)::int FROM public.simulation_runs r WHERE r.dataset_version_id = v.id) AS runs,
+                           (SELECT count(*)::int FROM public.model_validations m WHERE m.dataset_version_id = v.id) AS models
+                      FROM public.dataset_versions v WHERE v.project_id = '{pid}' ORDER BY v.version_no""")
+    out("\n**Data versions**")
+    for x in r or []:
+        out(f"- `{x['id'][:8]}` v{x['version_no']} {x['label']} · {x['runs']} runs · {x['models']} model(s) · {x['at'][:16]}")
+    r, e = safe(f"""SELECT r.id::text, s.name AS scenario, pv.label AS policy, r.status, r.created_at::text AS at,
+                           r.model_validation_id::text AS model, r.exploratory
+                      FROM public.simulation_runs r LEFT JOIN public.scenarios s ON s.id = r.scenario_id
+                      LEFT JOIN public.policy_versions pv ON pv.id = r.policy_version_id
+                     WHERE r.project_id = '{pid}' ORDER BY r.created_at""")
+    out("\n**Runs**")
+    for x in r or []:
+        out(f"- `{x['id'][:8]}` {x['scenario']} · {x['policy']} · {x['status']} · model `{(x['model'] or '-')[:8]}` · {x['at'][:16]}")
+    r, e = safe(f"SELECT count(*)::int AS n FROM public.analysis_runs WHERE project_id = '{pid}' AND status = 'running'")
+    out(f"\n**Analyses still `running`:** {r[0]['n'] if r else e}")
+
 def main() -> None:
     out(f"# Demo readiness — projects named `{NAME_PREFIX}*`\n")
     projects = sql(f"""SELECT p.id::text, p.name, p.supply_chain_model, p.bom_level, p.plant_name,
@@ -218,6 +263,7 @@ def main() -> None:
     out(f"Runs on the whole platform, last 14 days: {r if r is not None else e}")
     summary = {p["name"]: project_report(p) for p in projects}
     for p in projects:
+        inventory(p)
         export_snapshots(p)
     Path("demo-readiness.md").write_text("\n".join(OUT) + "\n")
     Path("demo-readiness.json").write_text(json.dumps(summary, indent=2) + "\n")
