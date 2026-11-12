@@ -65,9 +65,20 @@ const REPLICATIONS = Number(process.env.REPLICATIONS || 10);
 // ── The plan ─────────────────────────────────────────────────────────────────────
 // Every figure below was checked by replaying the project's own frozen inputs through the
 // engine (sim_worker.local.run_from_snapshots) before it was written here.
-const FRAME = { horizon_days: 364, replications: REPLICATIONS, seed: 42, crn: true };
-const outage = (target, start_day, duration_days) =>
-  ({ target, target_type: "node", start_day, duration_days, magnitude_pct: 100 });
+// THE CALENDAR. Run week 0 is `projects.simulation_start`. The Welch warm-up detected on the
+// demos is 34 weeks, so week 34 — where measuring begins — is put on 1 January 2026 and the
+// 52 measured weeks are the year 2026. The engine measures 52 weeks after warm-up and keeps a
+// 13-week tail after that window, so the run must be at least 34 + 52 + 13 = 99 weeks; it is 104
+// (two years). At 52 weeks, the length used before, only 18 weeks were measured.
+const WARMUP_WEEKS = 34;
+const HORIZON_WEEKS = 104;
+const CALENDAR_START = "2025-05-08";   // run week 0; week 34 = 2026-01-01
+const CALENDAR_END = "2027-05-06";     // week 0 + 104 weeks
+const DISRUPTION_WEEK = 54;            // 21 May 2026, 20 weeks into the measured year
+const DISRUPTION_DAY = DISRUPTION_WEEK * 7;
+const FRAME = { horizon_days: HORIZON_WEEKS * 7, warmup_days: WARMUP_WEEKS * 7, replications: REPLICATIONS, seed: 42, crn: true };
+const outage = (target, duration_days) =>
+  ({ target, target_type: "node", start_day: DISRUPTION_DAY, duration_days, magnitude_pct: 100 });
 
 // Customer terms: how long each customer × product row waits for a late order. With the
 // project-wide 14 days every late order still shipped inside the window, so a 3-week plant
@@ -81,16 +92,16 @@ if (DEMO === "small") {
   // The microcontroller is single-sourced from Kestrel (S-MCU, lead time 8 weeks): a 6-week
   // outage is covered by what is already in transit, so the outage runs 10 weeks.
   SCENARIOS = [
-    { name: "Normal year", description: "52 weeks, no disruption.", events: [] },
+    { name: "Normal 2026", description: "Calendar 2026 (week 34–86 of a 104-week run), no disruption.", events: [] },
     {
-      name: "Microcontroller supplier outage (10 weeks)",
-      description: "Kestrel Microsystems ships nothing for ten weeks from week 20.",
-      events: [outage("S-MCU", 140, 70)],
+      name: "Microcontroller outage May 2026 (10 wk)",
+      description: "Kestrel Microsystems ships nothing for ten weeks from 21 May 2026.",
+      events: [outage("S-MCU", 70)],
     },
     {
-      name: "Plant shutdown (3 weeks)",
-      description: "The plant makes nothing for three weeks from week 20.",
-      events: [outage("plant", 140, 21)],
+      name: "Plant shutdown May 2026 (3 wk)",
+      description: "The plant makes nothing for three weeks from 21 May 2026.",
+      events: [outage("plant", 21)],
     },
   ];
   CUSTOMER_TERMS = [
@@ -103,16 +114,16 @@ if (DEMO === "small") {
   // S-0198 (Husan Sensor Tech) is the single source whose outage costs the most lost sales
   // of the twelve largest, measured with the engine on this dataset (seed 7, 500 suppliers).
   SCENARIOS = [
-    { name: "Normal year", description: "52 weeks, no disruption.", events: [] },
+    { name: "Normal 2026", description: "Calendar 2026 (week 34–86 of a 104-week run), no disruption.", events: [] },
     {
-      name: "Sensor supplier outage (10 weeks)",
-      description: "Husan Sensor Tech (S-0198) ships nothing for ten weeks from week 20.",
-      events: [outage("S-0198", 140, 70)],
+      name: "Sensor supplier outage May 2026 (10 wk)",
+      description: "Husan Sensor Tech (S-0198) ships nothing for ten weeks from 21 May 2026.",
+      events: [outage("S-0198", 70)],
     },
     {
-      name: "Plant shutdown (3 weeks)",
-      description: "The plant makes nothing for three weeks from week 20.",
-      events: [outage("plant", 140, 21)],
+      name: "Plant shutdown May 2026 (3 wk)",
+      description: "The plant makes nothing for three weeks from 21 May 2026.",
+      events: [outage("plant", 21)],
     },
   ];
   // Every customer waits one week at most.
@@ -125,6 +136,7 @@ if (DRY_RUN) {
   console.log("SuReSuite demo runs seed — DRY RUN (nothing is called)\n");
   console.log(`  API: ${BASE}`);
   console.log(`  demo: ${DEMO}   project: "${PROJECT_NAME}"   frame: ${JSON.stringify(FRAME)}`);
+  console.log(`  calendar: week 0 = ${CALENDAR_START}, week ${WARMUP_WEEKS} = 2026-01-01, run ends ${CALENDAR_END} (${HORIZON_WEEKS} weeks)`);
   console.log(`  customer terms: ${CUSTOMER_TERMS.length} row(s), e.g. ${JSON.stringify(CUSTOMER_TERMS[0])}`);
   console.log(`  policy versions: A "${POLICY_LABELS.A}", B "${POLICY_LABELS.B}" (inventory.safety_stock_method=fixed_days, safety_stock_days=28)`);
   for (const s of SCENARIOS) console.log(`  scenario "${s.name}" — ${s.events.length} event(s): ${JSON.stringify(s.events)}`);
@@ -208,6 +220,11 @@ const app = {
     const list = await appRpc("list_projects", { p_user_id: USER_ID, p_user_email: USER_EMAIL });
     return (Array.isArray(list) ? list : []).find((p) => p.name === PROJECT_NAME) ?? null;
   },
+  // Run week 0. A run stamps the calendar it was dispatched against, so this comes first.
+  setCalendar: (p) => appRpc("update_project", {
+    p_project_id: p.id, p_name: p.name, p_plant: p.plant_name, p_model: p.supply_chain_model, p_bom_level: p.bom_level,
+    p_user_id: USER_ID, p_user_email: USER_EMAIL, p_simulation_start: CALENDAR_START, p_simulation_end: CALENDAR_END,
+  }),
   freeze: (pid) => appRpc("snapshot_dataset", { p_project_id: pid, p_label: "demo dataset", p_user_id: USER_ID, p_user_email: USER_EMAIL }),
   async inventory(pid) {
     const r = await rest("GET", `/rest/v1/policy_defaults?project_id=eq.${pid}&select=inventory`);
@@ -228,7 +245,7 @@ const app = {
     // The Lab's own defaults (useScenarios.tsx SCENARIO_ENGINE_DEFAULTS) with the frame above.
     const row = {
       project_id: pid, name: s.name, description: s.description, role: "experiment",
-      time_step: "day", warmup_mode: "auto", warmup_days: 14, demand_model: { kind: "poisson", lambda: 50 },
+      time_step: "day", warmup_mode: "manual", demand_model: { kind: "poisson", lambda: 50 },
       recovery_overrides: {}, stopping_rule: { kind: "fixed_horizon", max_wall_seconds: 600 }, primary_kpi: "fill_rate",
       ...FRAME, disruption_schedule: s.events,
     };
@@ -255,6 +272,8 @@ async function mainViaApp() {
   if (!project) throw new Error(`no project named "${PROJECT_NAME}" is visible to ${USER_EMAIL} — seed the data first, with the same owner`);
   const pid = project.id;
   console.log(`  project ${pid}`);
+  await app.setCalendar(project);
+  console.log(`  calendar: week 0 = ${CALENDAR_START}, week ${WARMUP_WEEKS} = 2026-01-01, ${HORIZON_WEEKS} weeks`);
 
   const ds = await app.freeze(pid);
   console.log(`  dataset version ${String(ds).slice(0, 8)}`);
