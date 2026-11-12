@@ -3,21 +3,21 @@ name: Demo seed (data, policies, scenarios, runs)
 # Loads the demo projects and gives /policies and the Simulation Lab something to show.
 #
 #   large-data  builds scripts/demo_project_large (500 suppliers) and loads it into a project
-#               owned by `large_owner_email`: masters by RPC, then the BOM and lanes as ONE
+#               owned by the old large demo's owner: masters by RPC, then the BOM and lanes as ONE
 #               SQL transaction (LANES_VIA=sql, the README's route), then the rest and the
 #               network analyses (LANES_VIA=loaded).
 #   runs        per demo: saves the customer terms, two policy versions, three scenarios and
 #               their six runs through the public API (scripts/seed_demo_runs.mjs).
 #   readiness   the read-only report, published to `demo-readiness-results`.
 #
-# Secrets: SUPABASE_ACCESS_TOKEN (already used by the seed and nexus workflows), and one API
-# key per demo owner, made in /developer with read+write on data, policies and runs:
-# DEMO_SMALL_API_KEY (the small demo's owner) and DEMO_LARGE_API_KEY (the large demo's).
+# Secret: SUPABASE_ACCESS_TOKEN only (already used by the seed and nexus workflows). Each demo
+# is written AS ITS OWNER through the app's own path — the owner is the project's modeler,
+# read from the database (scripts/demo/owner.py); the new large project takes the owner of
+# the 1 000-supplier project it replaces.
 #
 # TRIGGER: push `.github/demo-seed-request` with key=value lines:
 #   demos=small,large          which demos get policies, scenarios and runs
 #   large_data=1               also (re)load the large demo's data first
-#   large_owner_email=<email>  the approved user who owns the large demo
 #   replications=10
 
 on:
@@ -38,7 +38,6 @@ jobs:
     outputs:
       demos: ${{ steps.p.outputs.demos }}
       large_data: ${{ steps.p.outputs.large_data }}
-      large_owner_email: ${{ steps.p.outputs.large_owner_email }}
       replications: ${{ steps.p.outputs.replications }}
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +46,6 @@ jobs:
           get() { grep -oP "^$1=\K.+" .github/demo-seed-request | tail -1 || true; }
           echo "demos=$(get demos)" >> "$GITHUB_OUTPUT"
           echo "large_data=$(get large_data)" >> "$GITHUB_OUTPUT"
-          echo "large_owner_email=$(get large_owner_email)" >> "$GITHUB_OUTPUT"
           r=$(get replications); echo "replications=${r:-10}" >> "$GITHUB_OUTPUT"
 
   large-data:
@@ -69,30 +67,14 @@ jobs:
       - name: Build the large dataset
         run: python scripts/demo_project_large/build_dataset.py
       - name: Resolve the owner
-        id: who
         run: |
-          EMAIL="${{ needs.params.outputs.large_owner_email }}"
-          [ -n "$EMAIL" ] || { echo "::error::add large_owner_email=<email> to .github/demo-seed-request"; exit 1; }
-          ID=$(python - "$EMAIL" <<'PY'
-          import sys; sys.path.insert(0, "scripts/nexus")
-          from nexus_job import sql, lit
-          rows = sql(f"SELECT id FROM public.approved_users WHERE lower(email) = lower({lit(sys.argv[1])})")
-          print(rows[0]["id"] if rows else "")
-          PY
-          )
-          [ -n "$ID" ] || { echo "::error::no approved user $EMAIL"; exit 1; }
-          echo "id=$ID" >> "$GITHUB_OUTPUT"; echo "email=$EMAIL" >> "$GITHUB_OUTPUT"
+          python scripts/demo/owner.py "Demo — Large Network (100 products, 500 suppliers)" \
+            "Demo — Large Network (100 products, 1 000 suppliers)" >> "$GITHUB_ENV"
       - name: 1 · project and item masters (writes load_lanes.sql)
-        env:
-          USER_ID: ${{ steps.who.outputs.id }}
-          USER_EMAIL: ${{ steps.who.outputs.email }}
         run: LANES_VIA=sql SKIP_ANALYSES=1 BATCH_ROWS=1000 node scripts/seed_demo_project.mjs
       - name: 2 · BOM and lanes, one transaction
         run: python scripts/demo/run_sql_file.py "$DATASET_DIR/load_lanes.sql"
       - name: 3 · locations, firm graph, analyses, read-back
-        env:
-          USER_ID: ${{ steps.who.outputs.id }}
-          USER_EMAIL: ${{ steps.who.outputs.email }}
         run: LANES_VIA=loaded BATCH_ROWS=300 node scripts/seed_demo_project.mjs
 
   runs:
@@ -116,21 +98,28 @@ jobs:
         with:
           node-version: 22
       - uses: actions/setup-python@v5
-        if: steps.want.outputs.yes == '1' && matrix.demo == 'large'
+        if: steps.want.outputs.yes == '1'
         with:
           python-version: "3.12"
       - name: Build the large dataset
         if: steps.want.outputs.yes == '1' && matrix.demo == 'large'
         run: python scripts/demo_project_large/build_dataset.py
-      - name: Policies, scenarios and runs
+      - name: Resolve the owner
+        if: steps.want.outputs.yes == '1'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          if [ "${{ matrix.demo }}" = small ]; then
+            python scripts/demo/owner.py "Demo — Control Unit Supply Network" >> "$GITHUB_ENV"
+          else
+            python scripts/demo/owner.py "Demo — Large Network (100 products, 500 suppliers)" >> "$GITHUB_ENV"
+          fi
+      - name: Policies, scenarios and runs (as the owner, through the app's path)
         if: steps.want.outputs.yes == '1'
         env:
           DEMO: ${{ matrix.demo }}
           REPLICATIONS: ${{ needs.params.outputs.replications }}
-          SURESUITE_API_KEY: ${{ matrix.demo == 'small' && secrets.DEMO_SMALL_API_KEY || secrets.DEMO_LARGE_API_KEY }}
-        run: |
-          [ -n "$SURESUITE_API_KEY" ] || { echo "::error::no API key secret for the $DEMO demo (DEMO_SMALL_API_KEY / DEMO_LARGE_API_KEY)"; exit 1; }
-          node scripts/seed_demo_runs.mjs
+        run: node scripts/seed_demo_runs.mjs
 
   readiness:
     needs: [runs]

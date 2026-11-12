@@ -131,8 +131,15 @@ if (DRY_RUN) {
   console.log(`  runs: ${SCENARIOS.length} scenarios × 2 policy versions = ${SCENARIOS.length * 2}, one at a time`);
   process.exit(0);
 }
-if (!/^sk_(live|test)_/.test(API_KEY)) {
-  console.error("a live run needs SURESUITE_API_KEY (an owner's key, sk_test_… or sk_live_…) — see the header");
+// Two ways in. With SURESUITE_API_KEY: the public /v1 API. Without one but with USER_ID and
+// USER_EMAIL (the owner's approved_users id and email): the app's own path — the same RPCs,
+// table writes and sim-command call /policies and the Lab make for that signed-in owner,
+// with the app's publishable key, exactly as scripts/seed_demo_project.mjs loads the data.
+const USER_ID = process.env.USER_ID || "";
+const USER_EMAIL = process.env.USER_EMAIL || "";
+const VIA_APP = !API_KEY && !!USER_ID && !!USER_EMAIL;
+if (!VIA_APP && !/^sk_(live|test)_/.test(API_KEY)) {
+  console.error("a live run needs SURESUITE_API_KEY (an owner's key), or USER_ID + USER_EMAIL of the owner — see the header");
   process.exit(2);
 }
 
@@ -174,6 +181,150 @@ const listAll = async (path) => {
   } while (cursor);
   return rows;
 };
+
+// ── The app's own path (no API key) ──────────────────────────────────────────────
+const ANON_KEY = clientTs.match(/SUPABASE_PUBLISHABLE_KEY = "([^"]+)"/)?.[1];
+const appHeaders = { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}`, "Content-Type": "application/json" };
+async function rest(method, path, body, extra = {}) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const res = await fetch(`${SUPABASE_URL}${path}`, {
+      method, headers: { ...appHeaders, ...extra }, body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const text = await res.text();
+    let parsed = null;
+    try { parsed = text ? JSON.parse(text) : null; } catch { parsed = text; }
+    if (res.status === 429 || res.status === 503 || res.status === 502) { await sleep(5000); continue; }
+    return { status: res.status, body: parsed };
+  }
+  throw new Error(`${method} ${path}: still failing after 5 attempts`);
+}
+async function appRpc(fn, args) {
+  const r = await rest("POST", `/rest/v1/rpc/${fn}`, args);
+  if (r.status >= 300) throw new Error(`rpc ${fn} → HTTP ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
+  return r.body;
+}
+const app = {
+  async project() {
+    const list = await appRpc("list_projects", { p_user_id: USER_ID, p_user_email: USER_EMAIL });
+    return (Array.isArray(list) ? list : []).find((p) => p.name === PROJECT_NAME) ?? null;
+  },
+  freeze: (pid) => appRpc("snapshot_dataset", { p_project_id: pid, p_label: "demo dataset", p_user_id: USER_ID, p_user_email: USER_EMAIL }),
+  async inventory(pid) {
+    const r = await rest("GET", `/rest/v1/policy_defaults?project_id=eq.${pid}&select=inventory`);
+    return (Array.isArray(r.body) && r.body[0]?.inventory) || {};
+  },
+  saveInventory: (pid, value) => appRpc("save_policy_defaults", { p_project_id: pid, p_family: "inventory", p_value: value, _actor_user_id: USER_ID }),
+  saveOverrides: (pid, rows) => appRpc("bulk_upsert_policy_overrides", { p_project_id: pid, p_rows: rows, _actor_user_id: USER_ID }),
+  async saveVersion(pid, label) {
+    const id = await appRpc("snapshot_policy", { p_project_id: pid, p_label: label, p_user_id: USER_ID, p_user_email: USER_EMAIL, p_user_name: "Demo seed" });
+    return { id: String(id) };
+  },
+  async scenarios(pid) {
+    const r = await rest("GET", `/rest/v1/scenarios?project_id=eq.${pid}&select=id,name`);
+    if (r.status >= 300) throw new Error(`scenarios read → HTTP ${r.status}: ${JSON.stringify(r.body)}`);
+    return r.body;
+  },
+  async createScenario(pid, s) {
+    // The Lab's own defaults (useScenarios.tsx SCENARIO_ENGINE_DEFAULTS) with the frame above.
+    const row = {
+      project_id: pid, name: s.name, description: s.description, role: "experiment",
+      time_step: "day", warmup_mode: "auto", warmup_days: 14, demand_model: { kind: "poisson", lambda: 50 },
+      recovery_overrides: {}, stopping_rule: { kind: "fixed_horizon", max_wall_seconds: 600 }, primary_kpi: "fill_rate",
+      ...FRAME, disruption_schedule: s.events,
+    };
+    const r = await rest("POST", "/rest/v1/scenarios", row, { Prefer: "return=representation" });
+    if (r.status >= 300) throw new Error(`scenario insert → HTTP ${r.status}: ${JSON.stringify(r.body)}`);
+    return r.body[0];
+  },
+  async dispatch(pid, scenarioId, versionId, ack) {
+    return rest("POST", "/functions/v1/sim-command", {
+      project_id: pid, scenario_id: scenarioId, kind: "experiment.run",
+      payload: { policy_version_id: versionId, acknowledge_warnings: ack, actor_user_id: USER_ID },
+      client_ts: Date.now(),
+    });
+  },
+  async run(id) {
+    const r = await rest("GET", `/rest/v1/simulation_runs?id=eq.${id}&select=id,status,aggregate_kpis,error_message`);
+    return (Array.isArray(r.body) && r.body[0]) || { status: "unknown" };
+  },
+};
+
+async function mainViaApp() {
+  console.log(`SuReSuite demo runs seed — LIVE, through the app's own path as ${USER_EMAIL}`);
+  const project = await app.project();
+  if (!project) throw new Error(`no project named "${PROJECT_NAME}" is visible to ${USER_EMAIL} — seed the data first, with the same owner`);
+  const pid = project.id;
+  console.log(`  project ${pid}`);
+
+  const ds = await app.freeze(pid);
+  console.log(`  dataset version ${String(ds).slice(0, 8)}`);
+  await app.saveOverrides(pid, CUSTOMER_TERMS);
+  console.log(`  customer terms saved on ${CUSTOMER_TERMS.length} row(s)`);
+  const original = await app.inventory(pid);
+  const versionA = await app.saveVersion(pid, POLICY_LABELS.A);
+  let versionB;
+  try {
+    await app.saveInventory(pid, { ...original, safety_stock_method: "fixed_days", safety_stock_days: 28 });
+    versionB = await app.saveVersion(pid, POLICY_LABELS.B);
+  } finally {
+    await app.saveInventory(pid, original);
+  }
+  console.log(`  policy versions: A ${versionA.id.slice(0, 8)}  B ${versionB.id.slice(0, 8)}`);
+  if (versionA.id === versionB.id) throw new Error("versions A and B are the same — set the project's safety stock to something else first");
+
+  const existing = await app.scenarios(pid);
+  const scenarios = [];
+  for (const s of SCENARIOS) {
+    let sc = existing.find((x) => x.name === s.name);
+    if (!sc) { sc = await app.createScenario(pid, s); console.log(`  created scenario "${s.name}"`); }
+    else console.log(`  reusing scenario "${s.name}"`);
+    scenarios.push(sc);
+  }
+
+  const results = [];
+  for (const sc of scenarios) {
+    for (const [tag, version] of [["A", versionA], ["B", versionB]]) {
+      const label = `${sc.name} · ${POLICY_LABELS[tag]}`;
+      let r = await app.dispatch(pid, sc.id, version.id, false);
+      if (r.status === 422 && r.body?.validation === "ack_required") {
+        console.log(`  ${label}: the data check only warns —`);
+        for (const f of r.body.findings ?? []) console.log(`      [${f.severity}] ${f.message}`);
+        r = await app.dispatch(pid, sc.id, version.id, true);
+      }
+      if (r.status === 409 && r.body?.reuse_available) {
+        const id = r.body.reuse_candidate?.run_id;
+        console.log(`  ✓ ${label}: an identical run already exists (${String(id).slice(0, 8)})`);
+        results.push({ label, id, status: "done" });
+        continue;
+      }
+      if (r.status >= 300) {
+        for (const f of r.body?.findings ?? []) console.error(`      [${f.severity}] ${f.message}`);
+        throw new Error(`${label}: sim-command HTTP ${r.status}: ${JSON.stringify(r.body?.error ?? r.body).slice(0, 400)}`);
+      }
+      const id = r.body.run_id;
+      process.stdout.write(`  ${label}: waiting for run ${String(id).slice(0, 8)}`);
+      let run = await app.run(id);
+      const t0 = Date.now();
+      while (!["done", "failed", "cancelled"].includes(run.status)) {
+        if (Date.now() - t0 > 30 * 60 * 1000) throw new Error(`${label}: still ${run.status} after 30 minutes`);
+        process.stdout.write(".");
+        await sleep(10000);
+        run = await app.run(id);
+      }
+      const k = run.aggregate_kpis ?? {};
+      console.log(` ${run.status}${k.fill_rate != null ? ` — fill rate ${(k.fill_rate * 100).toFixed(1)}%, revenue ${Math.round(k.revenue ?? 0).toLocaleString("en")}, lost sales ${Math.round(k.lost_sales_value ?? 0).toLocaleString("en")}` : ""}${run.error_message ? ` — ${run.error_message}` : ""}`);
+      results.push({ label, id, status: run.status });
+    }
+  }
+  const failed = results.filter((r) => r.status !== "done");
+  console.log(`\n${results.length - failed.length} of ${results.length} runs done.`);
+  if (failed.length) {
+    console.error("✗ not done:\n" + failed.map((f) => `    - ${f.label}: ${f.status}`).join("\n"));
+    process.exit(1);
+  }
+  console.log("✓ the Lab has three scenarios with results, and /policies two saved versions.");
+  console.log("  Left to the app: /policies → Run & Validate, once, to create the Validated Model.");
+}
 
 // ── Main ─────────────────────────────────────────────────────────────────────────
 async function main() {
@@ -281,7 +432,7 @@ async function main() {
   console.log("  /policies → Run & Validate and run one baseline.");
 }
 
-main().catch((err) => {
+(VIA_APP ? mainViaApp() : main()).catch((err) => {
   console.error(`\n✗ ${err.message ?? err}`);
   process.exit(1);
 });
