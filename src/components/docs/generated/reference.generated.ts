@@ -332,7 +332,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProductLevelNetwork.tsx",
         "via": "rpc get_product_level_metrics (kind product_metrics, PLAN.md §4 D313)",
-        "evidence": "src/pages/ProductLevelNetwork.tsx:284"
+        "evidence": "src/pages/ProductLevelNetwork.tsx:285"
       }
     ],
     "governance": {
@@ -2031,7 +2031,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProcessLevelNetwork.tsx",
         "via": "table read",
-        "evidence": "src/pages/ProcessLevelNetwork.tsx:380"
+        "evidence": "src/pages/ProcessLevelNetwork.tsx:381"
       },
       {
         "page": "ProjectPolicies.tsx",
@@ -3190,7 +3190,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "DeveloperApi.tsx",
         "via": "rpc list_dataset_versions",
-        "evidence": "src/pages/DeveloperApi.tsx:383"
+        "evidence": "src/pages/DeveloperApi.tsx:382"
       },
       {
         "page": "ProductLevelNetwork.tsx",
@@ -20711,7 +20711,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "FirmLevelNetwork.tsx",
         "via": "table read",
-        "evidence": "src/pages/FirmLevelNetwork.tsx:326"
+        "evidence": "src/pages/FirmLevelNetwork.tsx:349"
       },
       {
         "page": "ProductLevelNetwork.tsx",
@@ -21384,12 +21384,12 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProjectPolicies.tsx",
         "via": "hook useSimulationRun → select * from run_replications",
-        "evidence": "src/hooks/useSimulationRun.tsx:150"
+        "evidence": "src/hooks/useSimulationRun.tsx:152"
       },
       {
         "page": "SimulationLab.tsx",
         "via": "hook useSimulationRun::loadReps → select * from run_replications",
-        "evidence": "src/hooks/useSimulationRun.tsx:265"
+        "evidence": "src/hooks/useSimulationRun.tsx:267"
       },
       {
         "page": "ProjectPolicies.tsx",
@@ -25901,7 +25901,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProjectPolicies.tsx",
         "via": "useVerifiableExports → select * from simulation_runs",
-        "evidence": "src/hooks/useVerifiableExports.tsx:219"
+        "evidence": "src/hooks/useVerifiableExports.tsx:220"
       }
     ],
     "governance": {
@@ -27314,7 +27314,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       {
         "page": "ProjectPolicies.tsx",
         "via": "rpc assign_material_supplier",
-        "evidence": "src/components/policies/StagePolicyTable.tsx:410"
+        "evidence": "src/components/policies/StagePolicyTable.tsx:413"
       },
       {
         "page": "SimulationLab.tsx",

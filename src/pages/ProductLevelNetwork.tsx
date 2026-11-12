@@ -2,6 +2,7 @@
 import { listProjectsCached } from '@/lib/projects/projectsCache';
 import { Suspense, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { lazyChunk } from '@/lib/lazyChunk';
+import { isLargeGraph } from '@/lib/network/scale';
 import { Node, Edge, Position } from '@xyflow/react';
 
 import { supabase } from '@/integrations/supabase/client';
@@ -701,10 +702,20 @@ export default function NetworkVisualization({ isCollapsed, setIsCollapsed }: Ne
   // The Labels toggle hides node ids and edge flow labels without touching the
   // data, so the details card, the search and the map still read the real id. The
   // same two memos as the Process-level view (§4 D306).
-  const displayNodes = useMemo(
-    () => (showLabels ? lens.nodes : lens.nodes.map((n) => ({ ...n, style: { ...n.style, color: 'transparent' } }))),
-    [lens.nodes, showLabels],
-  );
+  // A focus on a LARGE graph keeps the whole network's positions, which are spread over a
+  // canvas sized for thousands of nodes — so the few nodes that remain would be tiny and far
+  // apart. Lay the focused set out at its own size instead (`lib/network/scale.ts`). The
+  // trade-off: positions are recomputed, so a drag inside a large focus snaps back.
+  const focusedLarge = !!lens.focusedId && isLargeGraph(lens.allNodes.length, lens.allEdges.length);
+  const focusLayout = useMemo(() => {
+    if (!focusedLarge) return null;
+    const { width, height } = lensNodeSize(lens.nodes.length);
+    return layoutColumns(lens.nodes).map((n) => ({ ...n, style: { ...n.style, width, height } }));
+  }, [focusedLarge, lens.nodes, layoutColumns]);
+  const displayNodes = useMemo(() => {
+    const base = focusLayout ?? lens.nodes;
+    return showLabels ? base : base.map((n) => ({ ...n, style: { ...n.style, color: 'transparent' } }));
+  }, [focusLayout, lens.nodes, showLabels]);
   const displayEdges = useMemo(
     () => lens.edges.map((e) => ({ ...e, label: showLabels ? ((e.data?.originalLabel as string) || '') : '' })),
     [lens.edges, showLabels],
@@ -1028,6 +1039,29 @@ export default function NetworkVisualization({ isCollapsed, setIsCollapsed }: Ne
               fitKey={`${globalSelectedProjectId}|${loadNonce}|${focusedNode ?? ''}`}
               hint="Click/double-click node to select and add disruptions • Double-click to focus supply chain path"
               storageKey="suresuite.lens.product.graphHeight"
+              largeView={{
+                projectKey: String(globalSelectedProjectId ?? ''),
+                nodes: lens.allNodes,
+                edges: lens.allEdges,
+                groupOf: (n) => (n.data as NodeData).group,
+                layout: {
+                  kind: 'columns',
+                  layerOf: (n) => GROUP_ORDER.indexOf((n.data as NodeData).group ?? 'A'),
+                  layerCount: GROUP_ORDER.length,
+                },
+                weight: {
+                  label: 'Weekly flow',
+                  of: (n) => Math.max((n.data as NodeData).incomingFlow, (n.data as NodeData).outgoingFlow),
+                  format: (v) => flowLabel(v),
+                },
+                focusedId: lens.focusedId,
+                selectedId: lens.selectedId,
+                onSelect: (id) => lens.setSelectedId(id),
+                onFocus: (id) => {
+                  if (id) lens.setSelectedId(id);
+                  lens.setFocusedId(id);
+                },
+              }}
               replaceCanvas={
                 viewMode === 'map' ? (
                   <Suspense

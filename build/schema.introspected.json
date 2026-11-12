@@ -1,15 +1,15 @@
 {
   "$generator": "scripts/data-contract/introspect.mjs",
   "$doc": "EFFECTIVE schema replayed from supabase/migrations/*.sql in filename order. Generated — do not edit; `npm run contract:introspect -- --check` fails on drift.",
-  "migrations_found": 414,
-  "migrations_applied": 406,
+  "migrations_found": 415,
+  "migrations_applied": 407,
   "first_migration": "20250815000000_approved_users_base.sql",
-  "last_migration": "20261101000002_project_dates_day_early.sql",
+  "last_migration": "20261105000001_lane_rebuild_scales.sql",
   "counts": {
     "tables": 94,
     "views": 8,
     "enums": 4,
-    "functions": 434,
+    "functions": 436,
     "shadowed_definitions": 4,
     "phantom_tables": 0,
     "unparsed_statements": 0,
@@ -29287,6 +29287,18 @@
       "defined_by": "20260920000003_one_etl.sql"
     },
     {
+      "name": "node_bom_depths",
+      "signature": "node_bom_depths(uuid)",
+      "args": [
+        "p_project_id uuid"
+      ],
+      "returns": "TABLE (node_id text, bom_depth integer)",
+      "security_definer": true,
+      "volatility": "STABLE",
+      "comment": "The BOM depth of EVERY node of one project, from a single grouped scan — the set-based ",
+      "defined_by": "20261105000001_lane_rebuild_scales.sql"
+    },
+    {
       "name": "node_echelon_from_flags",
       "signature": "node_echelon_from_flags(boolean, boolean, boolean, boolean, boolean, boolean, boolean)",
       "args": [
@@ -29310,11 +29322,11 @@
       "args": [
         "p_project_id uuid"
       ],
-      "returns": "TABLE (node_id text, in_lanes boolean, plant_name text, echelon text, bom_depth integer, supply_tier integer)",
+      "returns": "TABLE(node_id text, in_lanes boolean, plant_name text, echelon text, bom_depth integer, supply_tier integer)",
       "security_definer": true,
       "volatility": "STABLE",
       "comment": "§4 D314. Every node of a project with its echelon, BOM depth and supply tier, in one ",
-      "defined_by": "20261027000002_node_list_refresh_set_based.sql"
+      "defined_by": "20261105000001_lane_rebuild_scales.sql"
     },
     {
       "name": "node_list_discover",
@@ -29342,6 +29354,18 @@
       "volatility": "STABLE",
       "comment": null,
       "defined_by": "20260920000001_one_node_classifier.sql"
+    },
+    {
+      "name": "node_supply_tiers",
+      "signature": "node_supply_tiers(uuid)",
+      "args": [
+        "p_project_id uuid"
+      ],
+      "returns": "TABLE (node_id text, supply_tier integer)",
+      "security_definer": true,
+      "volatility": "STABLE",
+      "comment": "The supply tier of EVERY node of one project, from a single grouped scan — the set-based ",
+      "defined_by": "20261105000001_lane_rebuild_scales.sql"
     },
     {
       "name": "normalize_node_location_fields",
@@ -29664,13 +29688,13 @@
       "signature": "rebuild_supply_chain_lanes(uuid, uuid)",
       "args": [
         "p_project_id uuid",
-        "p_actor_user_id uuid DEFAULT NULL"
+        "p_actor_user_id uuid DEFAULT NULL::uuid"
       ],
       "returns": "jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path TO",
       "security_definer": true,
       "volatility": null,
       "comment": "WP 8.2 · §4 D140. THE supply-chain lane derivation — the ONE writer of both ",
-      "defined_by": "20260924000001_bom_root_rows_are_not_edges.sql"
+      "defined_by": "20261105000001_lane_rebuild_scales.sql"
     },
     {
       "name": "recompute_project_completion",

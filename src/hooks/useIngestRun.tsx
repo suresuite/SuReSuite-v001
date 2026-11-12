@@ -27,6 +27,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { edgeErrorMessage } from "@/lib/ingest/edgeError";
 import type { IngestFile, IngestRun, StagedRow } from "@/lib/ingest/runReview";
 
 export interface IngestRunState {
@@ -94,7 +95,7 @@ export function useIngestRun(runId: string | null, userId: string | null): Inges
       body.append("run_id", runId);
       body.append("user_id", userId);
       const { data, error: err } = await supabase.functions.invoke("ingest-file", { body });
-      if (err) throw new Error(data?.error || err.message);
+      if (err) throw new Error(data?.error || (await edgeErrorMessage(err, `The ${mode} failed.`)));
       if (!data?.success) throw new Error(data?.error || `The ${mode} failed.`);
       return data as Record<string, unknown>;
     },

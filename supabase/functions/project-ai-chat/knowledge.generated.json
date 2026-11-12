@@ -426,7 +426,7 @@
    "source": "docs",
    "title": "The data model at a glance — Looking for a specific column?",
    "ref": "/docs/data-model#the-detailed-index",
-   "text": "This page is the map. The detailed index — every column of every described table, with its type, unit and constraints — is All tables , and Field index lists every field alphabetically. Start there for a field definition, unit or constraint. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "This page is the map. The detailed index — every column of every described table, with its type, unit and constraints — is All tables , and Field index lists every field alphabetically. Start there for a field definition, unit or constraint. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/your-first-project",
@@ -629,7 +629,7 @@
    "source": "docs",
    "title": "Inbound Logistics — Related",
    "ref": "/docs/inbound-logistics#related",
-   "text": "Suppliers · Materials · Outbound Logistics · Units and time periods · Supply Chain Data , which is what we derive from this file. 7 more columns the system fills in id Surrogate row identifier. Carries no meaning and joins to nothing. project_id The project this arc belongs to. Every read is scoped by it. plant_name The focal plant receiving the material, by NAME. A displayable string used as a join key — the thing invariant G1 forbids; WP 2.1/3.3 replace it with a uuid. created_at When the row was inserted. Server-set. updated_at When the row last changed. Server-set. ingest_run_id The ingestion run that last wrote this row (WP 3.3), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path, and for rows whose run has since been deleted — a null here means the provenance is UNKNOWN, never that there was none. Set by ingest_apply_run and by nothing else. source_row_id The tier-1 staged row this was promoted from (WP 3.3). Its source_row_number is the physical line of the uploaded file, header = line 1, so a person can be shown the line rather than told a file name — which is what extends A4 down to the source. ON DELETE SET NULL and DEFERRABLE: staging is deleted with its run, and a canonical row belongs to the project rather than to the run that last wrote it. Reference data: contract 62a6e8587a37 , engin…"
+   "text": "Suppliers · Materials · Outbound Logistics · Units and time periods · Supply Chain Data , which is what we derive from this file. 7 more columns the system fills in id Surrogate row identifier. Carries no meaning and joins to nothing. project_id The project this arc belongs to. Every read is scoped by it. plant_name The focal plant receiving the material, by NAME. A displayable string used as a join key — the thing invariant G1 forbids; WP 2.1/3.3 replace it with a uuid. created_at When the row was inserted. Server-set. updated_at When the row last changed. Server-set. ingest_run_id The ingestion run that last wrote this row (WP 3.3), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path, and for rows whose run has since been deleted — a null here means the provenance is UNKNOWN, never that there was none. Set by ingest_apply_run and by nothing else. source_row_id The tier-1 staged row this was promoted from (WP 3.3). Its source_row_number is the physical line of the uploaded file, header = line 1, so a person can be shown the line rather than told a file name — which is what extends A4 down to the source. ON DELETE SET NULL and DEFERRABLE: staging is deleted with its run, and a canonical row belongs to the project rather than to the run that last wrote it. Reference data: contract 980ce9c339c2 , engin…"
   },
   {
    "id": "docs/outbound-logistics",
@@ -685,7 +685,7 @@
    "source": "docs",
    "title": "Outbound Logistics — Related",
    "ref": "/docs/outbound-logistics#related",
-   "text": "Products · Inbound Logistics · Units and time periods 7 more columns the system fills in id Surrogate row identifier. Carries no meaning and joins to nothing. project_id The project this row belongs to. Every read is scoped by it. plant_name The focal plant this row belongs to, by NAME. A displayable string used as a join key — the thing invariant G1 forbids; WP 2.1/3.3 replace it with a uuid. created_at When the row was inserted. Server-set. updated_at When the row last changed. Server-set. ingest_run_id The ingestion run that last wrote this row (WP 3.3), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path, and for rows whose run has since been deleted — a null here means the provenance is UNKNOWN, never that there was none. Set by ingest_apply_run and by nothing else. source_row_id The tier-1 staged row this was promoted from (WP 3.3). Its source_row_number is the physical line of the uploaded file, header = line 1, so a person can be shown the line rather than told a file name — which is what extends A4 down to the source. ON DELETE SET NULL and DEFERRABLE: staging is deleted with its run, and a canonical row belongs to the project rather than to the run that last wrote it. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explana…"
+   "text": "Products · Inbound Logistics · Units and time periods 7 more columns the system fills in id Surrogate row identifier. Carries no meaning and joins to nothing. project_id The project this row belongs to. Every read is scoped by it. plant_name The focal plant this row belongs to, by NAME. A displayable string used as a join key — the thing invariant G1 forbids; WP 2.1/3.3 replace it with a uuid. created_at When the row was inserted. Server-set. updated_at When the row last changed. Server-set. ingest_run_id The ingestion run that last wrote this row (WP 3.3), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path, and for rows whose run has since been deleted — a null here means the provenance is UNKNOWN, never that there was none. Set by ingest_apply_run and by nothing else. source_row_id The tier-1 staged row this was promoted from (WP 3.3). Its source_row_number is the physical line of the uploaded file, header = line 1, so a person can be shown the line rather than told a file name — which is what extends A4 down to the source. ON DELETE SET NULL and DEFERRABLE: staging is deleted with its run, and a canonical row belongs to the project rather than to the run that last wrote it. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explana…"
   },
   {
    "id": "docs/demand-forecasts",
@@ -734,7 +734,7 @@
    "source": "docs",
    "title": "Demand Forecast — Related",
    "ref": "/docs/demand-forecasts#related",
-   "text": "Outbound Logistics · Customer stage · Units and time periods 8 more columns the system fills in id Surrogate row identifier. Carries no meaning and joins to nothing. project_id The project this bucket belongs to. Every read is scoped by it. period_end The bucket's EXCLUSIVE end: period_start + 1 week, or + 1 calendar month. Server-computed at promotion; never uploaded. weekly_quantity The bucket's quantity spread evenly over its own days, as a weekly rate: quantity × 7 / days in the bucket (decision 7). A 30-day month of 1 000 units is 233.33 per week. Server-computed at promotion; the only quantity the run reads. ingest_run_id The ingestion run that last wrote this row, and through it the file, the uploader and who approved the promotion. Set by ingest_apply_run and by nothing else. source_row_id The tier-1 staged row this was promoted from; its source_row_number is the physical line of the uploaded file. ON DELETE SET NULL , DEFERRABLE. created_at When the row was inserted. Server-set. updated_at When the row last changed. Server-set. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Outbound Logistics · Customer stage · Units and time periods 8 more columns the system fills in id Surrogate row identifier. Carries no meaning and joins to nothing. project_id The project this bucket belongs to. Every read is scoped by it. period_end The bucket's EXCLUSIVE end: period_start + 1 week, or + 1 calendar month. Server-computed at promotion; never uploaded. weekly_quantity The bucket's quantity spread evenly over its own days, as a weekly rate: quantity × 7 / days in the bucket (decision 7). A 30-day month of 1 000 units is 233.33 per week. Server-computed at promotion; the only quantity the run reads. ingest_run_id The ingestion run that last wrote this row, and through it the file, the uploader and who approved the promotion. Set by ingest_apply_run and by nothing else. source_row_id The tier-1 staged row this was promoted from; its source_row_number is the physical line of the uploaded file. ON DELETE SET NULL , DEFERRABLE. created_at When the row was inserted. Server-set. updated_at When the row last changed. Server-set. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/bom-single-level",
@@ -776,7 +776,7 @@
    "source": "docs",
    "title": "BOM — single level — Related",
    "ref": "/docs/bom-single-level#related",
-   "text": "BOM — multi level · Materials · Products · Process-Level Network , which is this file drawn. 7 more columns the system fills in id Surrogate row identifier. Carries no meaning and joins to nothing. project_id The project this row belongs to. Every read is scoped by it. plant_name The focal plant this row belongs to, by NAME. A displayable string used as a join key — the thing invariant G1 forbids; WP 2.1/3.3 replace it with a uuid. created_at When the row was inserted. Server-set. updated_at When the row last changed. Server-set. ingest_run_id The ingestion run that last wrote this row (WP 3.3), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path, and for rows whose run has since been deleted — a null here means the provenance is UNKNOWN, never that there was none. Set by ingest_apply_run and by nothing else. source_row_id The tier-1 staged row this was promoted from (WP 3.3). Its source_row_number is the physical line of the uploaded file, header = line 1, so a person can be shown the line rather than told a file name — which is what extends A4 down to the source. ON DELETE SET NULL and DEFERRABLE: staging is deleted with its run, and a canonical row belongs to the project rather than to the run that last wrote it. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are chec…"
+   "text": "BOM — multi level · Materials · Products · Process-Level Network , which is this file drawn. 7 more columns the system fills in id Surrogate row identifier. Carries no meaning and joins to nothing. project_id The project this row belongs to. Every read is scoped by it. plant_name The focal plant this row belongs to, by NAME. A displayable string used as a join key — the thing invariant G1 forbids; WP 2.1/3.3 replace it with a uuid. created_at When the row was inserted. Server-set. updated_at When the row last changed. Server-set. ingest_run_id The ingestion run that last wrote this row (WP 3.3), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path, and for rows whose run has since been deleted — a null here means the provenance is UNKNOWN, never that there was none. Set by ingest_apply_run and by nothing else. source_row_id The tier-1 staged row this was promoted from (WP 3.3). Its source_row_number is the physical line of the uploaded file, header = line 1, so a person can be shown the line rather than told a file name — which is what extends A4 down to the source. ON DELETE SET NULL and DEFERRABLE: staging is deleted with its run, and a canonical row belongs to the project rather than to the run that last wrote it. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are chec…"
   },
   {
    "id": "docs/bom-multi-level",
@@ -811,7 +811,7 @@
    "source": "docs",
    "title": "BOM — multi level — Related",
    "ref": "/docs/bom-multi-level#related",
-   "text": "BOM — single level · Materials · Multi-Tier Data 7 more columns the system fills in id Surrogate row identifier. Carries no meaning and joins to nothing. project_id The project this row belongs to. Every read is scoped by it. plant_name The focal plant this row belongs to, by NAME. A displayable string used as a join key — the thing invariant G1 forbids; WP 2.1/3.3 replace it with a uuid. created_at When the row was inserted. Server-set. updated_at When the row last changed. Server-set. ingest_run_id The ingestion run that last wrote this row (WP 3.3), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path, and for rows whose run has since been deleted — a null here means the provenance is UNKNOWN, never that there was none. Set by ingest_apply_run and by nothing else. source_row_id The tier-1 staged row this was promoted from (WP 3.3). Its source_row_number is the physical line of the uploaded file, header = line 1, so a person can be shown the line rather than told a file name — which is what extends A4 down to the source. ON DELETE SET NULL and DEFERRABLE: staging is deleted with its run, and a canonical row belongs to the project rather than to the run that last wrote it. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory …"
+   "text": "BOM — single level · Materials · Multi-Tier Data 7 more columns the system fills in id Surrogate row identifier. Carries no meaning and joins to nothing. project_id The project this row belongs to. Every read is scoped by it. plant_name The focal plant this row belongs to, by NAME. A displayable string used as a join key — the thing invariant G1 forbids; WP 2.1/3.3 replace it with a uuid. created_at When the row was inserted. Server-set. updated_at When the row last changed. Server-set. ingest_run_id The ingestion run that last wrote this row (WP 3.3), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path, and for rows whose run has since been deleted — a null here means the provenance is UNKNOWN, never that there was none. Set by ingest_apply_run and by nothing else. source_row_id The tier-1 staged row this was promoted from (WP 3.3). Its source_row_number is the physical line of the uploaded file, header = line 1, so a person can be shown the line rather than told a file name — which is what extends A4 down to the source. ON DELETE SET NULL and DEFERRABLE: staging is deleted with its run, and a canonical row belongs to the project rather than to the run that last wrote it. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory …"
   },
   {
    "id": "docs/materials",
@@ -846,7 +846,7 @@
    "source": "docs",
    "title": "Materials — Related",
    "ref": "/docs/materials#related",
-   "text": "Inbound Logistics · Products · Suppliers · When a value is missing 8 more columns the system fills in project_id The project this material belongs to. Half of the primary key. updated_at When the row last changed. Server-set. created_at When the row was inserted. Server-set. source_system Which external system this row came from, when it was synced rather than uploaded. NULL for a hand-uploaded or hand-edited row. source_external_id This row's identifier in the external system, so a re-sync can match it. source_synced_at When the external system last confirmed this row. ingest_run_id The ingestion run that last wrote this row (WP 3.3, D55), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path — which, on the day this column lands, is every row — and for rows whose run has since been deleted. source_row_id The tier-1 staged row this was promoted from (WP 3.3, D55). Its source_row_number is the physical line of the uploaded file, header = line 1. ON DELETE SET NULL and DEFERRABLE, because staging dies with its run and an item master belongs to the project rather than to the run. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Inbound Logistics · Products · Suppliers · When a value is missing 8 more columns the system fills in project_id The project this material belongs to. Half of the primary key. updated_at When the row last changed. Server-set. created_at When the row was inserted. Server-set. source_system Which external system this row came from, when it was synced rather than uploaded. NULL for a hand-uploaded or hand-edited row. source_external_id This row's identifier in the external system, so a re-sync can match it. source_synced_at When the external system last confirmed this row. ingest_run_id The ingestion run that last wrote this row (WP 3.3, D55), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path — which, on the day this column lands, is every row — and for rows whose run has since been deleted. source_row_id The tier-1 staged row this was promoted from (WP 3.3, D55). Its source_row_number is the physical line of the uploaded file, header = line 1. ON DELETE SET NULL and DEFERRABLE, because staging dies with its run and an item master belongs to the project rather than to the run. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/products",
@@ -895,7 +895,7 @@
    "source": "docs",
    "title": "Products — Related",
    "ref": "/docs/products#related",
-   "text": "Outbound Logistics · BOM — single level · Materials · When a value is missing 8 more columns the system fills in project_id The project this product belongs to. Half of the primary key. updated_at When the row last changed. Server-set. created_at When the row was inserted. Server-set. source_system Which external system this row came from, when it was synced rather than uploaded. NULL for a hand-uploaded or hand-edited row. source_external_id This row's identifier in the external system, so a re-sync can match it. source_synced_at When the external system last confirmed this row. ingest_run_id The ingestion run that last wrote this row (WP 3.3, D55), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path — which, on the day this column lands, is every row — and for rows whose run has since been deleted. source_row_id The tier-1 staged row this was promoted from (WP 3.3, D55). Its source_row_number is the physical line of the uploaded file, header = line 1. ON DELETE SET NULL and DEFERRABLE, because staging dies with its run and an item master belongs to the project rather than to the run. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Outbound Logistics · BOM — single level · Materials · When a value is missing 8 more columns the system fills in project_id The project this product belongs to. Half of the primary key. updated_at When the row last changed. Server-set. created_at When the row was inserted. Server-set. source_system Which external system this row came from, when it was synced rather than uploaded. NULL for a hand-uploaded or hand-edited row. source_external_id This row's identifier in the external system, so a re-sync can match it. source_synced_at When the external system last confirmed this row. ingest_run_id The ingestion run that last wrote this row (WP 3.3, D55), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path — which, on the day this column lands, is every row — and for rows whose run has since been deleted. source_row_id The tier-1 staged row this was promoted from (WP 3.3, D55). Its source_row_number is the physical line of the uploaded file, header = line 1. ON DELETE SET NULL and DEFERRABLE, because staging dies with its run and an item master belongs to the project rather than to the run. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/suppliers",
@@ -937,7 +937,7 @@
    "source": "docs",
    "title": "Suppliers — Related",
    "ref": "/docs/suppliers#related",
-   "text": "Inbound Logistics · Materials · Multi-Tier Suppliers · Supplier stage 8 more columns the system fills in project_id The project this supplier belongs to. Half of the primary key. updated_at When the row last changed. Server-set. created_at When the row was inserted. Server-set. source_system Which external system this row came from, when it was synced rather than uploaded. NULL for a hand-uploaded or hand-edited row. source_external_id This row's identifier in the external system, so a re-sync can match it. source_synced_at When the external system last confirmed this row. ingest_run_id The ingestion run that last wrote this row (WP 3.3, D55), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path — which, on the day this column lands, is every row — and for rows whose run has since been deleted. source_row_id The tier-1 staged row this was promoted from (WP 3.3, D55). Its source_row_number is the physical line of the uploaded file, header = line 1. ON DELETE SET NULL and DEFERRABLE, because staging dies with its run and an item master belongs to the project rather than to the run. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Inbound Logistics · Materials · Multi-Tier Suppliers · Supplier stage 8 more columns the system fills in project_id The project this supplier belongs to. Half of the primary key. updated_at When the row last changed. Server-set. created_at When the row was inserted. Server-set. source_system Which external system this row came from, when it was synced rather than uploaded. NULL for a hand-uploaded or hand-edited row. source_external_id This row's identifier in the external system, so a re-sync can match it. source_synced_at When the external system last confirmed this row. ingest_run_id The ingestion run that last wrote this row (WP 3.3, D55), and through it the project, the source kind and who approved the promotion. NULL for every row that predates the CSV landing path — which, on the day this column lands, is every row — and for rows whose run has since been deleted. source_row_id The tier-1 staged row this was promoted from (WP 3.3, D55). Its source_row_number is the physical line of the uploaded file, header = line 1. ON DELETE SET NULL and DEFERRABLE, because staging dies with its run and an item master belongs to the project rather than to the run. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/node-list",
@@ -979,7 +979,7 @@
    "source": "docs",
    "title": "Node List — Related",
    "ref": "/docs/node-list#related",
-   "text": "Deep-Tier Nodes · Network science metrics · Product-Level Network Uploaded and reviewed from Project Manager . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Deep-Tier Nodes · Network science metrics · Product-Level Network Uploaded and reviewed from Project Manager . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/deep-tier-nodes",
@@ -1014,7 +1014,7 @@
    "source": "docs",
    "title": "Deep-Tier Nodes — Related",
    "ref": "/docs/deep-tier-nodes#related",
-   "text": "Deep-Tier Edges · Firm-Level Network · Network science metrics · Network Summary Uploaded from Project Manager , drawn in Firm-Level Network . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Deep-Tier Edges · Firm-Level Network · Network science metrics · Network Summary Uploaded from Project Manager , drawn in Firm-Level Network . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/deep-tier-edges",
@@ -1049,7 +1049,7 @@
    "source": "docs",
    "title": "Deep-Tier Edges — Related",
    "ref": "/docs/deep-tier-edges#related",
-   "text": "Deep-Tier Nodes · Multi-Tier Suppliers · Firm-Level Network Drawn in Firm-Level Network . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Deep-Tier Nodes · Multi-Tier Suppliers · Firm-Level Network Drawn in Firm-Level Network . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/multi-tier-suppliers",
@@ -1077,7 +1077,7 @@
    "source": "docs",
    "title": "Multi-Tier Suppliers — Related",
    "ref": "/docs/multi-tier-suppliers#related",
-   "text": "Deep-Tier Edges · Suppliers · Known limits Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Deep-Tier Edges · Suppliers · Known limits Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/units-and-time-periods",
@@ -1126,7 +1126,7 @@
    "source": "docs",
    "title": "Units and time periods — Related",
    "ref": "/docs/units-and-time-periods#related",
-   "text": "Inbound Logistics · Outbound Logistics · Units & conventions · Verify your inputs Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Inbound Logistics · Outbound Logistics · Units & conventions · Verify your inputs Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/supply-chain-data",
@@ -1161,7 +1161,7 @@
    "source": "docs",
    "title": "Supply Chain Data — Related",
    "ref": "/docs/supply-chain-data#related",
-   "text": "Multi-Tier Data · Inbound Logistics · Product-Level Network , which draws it · Units and time periods 16 columns come from the graph build; 5 from an analysis. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Multi-Tier Data · Inbound Logistics · Product-Level Network , which draws it · Units and time periods 16 columns come from the graph build; 5 from an analysis. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/multi-tier-data",
@@ -1189,7 +1189,7 @@
    "source": "docs",
    "title": "Multi-Tier Data — Related",
    "ref": "/docs/multi-tier-data#related",
-   "text": "Supply Chain Data · Deep-Tier Edges · Firm-Level Network · Process-Level Network Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Supply Chain Data · Deep-Tier Edges · Firm-Level Network · Process-Level Network Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/network-summary",
@@ -1217,7 +1217,7 @@
    "source": "docs",
    "title": "Network Summary — Related",
    "ref": "/docs/network-summary#related",
-   "text": "Deep-Tier Nodes · Deep-Tier Edges · Firm-Level Network · Dataset Versions Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Deep-Tier Nodes · Deep-Tier Edges · Firm-Level Network · Dataset Versions Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/dataset-versions",
@@ -1252,7 +1252,7 @@
    "source": "docs",
    "title": "Dataset Versions — Related",
    "ref": "/docs/dataset-versions#related",
-   "text": "Reproducibility record · Data Trust Report · Verifiable exports · Network science metrics Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Reproducibility record · Data Trust Report · Verifiable exports · Network science metrics Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/how-policies-work",
@@ -1336,7 +1336,7 @@
    "source": "docs",
    "title": "How planning works — Related",
    "ref": "/docs/how-planning-works#related",
-   "text": "How policies work · Customer stage · Plant stage · Policy types · Demand Forecast Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "How policies work · Customer stage · Plant stage · Policy types · Demand Forecast Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/supplier-stage",
@@ -1364,7 +1364,7 @@
    "source": "docs",
    "title": "Supplier stage — Related",
    "ref": "/docs/supplier-stage#related",
-   "text": "How policies work · Suppliers · Inbound Logistics · Policy types Edited at /policies , under Supplier . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "How policies work · Suppliers · Inbound Logistics · Policy types Edited at /policies , under Supplier . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/plant-stage",
@@ -1392,7 +1392,7 @@
    "source": "docs",
    "title": "Plant stage — Related",
    "ref": "/docs/plant-stage#related",
-   "text": "How policies work · Products · Materials · Policy types Edited at /policies , under Focal plant . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "How policies work · Products · Materials · Policy types Edited at /policies , under Focal plant . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/customer-stage",
@@ -1427,7 +1427,7 @@
    "source": "docs",
    "title": "Customer stage — Related",
    "ref": "/docs/customer-stage#related",
-   "text": "How policies work · Outbound Logistics · The policy catalog · Supplier stage · Where a number came from Edited at /policies , under Customer . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "How policies work · Outbound Logistics · The policy catalog · Supplier stage · Where a number came from Edited at /policies , under Customer . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/policy-types",
@@ -1462,7 +1462,7 @@
    "source": "docs",
    "title": "Policy types — Related",
    "ref": "/docs/policy-types#related",
-   "text": "The policy catalog · How policies work · Plant stage Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "The policy catalog · How policies work · Plant stage Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/policy-catalog",
@@ -1518,7 +1518,7 @@
    "source": "docs",
    "title": "The policy catalog — Related",
    "ref": "/docs/policy-catalog#related",
-   "text": "Policy types · How policies work · Disruptions · Recovery playbooks Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Policy types · How policies work · Disruptions · Recovery playbooks Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/where-a-number-came-from",
@@ -1553,7 +1553,7 @@
    "source": "docs",
    "title": "Where a number came from — Related",
    "ref": "/docs/where-a-number-came-from#related",
-   "text": "When a value is missing — every substitution the system will make · How policies work · What happens to your data The legend also sits under the grid itself at /policies , and it is the same list — this page reads it rather than copying it. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "When a value is missing — every substitution the system will make · How policies work · What happens to your data The legend also sits under the grid itself at /policies , and it is the same list — this page reads it rather than copying it. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/when-a-value-is-missing",
@@ -1595,7 +1595,7 @@
    "source": "docs",
    "title": "When a value is missing — Related",
    "ref": "/docs/when-a-value-is-missing#related",
-   "text": "Where a number came from · Verify your inputs · All tables , where each substitution sits beside its column · Known limits Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Where a number came from · Verify your inputs · All tables , where each substitution sits beside its column · Known limits Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/policy-versions-and-presets",
@@ -1644,7 +1644,7 @@
    "source": "docs",
    "title": "Policy versions & presets — Related",
    "ref": "/docs/policy-versions-and-presets#related",
-   "text": "How policies work · Reproducibility record · Experiments & comparison · All tables Saved from the policy grid at /policies . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "How policies work · Reproducibility record · Experiments & comparison · All tables Saved from the policy grid at /policies . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/verify-your-inputs",
@@ -1693,7 +1693,7 @@
    "source": "docs",
    "title": "Verify your inputs — Related",
    "ref": "/docs/verify-your-inputs#related",
-   "text": "Data Trust Report · When a value is missing · Uploading data · Simulation Lab Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Data Trust Report · When a value is missing · Uploading data · Simulation Lab Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/data-trust-report",
@@ -1735,7 +1735,7 @@
    "source": "docs",
    "title": "Data Trust Report — Related",
    "ref": "/docs/data-trust-report#related",
-   "text": "Verify your inputs · Dataset Versions · Known limits · Reproducibility record Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Verify your inputs · Dataset Versions · Known limits · Reproducibility record Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/model-validation",
@@ -1784,7 +1784,7 @@
    "source": "docs",
    "title": "Model validation — Related",
    "ref": "/docs/model-validation#related",
-   "text": "Verify your inputs is the other question · Seeds, replications & confidence is where the adopted replication count comes from · Scenarios is what inherits it · Data Trust Report · Reproducibility record · Known limits . Validate at /policies , under Run & validate. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Verify your inputs is the other question · Seeds, replications & confidence is where the adopted replication count comes from · Scenarios is what inherits it · Data Trust Report · Reproducibility record · Known limits . Validate at /policies , under Run & validate. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/simulation-lab",
@@ -1861,7 +1861,7 @@
    "source": "docs",
    "title": "Scenarios — Related",
    "ref": "/docs/scenarios#related",
-   "text": "Simulation Lab is where these settings live · Seeds, replications & confidence is why the Precision group matters most · Disruptions is the other half of a scenario · Stress tests is a scenario made for you · Experiments & comparison is what two scenarios are for. Edit them at /simulation-lab , stage 1. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Simulation Lab is where these settings live · Seeds, replications & confidence is why the Precision group matters most · Disruptions is the other half of a scenario · Stress tests is a scenario made for you · Experiments & comparison is what two scenarios are for. Edit them at /simulation-lab , stage 1. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/disruptions",
@@ -1896,7 +1896,7 @@
    "source": "docs",
    "title": "Disruptions — Related",
    "ref": "/docs/disruptions#related",
-   "text": "Scenarios · Recovery playbooks · Stress tests · The policy catalog Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Scenarios · Recovery playbooks · Stress tests · The policy catalog Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/recovery-playbooks",
@@ -1931,7 +1931,7 @@
    "source": "docs",
    "title": "Recovery playbooks — Related",
    "ref": "/docs/recovery-playbooks#related",
-   "text": "Disruptions is what a playbook responds to · Simulation Lab stage 2 is where both live · How policies work is the other recovery list · The policy catalog has every policy's status · Experiments & comparison is how to tell whether a playbook helped. Edit one at /simulation-lab , stage 2. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Disruptions is what a playbook responds to · Simulation Lab stage 2 is where both live · How policies work is the other recovery list · The policy catalog has every policy's status · Experiments & comparison is how to tell whether a playbook helped. Edit one at /simulation-lab , stage 2. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/experiments-and-comparison",
@@ -2064,7 +2064,7 @@
    "source": "docs",
    "title": "Stress tests — Related",
    "ref": "/docs/stress-tests#related",
-   "text": "Disruptions is the schedule editor these presets write into, and the two table-based disruption models beside it · Simulation Lab is where the drawer lives · Experiments & comparison is how you read several stress scenarios against one baseline · Reading your results is where the mapping warnings appear. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Disruptions is the schedule editor these presets write into, and the two table-based disruption models beside it · Simulation Lab is where the drawer lives · Experiments & comparison is how you read several stress scenarios against one baseline · Reading your results is where the mapping warnings appear. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/product-level-network",
@@ -2225,7 +2225,7 @@
    "source": "docs",
    "title": "Interactive Network Space — Related",
    "ref": "/docs/interactive-network-space#related",
-   "text": "Product-Level Network · Process-Level Network · Firm-Level Network · Network science metrics Open it at /network/interactive-space . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Product-Level Network · Process-Level Network · Firm-Level Network · Network science metrics Open it at /network/interactive-space . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/network-science-metrics",
@@ -2274,7 +2274,7 @@
    "source": "docs",
    "title": "Network science metrics — Related",
    "ref": "/docs/network-science-metrics#related",
-   "text": "Firm-Level Network · Deep-Tier Nodes · Node List · Dataset Versions Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Firm-Level Network · Deep-Tier Nodes · Node List · Dataset Versions Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/ai-assistant",
@@ -2330,7 +2330,7 @@
    "source": "docs",
    "title": "The AI assistant — Related",
    "ref": "/docs/ai-assistant#related",
-   "text": "Plans and proposals is what Review mode produces · Project memory is what it remembers between threads · Models, budgets and limits is which model answers and what it costs · Reports & files is what the report builder produces · Who can see your data . Open it at /project-intelligence . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Plans and proposals is what Review mode produces · Project memory is what it remembers between threads · Models, budgets and limits is which model answers and what it costs · Reports & files is what the report builder produces · Who can see your data . Open it at /project-intelligence . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/plans-and-proposals",
@@ -2386,7 +2386,7 @@
    "source": "docs",
    "title": "Plans and proposals — Related",
    "ref": "/docs/plans-and-proposals#related",
-   "text": "The AI assistant · How policies work · Audit log · Policy versions & presets Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "The AI assistant · How policies work · Audit log · Policy versions & presets Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/project-memory",
@@ -2435,7 +2435,7 @@
    "source": "docs",
    "title": "Project memory — Related",
    "ref": "/docs/project-memory#related",
-   "text": "The AI assistant is what reads it · Plans and proposals is the other thing it keeps between turns · Models, budgets and limits · Who can see your data · All tables . The panel is in the sidebar at /project-intelligence . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "The AI assistant is what reads it · Plans and proposals is the other thing it keeps between turns · Models, budgets and limits · Who can see your data · All tables . The panel is in the sidebar at /project-intelligence . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/models-budgets-limits",
@@ -2491,7 +2491,7 @@
    "source": "docs",
    "title": "Models, budgets and limits — Related",
    "ref": "/docs/models-budgets-limits#related",
-   "text": "The AI assistant · Roles and capabilities · Admin screens · Known limits Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "The AI assistant · Roles and capabilities · Admin screens · Known limits Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/connecting-erp",
@@ -2526,7 +2526,7 @@
    "source": "docs",
    "title": "Connecting an ERP / MRP system — Related",
    "ref": "/docs/connecting-erp#related",
-   "text": "Reviewing and applying a sync · CSV or connector · Uploading data · Who can see your data Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Reviewing and applying a sync · CSV or connector · Uploading data · Who can see your data Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/reviewing-a-sync",
@@ -2561,7 +2561,7 @@
    "source": "docs",
    "title": "Reviewing and applying a sync — Related",
    "ref": "/docs/reviewing-a-sync#related",
-   "text": "Connecting an ERP / MRP system · Uploading data · CSV or connector · How your data flows Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Connecting an ERP / MRP system · Uploading data · CSV or connector · How your data flows Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/csv-vs-connector",
@@ -2603,7 +2603,7 @@
    "source": "docs",
    "title": "CSV or connector — which to use — Related",
    "ref": "/docs/csv-vs-connector#related",
-   "text": "Connecting an ERP / MRP system is how a link is made · Reviewing and applying a sync is the review a threshold can skip · Uploading data is the other route · Products is the one table both can write. Both live on Project Manager . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Connecting an ERP / MRP system is how a link is made · Reviewing and applying a sync is the review a threshold can skip · Uploading data is the other route · Products is the one table both can write. Both live on Project Manager . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/reading-your-results",
@@ -2694,7 +2694,7 @@
    "source": "docs",
    "title": "KPIs & the Resilience Index — Related",
    "ref": "/docs/kpis-and-resilience-index#related",
-   "text": "Reading your results · Experiments & comparison · Stress tests · Per-item time series Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Reading your results · Experiments & comparison · Stress tests · Per-item time series Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/per-item-time-series",
@@ -2743,7 +2743,7 @@
    "source": "docs",
    "title": "Per-item time series — Related",
    "ref": "/docs/per-item-time-series#related",
-   "text": "Reading your results is the layer above this one · KPIs & the Resilience Index is what these series are summarised into · Seeds, replications & confidence is why one seed is not an answer · Verifiable exports ships the series as a weeks-by-seeds sheet · Model validation is how the warm-up line got where it is. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Reading your results is the layer above this one · KPIs & the Resilience Index is what these series are summarised into · Seeds, replications & confidence is why one seed is not an answer · Verifiable exports ships the series as a weeks-by-seeds sheet · Model validation is how the warm-up line got where it is. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/performance-and-caching",
@@ -2771,7 +2771,7 @@
    "source": "docs",
    "title": "Performance & caching — Related",
    "ref": "/docs/performance-and-caching#related",
-   "text": "Dataset Versions · Network science metrics · Seeds, replications & confidence · Data Trust Report Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Dataset Versions · Network science metrics · Seeds, replications & confidence · Data Trust Report Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/reports-and-files",
@@ -2813,7 +2813,7 @@
    "source": "docs",
    "title": "Reports & files — Related",
    "ref": "/docs/reports-and-files#related",
-   "text": "Verifiable exports is the artifact to send when somebody has to check you · Plans and proposals is the approval a render needs · Exporting and deleting your data · Who can see your data is the rest of the access picture · Reading your results is what a report is made of. Your files are listed in Project Intelligence , beside the assistant that produced them. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Verifiable exports is the artifact to send when somebody has to check you · Plans and proposals is the approval a render needs · Exporting and deleting your data · Who can see your data is the rest of the access picture · Reading your results is what a report is made of. Your files are listed in Project Intelligence , beside the assistant that produced them. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/verifiable-exports",
@@ -2848,7 +2848,7 @@
    "source": "docs",
    "title": "Verifiable exports — Related",
    "ref": "/docs/verifiable-exports#related",
-   "text": "Dataset Versions · Reproducibility record · Reading your results · Exporting and deleting your data Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Dataset Versions · Reproducibility record · Reading your results · Exporting and deleting your data Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/reproducibility-record",
@@ -2883,7 +2883,7 @@
    "source": "docs",
    "title": "Reproducibility record — Related",
    "ref": "/docs/reproducibility-record#related",
-   "text": "Verifiable exports · Dataset Versions · Data Trust Report · Known limits · Model validation Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Verifiable exports · Dataset Versions · Data Trust Report · Known limits · Model validation Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/engine-versions",
@@ -2925,7 +2925,7 @@
    "source": "docs",
    "title": "Engine versions & changes — What this page cannot tell you",
    "ref": "/docs/engine-versions#limits",
-   "text": "Runs before build identity name only a version. Several different builds often shipped under one number then, so for those runs the version is known and the exact code is not. Every one of those builds is archived and installable, but the run did not record which it was. The measured report sees only what the reference runs exercise. A change that acts only on fields those runs do not set (a typed replenishment level, MRP, demand per customer row) shows as unchanged there. The entry's “who is affected” line is what says who else is touched. Some history is counted, not described. Where engine changes were made without any record, the entry gives their number rather than inventing what they were. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Runs before build identity name only a version. Several different builds often shipped under one number then, so for those runs the version is known and the exact code is not. Every one of those builds is archived and installable, but the run did not record which it was. The measured report sees only what the reference runs exercise. A change that acts only on fields those runs do not set (a typed replenishment level, MRP, demand per customer row) shows as unchanged there. The entry's “who is affected” line is what says who else is touched. Some history is counted, not described. Where engine changes were made without any record, the entry gives their number rather than inventing what they were. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/exporting-and-deleting",
@@ -2960,7 +2960,7 @@
    "source": "docs",
    "title": "Exporting and deleting your data — Related",
    "ref": "/docs/exporting-and-deleting#related",
-   "text": "Verifiable exports · What happens to your data · Who can see your data · Audit log Projects are managed at Project Manager . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Verifiable exports · What happens to your data · Who can see your data · Audit log Projects are managed at Project Manager . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/organizations-and-members",
@@ -3009,7 +3009,7 @@
    "source": "docs",
    "title": "Organizations and members — Related",
    "ref": "/docs/organizations-and-members#related",
-   "text": "Project access · Roles and capabilities · Who can see your data · Admin screens Managed at /admin/organizations . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Project access · Roles and capabilities · Who can see your data · Admin screens Managed at /admin/organizations . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/roles-and-capabilities",
@@ -3135,7 +3135,7 @@
    "source": "docs",
    "title": "Who can see your data — Related",
    "ref": "/docs/who-can-see-your-data#related",
-   "text": "What happens to your data · Roles and capabilities · Audit log · Known limits · Exporting and deleting your data Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "What happens to your data · Roles and capabilities · Audit log · Known limits · Exporting and deleting your data Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/audit-log",
@@ -3170,7 +3170,7 @@
    "source": "docs",
    "title": "Audit log — Related",
    "ref": "/docs/audit-log#related",
-   "text": "Who can see your data · Admin screens · Reviewing and applying a sync Read it at /admin/audit — super admins only — over the last 24 hours, 7 days or 30 days, with a summary of who signed in and what they changed. Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Who can see your data · Admin screens · Reviewing and applying a sync Read it at /admin/audit — super admins only — over the last 24 hours, 7 days or 30 days, with a summary of who signed in and what they changed. Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/admin-screens",
@@ -3198,7 +3198,7 @@
    "source": "docs",
    "title": "Admin screens — Related",
    "ref": "/docs/admin-screens#related",
-   "text": "Roles and capabilities · Organizations and members · Audit log · Models, budgets and limits Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Roles and capabilities · Organizations and members · Audit log · Models, budgets and limits Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/account-and-password",
@@ -3233,7 +3233,7 @@
    "source": "docs",
    "title": "Account & password — Related",
    "ref": "/docs/account-and-password#related",
-   "text": "Who can see your data · Roles and capabilities · Getting an API key Managed at /profile . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Who can see your data · Roles and capabilities · Getting an API key Managed at /profile . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/getting-an-api-key",
@@ -3310,7 +3310,7 @@
    "source": "docs",
    "title": "Endpoints & schemas — Related",
    "ref": "/docs/endpoints-and-schemas#related",
-   "text": "Getting an API key · Rate limits & idempotency · Request log · Reproducibility record Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Getting an API key · Rate limits & idempotency · Request log · Reproducibility record Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/rate-limits-and-idempotency",
@@ -3345,7 +3345,7 @@
    "source": "docs",
    "title": "Rate limits & idempotency — Related",
    "ref": "/docs/rate-limits-and-idempotency#related",
-   "text": "Getting an API key · Endpoints & schemas · Request log Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Getting an API key · Endpoints & schemas · Request log Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/request-log",
@@ -3380,7 +3380,7 @@
    "source": "docs",
    "title": "Request log — Related",
    "ref": "/docs/request-log#related",
-   "text": "Getting an API key · Rate limits & idempotency · Audit log · Endpoints & schemas Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "Getting an API key · Rate limits & idempotency · Audit log · Endpoints & schemas Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/all-tables",
@@ -3940,7 +3940,7 @@
    "source": "docs",
    "title": "All tables — Not yet described",
    "ref": "/docs/all-tables#not-yet-described",
-   "text": "These 17 tables exist and hold real data. What they lack is a description of every column — the thing this page is generated from. Each is listed under the work package that owes it, so the index is complete and true rather than partial and quiet. WP 5.2 17 tables Outside the data spine. These are the AI and public-API control planes: they carry no simulation input, no engine-read field and no user-uploaded value, so a data-contract sidecar would describe machinery rather than the user's data. PLAN.md §6.3 documents them in the manual's sections 14 and 15 instead, and lists several of them explicitly as internal-only. If one ever starts carrying a value a simulation reads, it moves into the contract — that is the test, not the table's age. ai_budgets ai_chat_events ai_model_capabilities ai_models ai_providers ai_usage_logs api_idempotency api_keys api_rate_limits api_request_logs chat_folders chat_messages chat_plans chat_threads project_memory proposals user_files Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "These 17 tables exist and hold real data. What they lack is a description of every column — the thing this page is generated from. Each is listed under the work package that owes it, so the index is complete and true rather than partial and quiet. WP 5.2 17 tables Outside the data spine. These are the AI and public-API control planes: they carry no simulation input, no engine-read field and no user-uploaded value, so a data-contract sidecar would describe machinery rather than the user's data. PLAN.md §6.3 documents them in the manual's sections 14 and 15 instead, and lists several of them explicitly as internal-only. If one ever starts carrying a value a simulation reads, it moves into the contract — that is the test, not the table's age. ai_budgets ai_chat_events ai_model_capabilities ai_models ai_providers ai_usage_logs api_idempotency api_keys api_rate_limits api_request_logs chat_folders chat_messages chat_plans chat_threads project_memory proposals user_files Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/units-and-conventions",
@@ -3982,7 +3982,7 @@
    "source": "docs",
    "title": "Units & conventions — Where this is defined",
    "ref": "/docs/units-and-conventions#where-defined",
-   "text": "supabase/functions/_shared/grading.ts UNIT_DAYS This page imports that object directly rather than copying it, so the table above is the table the software uses — not a description of it. For the narrative difference between a lane's time unit and its lead time, see Units and time periods . Reference data: contract 62a6e8587a37 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
+   "text": "supabase/functions/_shared/grading.ts UNIT_DAYS This page imports that object directly rather than copying it, so the table above is the table the software uses — not a description of it. For the narrative difference between a lane's time unit and its lead time, see Units and time periods . Reference data: contract 980ce9c339c2 , engine 0.8.3 . Generated definitions are checked separately from this page’s explanatory guidance."
   },
   {
    "id": "docs/glossary",

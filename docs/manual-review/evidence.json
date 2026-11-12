@@ -6,7 +6,7 @@
       "path": "src/components/UploadWizard.tsx",
       "symbols": "UploadWizard, IngestRunPanel",
       "manual_page": "uploading-data",
-      "sha256": "6c8a3336d73decedc5992c0a0d089a4343e2685665debef8e4319e948d76bade"
+      "sha256": "ad6cb9f29d5a90d710f5f55fcf2cda5bf9297922677df01fe1794f7a1799437e"
     },
     {
       "path": "supabase/functions/_shared/ingestValidate.ts",

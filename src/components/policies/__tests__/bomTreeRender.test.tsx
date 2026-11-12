@@ -102,13 +102,22 @@ describe("the BOM tree renders at AA-ver3's size (D180)", () => {
     expect(html).toContain("Outline and Tabular only — Compact has one label column");
   });
 
-  it.each(["compact", "outline", "tabular"])("%s, everything open: every material and every line is on screen", (layout) => {
+  it.each(["compact", "outline", "tabular"])("%s, everything open: every line is counted, and only a window of rows is mounted", (layout) => {
     withPrefs({ layout, repeat: true, level: "all" });
     const t0 = performance.now();
     const html = render(input);
     const ms = performance.now() - t0;
+    // every line is open and counted ...
     expect(html).toContain("BOM tree · 386 of 386 lines open");
-    for (const r of aa.supplierRows) expect(html).toContain(`>${String(r.material_id)}<`);
+    // ... but a long tree mounts the rows in (and near) the viewport, with a spacer for the rest, so
+    // the grid stays fast at thousands of rows. `rowWindow.test.ts` holds that nothing is unreachable
+    // (the window and its spacers always add up to the whole height).
+    const mounted = count(html, "<tr");
+    expect(mounted).toBeLessThan(aa.supplierRows.length);
+    expect(mounted).toBeGreaterThan(20);
+    expect(html).toContain('aria-hidden="true"');
+    // the top of the tree is what the first paint shows
+    expect(html).toContain(`>${String(aa.supplierRows[0].material_id)}<`);
     // the widest AA-sized render stays interactive-fast even on the server path
     expect(ms).toBeLessThan(4000);
   });

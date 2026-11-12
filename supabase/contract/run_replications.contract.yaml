@@ -81,7 +81,7 @@ surfaces:
   - page: "ProjectPolicies.tsx"
     via: "hook useSimulationRun → select * from run_replications"
     grain: table
-    evidence: "src/hooks/useSimulationRun.tsx:150"
+    evidence: "src/hooks/useSimulationRun.tsx:152"
     confirmed: true
     note: >-
       Both result surfaces reach this table through the SAME hook, so the
@@ -92,7 +92,7 @@ surfaces:
   - page: "SimulationLab.tsx"
     via: "hook useSimulationRun::loadReps → select * from run_replications"
     grain: table
-    evidence: "src/hooks/useSimulationRun.tsx:265"
+    evidence: "src/hooks/useSimulationRun.tsx:267"
     confirmed: true
   - page: "ProjectPolicies.tsx"
     via: "useVerifiableExports → select * from run_replications"

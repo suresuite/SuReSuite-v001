@@ -16,6 +16,10 @@ Two evidence hashes moved: `comparability.ts` (`runVersions` gains the run's rec
 
 One evidence hash moved: `_shared/dispatch.ts`. `dispatchExperimentRun` gained `opts.createdBy`, so a caller whose user id is an `approved_users` id (agent-apply) writes NULL into `simulation_runs.created_by`, a foreign key to `auth.users`, instead of failing the insert. The Lab and the public API are unchanged. Read against `roles-and-capabilities`: its claim that the dispatch helper assumes the caller already authorized the request, and does not establish the caller's project role, is unaffected. Who may dispatch did not change, only what is recorded as `created_by`. No manual text changed. Not refreshed: every other hash, which still matches.
 
+## Refresh 2026-11-05
+
+One evidence hash moved: `UploadWizard.tsx`. The change is that a failed `ingest-file` call now shows the server's own reason and HTTP status instead of the fixed sentence "Edge Function returned a non-2xx status code" (`src/lib/ingest/edgeError.ts`, also used by `useIngestRun`). It was read against `uploading-data`, which already tells readers that an upload error, a validation failure and a permission denial need different fixes and to capture the exact message; the page needed no change, and the new behaviour is what makes that advice workable. Not refreshed: every other hash, which still matches.
+
 ## What changed
 
 - **Starting:** four reader paths now lead to an outcome. The analyst tutorial supplies seven synthetic CSVs, a precise experiment protocol, expected checkpoints, failure recovery and locally executed results.

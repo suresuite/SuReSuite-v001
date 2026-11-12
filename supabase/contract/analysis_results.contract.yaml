@@ -44,7 +44,7 @@ surfaces:
   - page: "ProductLevelNetwork.tsx"
     via: "rpc get_product_level_metrics (kind product_metrics, PLAN.md §4 D313)"
     grain: table
-    evidence: "src/pages/ProductLevelNetwork.tsx:284"
+    evidence: "src/pages/ProductLevelNetwork.tsx:285"
     confirmed: true
 
 governance:

@@ -264,6 +264,6 @@ When the row was last changed. The legacy writer only inserted; no trigger re-st
 
 ---
 
-*Generated from data contract `62a6e8587a37`, engine `0.8.3`,
+*Generated from data contract `980ce9c339c2`, engine `0.8.3`,
 sidecar `supabase/contract/simulation_job_magnitudes.contract.yaml`, table created by `20250917214434_0124e19b-fd0b-4bb1-9dad-0a449d321c0a.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

@@ -77,19 +77,19 @@ unnoticed.
 
 <details><summary>13 app-shell read(s) — not lineage</summary>
 
-* `Auth.tsx` — `src/hooks/useAuth.tsx:167`
-* `DataManager.tsx` — `src/hooks/useAuth.tsx:167`
-* `FirmLevelNetwork.tsx` — `src/hooks/useAuth.tsx:167`
-* `Forbidden.tsx` — `src/hooks/useAuth.tsx:167`
-* `GettingStarted.tsx` — `src/hooks/useAuth.tsx:167`
-* `InteractiveNetworkSpace.tsx` — `src/hooks/useAuth.tsx:167`
-* `Landing.tsx` — `src/hooks/useAuth.tsx:167`
-* `NotFound.tsx` — `src/hooks/useAuth.tsx:167`
-* `ProcessLevelNetwork.tsx` — `src/hooks/useAuth.tsx:167`
-* `ProductLevelNetwork.tsx` — `src/hooks/useAuth.tsx:167`
-* `ProjectIntelligence.tsx` — `src/hooks/useAuth.tsx:167`
-* `ProjectPolicies.tsx` — `src/hooks/useAuth.tsx:167`
-* `SimulationLab.tsx` — `src/hooks/useAuth.tsx:167`
+* `Auth.tsx` — `src/hooks/useAuth.tsx:169`
+* `DataManager.tsx` — `src/hooks/useAuth.tsx:169`
+* `FirmLevelNetwork.tsx` — `src/hooks/useAuth.tsx:169`
+* `Forbidden.tsx` — `src/hooks/useAuth.tsx:169`
+* `GettingStarted.tsx` — `src/hooks/useAuth.tsx:169`
+* `InteractiveNetworkSpace.tsx` — `src/hooks/useAuth.tsx:169`
+* `Landing.tsx` — `src/hooks/useAuth.tsx:169`
+* `NotFound.tsx` — `src/hooks/useAuth.tsx:169`
+* `ProcessLevelNetwork.tsx` — `src/hooks/useAuth.tsx:169`
+* `ProductLevelNetwork.tsx` — `src/hooks/useAuth.tsx:169`
+* `ProjectIntelligence.tsx` — `src/hooks/useAuth.tsx:169`
+* `ProjectPolicies.tsx` — `src/hooks/useAuth.tsx:169`
+* `SimulationLab.tsx` — `src/hooks/useAuth.tsx:169`
 
 These reach the table only through modules the shell mounts on every page.
 Listing them as surfaces would be true about the imports and false about
@@ -447,6 +447,6 @@ for one you did.
 
 ---
 
-*Generated from data contract `62a6e8587a37`, engine `0.8.3`,
+*Generated from data contract `980ce9c339c2`, engine `0.8.3`,
 sidecar `supabase/contract/approved_users.contract.yaml`, table created by `20250815000000_approved_users_base.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

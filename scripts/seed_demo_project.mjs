@@ -42,15 +42,40 @@
 //   USER_NAME             (default "Demo Seed")
 //   PROJECT_NAME          (default: the dataset's)
 //   SKIP_ANALYSES=1       load the data but leave the analyses to the pages
+//   DATASET_DIR           the directory holding dataset.json (default: scripts/demo_project;
+//                         the large one is scripts/demo_project_large/out)
+//   LANES_VIA=sql         for a project too big to promote through the upload path (every
+//                         promotion rebuilds the whole project's lanes, and past about 100
+//                         products that exceeds the database's per-statement time limit even
+//                         for a 20-row file). Writes DATASET_DIR/load_lanes.sql and stops: one
+//                         file that loads the BOM, inbound and outbound rows with the rebuild
+//                         triggers off, switches them back on and rebuilds ONCE. Run it as a
+//                         single transaction (Supabase SQL editor, or `psql -1 -f`), then run
+//                         this script again with LANES_VIA=loaded to finish (node list, firm
+//                         graph, read-back). The rows skip the ingest tiers and their audit
+//                         rows, as the bulk RPCs this script used before always did.
+//   LANES_VIA=loaded      the lanes are already in (LANES_VIA=sql ran): skip clearing and
+//                         loading them and carry on.
+//   BATCH_ROWS            send each bulk call in slices of this many rows (default: all at
+//                         once). A slice is one statement, so a big load stays under the
+//                         database's per-statement time limit. A slice that still times out
+//                         is halved and retried by itself (a timeout rolls the call back).
+//   LANES_VIA=ingest      load the three lane files (BOM, inbound, outbound) the way the
+//                         upload wizard does — `ingest-file` land, then apply — one part at a
+//                         time, from DATASET_DIR/csv_split/ (or csv/ when there is no split).
+//                         The bulk RPCs rebuild the project's lanes once PER ROW, which is
+//                         what makes a big load time out; the ingest path promotes each file
+//                         in one statement. A part that times out is split and retried.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const clientTs = readFileSync(join(repoRoot, "src/integrations/supabase/client.ts"), "utf8");
-const SUPABASE_URL = clientTs.match(/SUPABASE_URL = "([^"]+)"/)?.[1];
+// SUPABASE_URL in the environment overrides the app's own (used to point the script at a local stand-in).
+const SUPABASE_URL = process.env.SUPABASE_URL || clientTs.match(/SUPABASE_URL = "([^"]+)"/)?.[1];
 const ANON_KEY = clientTs.match(/SUPABASE_PUBLISHABLE_KEY = "([^"]+)"/)?.[1];
 if (!SUPABASE_URL || !ANON_KEY) {
   console.error("could not parse SUPABASE_URL / anon key from client.ts");
@@ -63,7 +88,14 @@ const USER_EMAIL = process.env.USER_EMAIL || null;
 const USER_NAME = process.env.USER_NAME || "Demo Seed";
 const SKIP_ANALYSES = process.env.SKIP_ANALYSES === "1";
 
-const data = JSON.parse(readFileSync(join(repoRoot, "scripts/demo_project/dataset.json"), "utf8"));
+const DATASET_DIR = process.env.DATASET_DIR
+  ? join(process.cwd(), process.env.DATASET_DIR)
+  : join(repoRoot, "scripts/demo_project");
+const BATCH_ROWS = Number(process.env.BATCH_ROWS) > 0 ? Number(process.env.BATCH_ROWS) : Infinity;
+const LANES_VIA_INGEST = process.env.LANES_VIA === "ingest";
+const LANES_VIA_SQL = process.env.LANES_VIA === "sql";
+const LANES_LOADED = process.env.LANES_VIA === "loaded";
+const data = JSON.parse(readFileSync(join(DATASET_DIR, "dataset.json"), "utf8"));
 const { project: PROJECT, suppliers, materials, products, node_list: nodeList } = data;
 const bom = data.bom_multi_level;
 const inbound = data.inbound;
@@ -153,6 +185,225 @@ async function fn(name, body) {
 
 const rowsFor = (rows, projectId) => rows.map((r) => ({ ...r, plant_name: PLANT_NAME, project_id: projectId }));
 
+const isTimeout = (e) => /57014|statement timeout/i.test(String(e?.message ?? e));
+
+// One bulk call per slice of BATCH_ROWS rows; the answers (row counts) are added up. With the
+// default (no slicing) this is exactly the single call it replaces. A slice that hits the
+// database's statement timeout is rolled back whole, so it is safe to halve it and try again.
+async function bulkSlice(name, rows, extra) {
+  try {
+    const n = await rpc(name, { ...extra, p_rows: rows });
+    return typeof n === "number" ? n : Number(n) || 0;
+  } catch (e) {
+    if (isTimeout(e) && rows.length > 25) {
+      const mid = rows.length >> 1;
+      console.log(`    ${name}: ${rows.length} rows timed out — retrying as ${mid} + ${rows.length - mid}`);
+      return (await bulkSlice(name, rows.slice(0, mid), extra)) + (await bulkSlice(name, rows.slice(mid), extra));
+    }
+    throw e;
+  }
+}
+async function bulk(name, rows, extra) {
+  let total = 0;
+  for (let i = 0; i < rows.length; i += BATCH_ROWS) total += await bulkSlice(name, rows.slice(i, i + BATCH_ROWS), extra);
+  return total;
+}
+
+// ── The lane files, through the upload path ──────────────────────────────────────
+// What the wizard sends: multipart to `ingest-file`, mode `land` (stage + diff), then mode
+// `apply` with the run id (promote). Nothing here knows a column: the function validates
+// against the data contract exactly as it does for a person.
+const LANE_FILES = [
+  { dataset: "bom_multi_level", stem: "bom_multi_level" },
+  { dataset: "inbound_logistics", stem: "inbound_logistics" },
+  { dataset: "outbound_logistics", stem: "outbound_logistics" },
+];
+
+function lanePartsFor(stem) {
+  const split = join(DATASET_DIR, "csv_split");
+  const parts = existsSync(split)
+    ? readdirSync(split).filter((f) => f.startsWith(`${stem}_part`)).sort()
+    : [];
+  if (parts.length) return parts.map((f) => ({ name: f, text: readFileSync(join(split, f), "utf8") }));
+  const whole = join(DATASET_DIR, "csv", `${stem}.csv`);
+  return existsSync(whole) ? [{ name: `${stem}.csv`, text: readFileSync(whole, "utf8") }] : [];
+}
+
+async function ingestCall(fields, file) {
+  const form = new FormData();
+  for (const [k, v] of Object.entries(fields)) form.append(k, v);
+  if (file) form.append("file", new Blob([file.text], { type: "text/csv" }), file.name);
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/ingest-file`, {
+    method: "POST",
+    headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
+    body: form,
+  });
+  const text = await res.text();
+  let body = null;
+  try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+  return { status: res.status, body };
+}
+
+const reasonOf = (r) =>
+  `HTTP ${r.status}: ` +
+  (typeof r.body === "string" ? r.body.slice(0, 300)
+    : r.body?.error ?? (r.body?.findings ?? []).map((f) => f.message).slice(0, 3).join("; ") ?? JSON.stringify(r.body));
+
+// A server that fell over or ran out of time may succeed on less. A 4xx is the file's fault.
+const retryable = (r) => r.status >= 500 || isTimeout(JSON.stringify(r.body ?? ""));
+
+/** Cut a CSV in two near the middle. A BOM is cut only between products, so a sub-assembly
+ *  stays with its parent; null when it cannot be cut. */
+function halve(dataset, text) {
+  const lines = text.split("\n").filter((l) => l.length);
+  const header = lines[0];
+  const rows = lines.slice(1);
+  if (rows.length < 40) return null;
+  let cut = rows.length >> 1;
+  if (dataset === "bom_multi_level") {
+    const col = header.split(",").indexOf("higher_level_component_id");
+    const owner = (row) => {
+      const par = row.split(",")[col] ?? "";
+      return par.startsWith("P-") ? par : `P-${par.split("-")[1]}`;
+    };
+    let i = cut;
+    while (i < rows.length && owner(rows[i]) === owner(rows[i - 1])) i++;
+    if (i >= rows.length) {
+      i = cut;
+      while (i > 0 && owner(rows[i]) === owner(rows[i - 1])) i--;
+    }
+    if (i <= 0 || i >= rows.length) return null;
+    cut = i;
+  }
+  const join2 = (rs) => header + "\n" + rs.join("\n") + "\n";
+  return [join2(rows.slice(0, cut)), join2(rows.slice(cut))];
+}
+
+async function uploadLaneFile(dataset, projectId, name, text) {
+  const t0 = Date.now();
+  const rowCount = text.split("\n").filter((l) => l.length).length - 1;
+  let failure = null;
+  const land = await ingestCall(
+    { mode: "land", dataset, project_id: projectId, user_id: USER_ID },
+    { name, text },
+  );
+  if (land.status < 300 && land.body?.success) {
+    const apply = await ingestCall({ mode: "apply", run_id: land.body.run_id, user_id: USER_ID });
+    if (apply.status < 300 && apply.body?.success) {
+      const b = apply.body;
+      const held = land.body.rows_held ?? b.rows_held ?? 0;
+      console.log(
+        `  ✓ ${name}: ${rowCount} rows · new ${b.rows_new ?? land.body.rows_new ?? "?"}` +
+        `, changed ${b.rows_changed ?? land.body.rows_changed ?? "?"}` +
+        `, unchanged ${b.rows_unchanged ?? land.body.rows_unchanged ?? "?"}` +
+        (held ? `, HELD BACK ${held}` : "") + ` (${((Date.now() - t0) / 1000).toFixed(1)}s)`,
+      );
+      return;
+    }
+    failure = { stage: "apply", ...apply };
+  } else {
+    failure = { stage: "land", ...land };
+  }
+  if (retryable(failure)) {
+    const halves = halve(dataset, text);
+    if (halves) {
+      console.log(`  … ${name}: ${failure.stage} failed (${reasonOf(failure).slice(0, 90)}) — splitting ${rowCount} rows in two`);
+      await uploadLaneFile(dataset, projectId, name.replace(/\.csv$/, "") + "a.csv", halves[0]);
+      await uploadLaneFile(dataset, projectId, name.replace(/\.csv$/, "") + "b.csv", halves[1]);
+      return;
+    }
+  }
+  throw new Error(`${name} (${dataset}): ${failure.stage} failed — ${reasonOf(failure)}`);
+}
+
+async function loadLanesViaIngest(projectId) {
+  for (const { dataset, stem } of LANE_FILES) {
+    const parts = lanePartsFor(stem);
+    if (!parts.length) throw new Error(`no CSV for ${dataset} under ${DATASET_DIR}`);
+    console.log(`  ${dataset}: ${parts.length} file(s)`);
+    for (const part of parts) await uploadLaneFile(dataset, projectId, part.name, part.text);
+  }
+}
+
+// ── The lanes as one SQL file ────────────────────────────────────────────────────
+const sqlLit = (v) =>
+  v === null || v === undefined || v === "" ? "NULL"
+  : typeof v === "number" ? String(v)
+  : `'${String(v).replace(/'/g, "''")}'`;
+
+function valuesSql(rows, cols) {
+  return rows.map((r) => `(${cols.map((c) => sqlLit(r[c])).join(", ")})`).join(",\n");
+}
+
+function lanesSql(projectId) {
+  const SLICE = 500;
+  const out = [];
+  const insert = (table, cols, rows) => {
+    for (let i = 0; i < rows.length; i += SLICE) {
+      out.push(`INSERT INTO public.${table} (${cols.join(", ")}) VALUES\n${valuesSql(rows.slice(i, i + SLICE), cols)};`);
+    }
+  };
+  const withProject = (rows) => rows.map((r) => ({ ...r, plant_name: PLANT_NAME, project_id: projectId }));
+  const bomCols = ["project_id", "plant_name", "material_id", "level", "higher_level_component_id", "consumption_rate"];
+  const inCols = ["project_id", "plant_name", "supplier_id", "material_id", "volume", "time_unit", "lead_time", "unit_price"];
+  const outCols = ["project_id", "plant_name", "customer_id", "product_id", "volume", "time_unit", "expected_lead_time", "unit_price"];
+
+  out.push(`-- Generated by scripts/seed_demo_project.mjs (LANES_VIA=sql). Project ${projectId}.
+--
+-- WHAT THIS DOES: loads the BOM (${bom.length} rows), inbound (${inbound.length}) and outbound (${outbound.length}) lanes of
+-- "${PROJECT_NAME}" with the lane triggers OFF, switches them back on, and rebuilds the project's lanes
+-- ONCE. Through the upload path the same rebuild runs after every file, and on a project this size
+-- one rebuild takes longer than the database's per-statement limit.
+--
+-- RUN IT AS ONE TRANSACTION: paste it into the Supabase SQL editor and press Run, or use
+-- \`psql "<connection string>" -1 -f load_lanes.sql\`. If anything fails, the whole file rolls back
+-- (the trigger switches too), so nothing is left half-loaded or with a trigger off. Do NOT run it
+-- statement by statement.
+--
+-- WHAT IT SKIPS: the ingest tiers and their audit rows for these lane rows, as the bulk RPCs the
+-- first version of this seed used also did.
+
+SET LOCAL statement_timeout = '300s';
+
+ALTER TABLE public.bom_multi_level    DISABLE TRIGGER USER;
+ALTER TABLE public.inbound_logistics  DISABLE TRIGGER USER;
+ALTER TABLE public.outbound_logistics DISABLE TRIGGER USER;
+
+DELETE FROM public.bom_multi_level    WHERE project_id = '${projectId}';
+DELETE FROM public.inbound_logistics  WHERE project_id = '${projectId}';
+DELETE FROM public.outbound_logistics WHERE project_id = '${projectId}';
+`);
+  insert("bom_multi_level", bomCols, withProject(bom));
+  insert("inbound_logistics", inCols, withProject(inbound));
+  insert("outbound_logistics", outCols, withProject(outbound));
+  out.push(`
+-- Run any deferred constraint checks now: PostgreSQL refuses to change a table's triggers in a
+-- transaction that still has some pending on it.
+SET CONSTRAINTS ALL IMMEDIATE;
+ALTER TABLE public.bom_multi_level    ENABLE TRIGGER USER;
+ALTER TABLE public.inbound_logistics  ENABLE TRIGGER USER;
+ALTER TABLE public.outbound_logistics ENABLE TRIGGER USER;
+
+-- What the triggers would have done for these rows: say the project's graph changed, refresh its
+-- completion flags, and rebuild its lanes and node list once.
+SELECT public._graph_state_mark(ARRAY['${projectId}'::uuid]);
+SELECT public._project_completion_refresh('${projectId}'::uuid);
+SELECT public.rebuild_supply_chain_lanes('${projectId}'::uuid, '${USER_ID}'::uuid);
+
+-- Read-back: counts, and that no trigger was left off.
+SELECT (SELECT count(*) FROM public.bom_multi_level    WHERE project_id = '${projectId}') AS bom_rows,
+       (SELECT count(*) FROM public.inbound_logistics  WHERE project_id = '${projectId}') AS inbound_rows,
+       (SELECT count(*) FROM public.outbound_logistics WHERE project_id = '${projectId}') AS outbound_rows,
+       (SELECT count(*) FROM public.supply_chain_data  WHERE project_id = '${projectId}') AS lanes,
+       (SELECT count(*) FROM public.supply_chain_data_multi_tier WHERE project_id = '${projectId}') AS deep_lanes,
+       (SELECT count(*) FROM public.node_list          WHERE project_id = '${projectId}') AS nodes,
+       (SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+         WHERE c.relname IN ('bom_multi_level','inbound_logistics','outbound_logistics')
+           AND NOT t.tgisinternal AND t.tgenabled = 'D') AS triggers_left_off;
+`);
+  return out.join("\n");
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────────
 async function main() {
   console.log(`SuReSuite demo project seed — ${DRY_RUN ? "DRY RUN" : "LIVE"}`);
@@ -173,6 +424,13 @@ async function main() {
   console.log(`  project "${PROJECT_NAME}" · plant "${PLANT_NAME}" · ${PROJECT.model} · bom=${PROJECT.bom_level}`);
   console.log(`  rows: ${JSON.stringify(counts)}`);
 
+  if (LANES_VIA_INGEST) {
+    console.log("  lanes via ingest-file:");
+    for (const { dataset, stem } of LANE_FILES) {
+      const parts = lanePartsFor(stem);
+      console.log(`    ${dataset}: ${parts.length} file(s) ${parts.map((p) => p.text.split("\n").filter(Boolean).length - 1).join(" + ")} rows`);
+    }
+  }
   if (DRY_RUN) {
     console.log("\nDRY RUN complete — no writes performed.");
     return;
@@ -208,32 +466,65 @@ async function main() {
 
   // 2 · item masters (upsert)
   console.log("── item masters");
-  console.log(`  suppliers: ${await rpc("bulk_upsert_suppliers", { p_project_id: projectId, p_rows: suppliers })}`);
-  console.log(`  materials: ${await rpc("bulk_upsert_materials", { p_project_id: projectId, p_rows: materials })}`);
-  console.log(`  products:  ${await rpc("bulk_upsert_products", { p_project_id: projectId, p_rows: products })}`);
+  console.log(`  suppliers: ${await bulk("bulk_upsert_suppliers", suppliers, { p_project_id: projectId })}`);
+  console.log(`  materials: ${await bulk("bulk_upsert_materials", materials, { p_project_id: projectId })}`);
+  console.log(`  products:  ${await bulk("bulk_upsert_products", products, { p_project_id: projectId })}`);
 
   // 3 · clear what a re-run would duplicate
   console.log("── clearing arcs and the deep-tier graph (idempotency)");
-  console.log(`  arcs:      ${await rpc("delete_project_dataset", { p_project_id: projectId, p_dataset: "all", ...auth })}`);
+  // In sql mode the file clears the lane sources itself, with the rebuild triggers off; a delete
+  // here would fire a rebuild per table over whatever is already loaded.
+  if (LANES_LOADED || LANES_VIA_SQL) console.log("  arcs:      left to the next step (LANES_VIA=" + process.env.LANES_VIA + ")");
+  else console.log(`  arcs:      ${await rpc("delete_project_dataset", { p_project_id: projectId, p_dataset: "all", ...auth })}`);
   console.log(`  deep tier: ${await rpc("delete_project_dataset", { p_project_id: projectId, p_dataset: "deep_tier", ...auth })}`);
 
   // 4 · the chain
   console.log("── the chain (multi-level bom + inbound + outbound)");
-  console.log(`  bom:      ${await rpc("bulk_insert_bom_multi_level", { p_rows: rowsFor(bom, projectId), ...auth })}`);
-  console.log(`  inbound:  ${await rpc("bulk_insert_inbound_logistics", { p_rows: rowsFor(inbound, projectId), ...auth })}`);
-  console.log(`  outbound: ${await rpc("bulk_insert_outbound_logistics", { p_rows: rowsFor(outbound, projectId), ...auth })}`);
-  await rpc("update_project_completion_status", { p_project_id: projectId, ...auth });
-  await rpc("combine_project_into_supply_chain", { p_project_id: projectId, ...auth });
-  await rpc("rebuild_node_list", { p_project_id: projectId, ...auth });
+  if (LANES_VIA_SQL) {
+    const file = join(DATASET_DIR, "load_lanes.sql");
+    writeFileSync(file, lanesSql(projectId));
+    const mb = (readFileSync(file).length / 1e6).toFixed(1);
+    console.log(`\n  wrote ${file} (${mb} MB)`);
+    console.log("\n  NEXT: run that file as ONE transaction, either");
+    console.log("    · Supabase dashboard → SQL Editor → New query → paste the file's contents → Run, or");
+    console.log(`    · psql "<connection string from Project Settings → Database>" -1 -f ${file}`);
+    console.log("  Its last query prints the row counts and `triggers_left_off` (must be 0).");
+    console.log("  Then finish with:");
+    console.log("    LANES_VIA=loaded <the same variables as this run> node scripts/seed_demo_project.mjs");
+    return;
+  } else if (LANES_LOADED) {
+    await rpc("update_project_completion_status", { p_project_id: projectId, ...auth });
+    console.log("  lanes: already loaded (LANES_VIA=loaded)");
+  } else if (LANES_VIA_INGEST) {
+    await loadLanesViaIngest(projectId);
+    await rpc("update_project_completion_status", { p_project_id: projectId, ...auth });
+    // Each promotion rebuilt the lanes through the lane tables' own triggers, so these two are
+    // repeated only to be safe. At this size they may exceed the time limit: not fatal.
+    for (const name of ["combine_project_into_supply_chain", "rebuild_node_list"]) {
+      try {
+        await rpc(name, { p_project_id: projectId, ...auth });
+        console.log(`  ✓ ${name}`);
+      } catch (e) {
+        console.log(`  ✗ ${name} (not fatal — the promotions already rebuilt the lanes): ${String(e.message).slice(0, 160)}`);
+      }
+    }
+  } else {
+    console.log(`  bom:      ${await bulk("bulk_insert_bom_multi_level", rowsFor(bom, projectId), auth)}`);
+    console.log(`  inbound:  ${await bulk("bulk_insert_inbound_logistics", rowsFor(inbound, projectId), auth)}`);
+    console.log(`  outbound: ${await bulk("bulk_insert_outbound_logistics", rowsFor(outbound, projectId), auth)}`);
+    await rpc("update_project_completion_status", { p_project_id: projectId, ...auth });
+    await rpc("combine_project_into_supply_chain", { p_project_id: projectId, ...auth });
+    await rpc("rebuild_node_list", { p_project_id: projectId, ...auth });
+  }
   // After the rebuild, so the rows exist to be located; the upload only sets the
   // description and the coordinates.
-  console.log(`  locations: ${await rpc("upload_node_list_data", { p_project_id: projectId, p_rows: nodeList, ...auth })}`);
+  console.log(`  locations: ${await bulk("upload_node_list_data", nodeList, { p_project_id: projectId, ...auth })}`);
 
   // 5 · the firm-level graph (nodes first: an edge to a missing firm connects nothing)
   console.log("── the deep-tier firm graph");
   const deep = { p_project_id: projectId, p_plant_name: PLANT_NAME, ...auth };
-  console.log(`  nodes: ${await rpc("bulk_insert_network_nodes", { ...deep, p_rows: netNodes })}`);
-  console.log(`  edges: ${await rpc("bulk_insert_network_edges", { ...deep, p_rows: netEdges })}`);
+  console.log(`  nodes: ${await bulk("bulk_insert_network_nodes", netNodes, deep)}`);
+  console.log(`  edges: ${await bulk("bulk_insert_network_edges", netEdges, deep)}`);
 
   // 6 · the analyses, once
   if (SKIP_ANALYSES) {

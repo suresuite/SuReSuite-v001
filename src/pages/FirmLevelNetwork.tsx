@@ -1,5 +1,7 @@
 // @ts-nocheck — schema mismatch: this file targets a supply-chain schema not yet migrated into this project. Remove once tables/RPCs are created.
 import { listProjectsCached } from '@/lib/projects/projectsCache';
+import { adaptiveColumnLayout, lensNodeSize } from '@/lib/graph';
+import { isLargeGraph } from '@/lib/network/scale';
 import { Suspense, useEffect, useState, useMemo, useRef } from 'react';
 import { lazyChunk } from '@/lib/lazyChunk';
 import { Node, Edge } from '@xyflow/react';
@@ -197,6 +199,26 @@ export default function FirmLevelNetwork({ isCollapsed, setIsCollapsed }: FirmLe
     styleEdge: styleFirmEdge,
   });
   const { allNodes, allEdges, setAllNodes, setAllEdges, selectedNode, focusedId: focusedNode, setFocusedId: setFocusedNode } = lens;
+
+  // A focus on a LARGE firm graph keeps the rings' positions, which are sized for thousands of
+  // firms, so the handful that remain would be tiny and far apart. Lay the focused set out in
+  // tier columns at its own size (`lib/network/scale.ts`); a drag inside a large focus snaps back.
+  const focusedLarge = !!lens.focusedId && isLargeGraph(allNodes.length, allEdges.length);
+  const focusLayout = useMemo(() => {
+    if (!focusedLarge) return null;
+    const list = lens.nodes;
+    const side = Math.max(24, Math.round(lensNodeSize(list.length).width));
+    const size = graphRef.current?.canvasSize() ?? { width: 900, height: 596 };
+    const positions = adaptiveColumnLayout(
+      LEGEND_TIERS.map((t) => ({ ids: list.filter((n) => n.data.tier === t).map((n) => n.id) })),
+      { canvasWidth: size.width, canvasHeight: size.height, nodeWidth: side, nodeHeight: side },
+    );
+    return list.map((n) => ({
+      ...n,
+      position: positions.get(n.id) ?? n.position,
+      style: { ...n.style, width: side, height: side },
+    }));
+  }, [focusedLarge, lens.nodes]);
   const [loading, setLoading] = useState(false);
   const [tierCounts, setTierCounts] = useState<Record<TierKey, number>>({ 'Tier 1': 0, 'Tier 2': 0, 'Tier 3': 0, 'Plant': 0 });
   const [projects, setProjects] = useState<any[]>([]);
@@ -1432,7 +1454,7 @@ export default function FirmLevelNetwork({ isCollapsed, setIsCollapsed }: FirmLe
               ref={graphRef}
               legendShape="round"
               legend={LEGEND_TIERS.map((t) => ({ key: t, label: TIER_LABELS[t], color: TIER_COLORS[t], count: tierCounts[t] }))}
-              nodes={lens.nodes}
+              nodes={focusLayout ?? lens.nodes}
               edges={lens.edges}
               onNodesChange={lens.onNodesChange}
               onNodeClick={lens.onNodeClick}
@@ -1447,6 +1469,39 @@ export default function FirmLevelNetwork({ isCollapsed, setIsCollapsed }: FirmLe
               fitKey={`${globalSelectedProjectId}|${loadNonce}|${focusedNode ?? ''}`}
               hint="Click/double-click firm to select and add disruptions • Double-click to focus network connections"
               storageKey="suresuite.lens.firm.graphHeight"
+              largeView={{
+                projectKey: String(globalSelectedProjectId ?? ''),
+                nodes: lens.allNodes,
+                edges: lens.allEdges,
+                groupOf: (n) => (n.data as NodeData).tier,
+                // The Firm lens's own rings read well at this size; its outermost tier is the one that
+                // bunches up around a few parents, so that tier alone is re-placed as a ragged fringe
+                // outside the rest: each firm at the angle of its suppliers, stacking outward where
+                // many share one.
+                layout: {
+                  kind: 'page',
+                  // irregularity 0 = ruler-straight, 1 = grown
+                  spread: {
+                    layerOf: (n) => LEGEND_TIERS.indexOf((n.data as NodeData).tier ?? 'Tier 1'),
+                    layers: [3],
+                    irregularity: 0.8,
+                    style: 'fringe',
+                  },
+                },
+                weight: {
+                  label: 'Revenue',
+                  of: (n) => (n.data as NodeData).revenue,
+                  format: formatMoneyCompact,
+                },
+                secondary: { title: 'Country', of: (n) => (n.data as NodeData).country },
+                focusedId: lens.focusedId,
+                selectedId: lens.selectedId,
+                onSelect: (id) => lens.setSelectedId(id),
+                onFocus: (id) => {
+                  if (id) lens.setSelectedId(id);
+                  lens.setFocusedId(id);
+                },
+              }}
               minimapNodeColor={(n) => TIER_COLORS[(n.data as NodeData).tier || 'Tier 1']}
               replaceCanvas={
                 viewMode === 'map' ? (

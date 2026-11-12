@@ -55,7 +55,7 @@ Written by the `combine-project` edge function, never by a page. Invariant I2: p
 |---|---|---|---|
 | `DataManager.tsx` | rpc combine_project_into_supply_chain | `src/pages/DataManager.tsx:673` | yes |
 | `ProductLevelNetwork.tsx` | rpc project_freshness (GraphVersionChip → FreshnessBadge, WP 10.1) | `src/components/trust/useProjectFreshness.ts:28` | yes |
-| `ProjectPolicies.tsx` | rpc assign_material_supplier | `src/components/policies/StagePolicyTable.tsx:410` | yes |
+| `ProjectPolicies.tsx` | rpc assign_material_supplier | `src/components/policies/StagePolicyTable.tsx:413` | yes |
 | `SimulationLab.tsx` | rpc assign_material_supplier | `src/components/sim/PreRunValidationPanel.tsx:78` | yes |
 
 Each row says the page READS the table by that path, at that line. It does
@@ -435,6 +435,6 @@ WP 4.3 · when the run that wrote the criticality columns finished. It is proven
 
 ---
 
-*Generated from data contract `62a6e8587a37`, engine `0.8.3`,
+*Generated from data contract `980ce9c339c2`, engine `0.8.3`,
 sidecar `supabase/contract/supply_chain_data.contract.yaml`, table created by `20250815235125_cfc18b38-6bb4-4fc3-9c2a-5247afb7f311.sql`. No wall-clock date: a generated
 page that differs from itself tomorrow cannot be drift-gated.*

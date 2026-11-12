@@ -1,5 +1,6 @@
 // @ts-nocheck — schema mismatch: this file targets a supply-chain schema not yet migrated into this project. Remove once tables/RPCs are created.
 import { listProjectsCached } from '@/lib/projects/projectsCache';
+import { isLargeGraph } from '@/lib/network/scale';
 import { Node, Edge, Position } from '@xyflow/react';
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
@@ -798,10 +799,19 @@ export default function ProcessLevelNetwork({ isCollapsed, setIsCollapsed }: Net
 
   // The Labels toggle hides node ids and edge flow labels without touching the
   // data, so the details card and the search still read the real id.
-  const displayNodes = useMemo(
-    () => (showLabels ? lens.nodes : lens.nodes.map((n) => ({ ...n, style: { ...n.style, color: 'transparent' } }))),
-    [lens.nodes, showLabels],
-  );
+  // A focus on a LARGE graph keeps the whole network's positions (sized for thousands of
+  // nodes), so what remains would be tiny and far apart. Lay the focused set out at its own
+  // size (`lib/network/scale.ts`); a drag inside a large focus therefore snaps back.
+  const focusedLarge = !!lens.focusedId && isLargeGraph(lens.allNodes.length, lens.allEdges.length);
+  const focusLayout = useMemo(() => {
+    if (!focusedLarge) return null;
+    const { width, height } = lensNodeSize(lens.nodes.length);
+    return layoutColumns(lens.nodes, classOrder).map((n) => ({ ...n, style: { ...n.style, width, height } }));
+  }, [focusedLarge, lens.nodes, layoutColumns, classOrder]);
+  const displayNodes = useMemo(() => {
+    const base = focusLayout ?? lens.nodes;
+    return showLabels ? base : base.map((n) => ({ ...n, style: { ...n.style, color: 'transparent' } }));
+  }, [focusLayout, lens.nodes, showLabels]);
   const displayEdges = useMemo(
     () => lens.edges.map((e) => ({ ...e, label: showLabels ? ((e.data?.originalLabel as string) || '') : '' })),
     [lens.edges, showLabels],
@@ -1112,6 +1122,24 @@ export default function ProcessLevelNetwork({ isCollapsed, setIsCollapsed }: Net
             fitKey={`${globalSelectedProjectId}|${loadNonce}|${focusedNode ?? ''}|${selectedLevel1Node ?? ''}`}
             hint="Click a component to see details • Double-click to focus on process chain"
             storageKey="suresuite.lens.process.graphHeight"
+            largeView={{
+              projectKey: String(globalSelectedProjectId ?? ''),
+              nodes: lens.allNodes,
+              edges: lens.allEdges,
+              groupOf: (n) => (n.data as NodeData).classKey,
+              layout: {
+                kind: 'columns',
+                layerOf: (n) => classOrder.indexOf((n.data as NodeData).classKey ?? ''),
+                layerCount: Math.max(1, classOrder.length),
+              },
+              focusedId: lens.focusedId,
+              selectedId: lens.selectedId,
+              onSelect: (id) => lens.setSelectedId(id),
+              onFocus: (id) => {
+                if (id) lens.setSelectedId(id);
+                lens.setFocusedId(id);
+              },
+            }}
             overlay={
               loading ? (
                 <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/80">
