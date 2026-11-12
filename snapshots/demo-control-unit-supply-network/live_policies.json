@@ -1,0 +1,206 @@
+{
+ "defaults": [
+  {
+   "demand": {},
+   "recovery": {},
+   "sourcing": {},
+   "inventory": {},
+   "preset_id": null,
+   "transport": {},
+   "created_at": "2026-11-04T17:07:25.397474+00:00",
+   "production": {},
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "updated_at": "2026-11-12T14:42:49.229955+00:00",
+   "updated_by": null,
+   "fulfillment": {},
+   "active_preset": null,
+   "preset_applied_at": null,
+   "fulfillment_strategy": "make_to_stock"
+  }
+ ],
+ "overrides": [
+  {
+   "id": "87f10587-4071-457e-9cb5-56489767329d",
+   "patch": {
+    "primary_source": true
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-PASSIVE::M-CAP",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "8d4f01f0-0a22-458b-aad6-fe04e0659a0b",
+   "patch": {
+    "primary_source": true
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-CONN::M-CONNECTOR",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "953373ee-8658-4551-9d49-86373f5690ef",
+   "patch": {
+    "primary_source": true
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-HARNESS::M-HARNESS",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "2c1ef54d-90b7-4f8e-9e43-f11e0cbb066b",
+   "patch": {
+    "primary_source": true
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-PRINT::M-LABEL",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "fe16dd6f-dc31-470a-b3ee-6a30da170c61",
+   "patch": {
+    "primary_source": true
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-MCU::M-MCU",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "386e901a-684a-45d9-946a-63fa2fbb2c38",
+   "patch": {
+    "primary_source": false
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-MCU2::M-MCU",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "fc371917-e8d5-4a24-9c0b-f44ea2393c72",
+   "patch": {
+    "primary_source": true
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-PCB::M-PCB",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "c9a2c00d-8c83-438f-8f6a-9c2ee0a79607",
+   "patch": {
+    "primary_source": true
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-FAST::M-SCREW",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "a1c3a4fe-d3ef-49e5-97f4-4c88299c0832",
+   "patch": {
+    "primary_source": true
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-SEAL::M-SEAL",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "12d8d066-0457-4a50-8952-27076f67df64",
+   "patch": {
+    "primary_source": true
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-SENS::M-SENSOR",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "827781c8-4339-4cfb-ad4b-a4e182b97201",
+   "patch": {
+    "primary_source": true
+   },
+   "scope": "node",
+   "family": "sourcing",
+   "created_at": "2026-11-04T17:38:37.853552+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "S-PLASTIC::M-SHELL",
+   "updated_at": "2026-11-04T17:38:37.853552+00:00",
+   "updated_by": null,
+   "seeded_from_hash": "d6384617cad49aca6a194a16565f8b07abb6b7df41f885b0b5314c9049670c8d"
+  },
+  {
+   "id": "caa9b364-6e66-48c6-9e6d-88f4bb28b2ee",
+   "patch": {
+    "backorder_allowed": true,
+    "max_backorder_days": 7
+   },
+   "scope": "node",
+   "family": "fulfillment",
+   "created_at": "2026-11-12T14:09:10.620467+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "C-ASSEMBLY::P-CONTROL",
+   "updated_at": "2026-11-12T14:42:47.134003+00:00",
+   "updated_by": null,
+   "seeded_from_hash": null
+  },
+  {
+   "id": "76e92b1d-a63c-40ac-8c49-67b844c8e0e4",
+   "patch": {
+    "backorder_allowed": false
+   },
+   "scope": "node",
+   "family": "fulfillment",
+   "created_at": "2026-11-12T14:09:10.620467+00:00",
+   "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+   "target_key": "C-SERVICE::P-CONTROL",
+   "updated_at": "2026-11-12T14:42:47.134003+00:00",
+   "updated_by": null,
+   "seeded_from_hash": null
+  }
+ ]
+}

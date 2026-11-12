@@ -1,0 +1,146 @@
+[
+ {
+  "id": "1f92fe7c-869c-4bd4-bafd-0eb247874c19",
+  "crn": true,
+  "name": "Policy validation (auto)",
+  "role": "validation_baseline",
+  "seed": 1,
+  "time_step": "day",
+  "created_at": "2026-11-04T18:22:18.669222+00:00",
+  "created_by": null,
+  "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+  "updated_at": "2026-11-12T15:08:06.333608+00:00",
+  "description": "",
+  "primary_kpi": "fill_rate",
+  "warmup_days": 14,
+  "warmup_mode": "auto",
+  "demand_model": {
+   "kind": "poisson",
+   "lambda": 50
+  },
+  "from_network": false,
+  "horizon_days": 728,
+  "replications": 10,
+  "stopping_rule": {
+   "kind": "fixed_horizon",
+   "max_wall_seconds": 600
+  },
+  "policy_snapshot_id": null,
+  "recovery_overrides": {},
+  "disruption_schedule": [],
+  "recovery_playbook_id": null,
+  "inherited_validation_id": null
+ },
+ {
+  "id": "c8f7ee49-472a-4b5e-b414-6e14961e03dd",
+  "crn": true,
+  "name": "Normal 2026",
+  "role": "experiment",
+  "seed": 1,
+  "time_step": "day",
+  "created_at": "2026-11-12T15:38:23.791583+00:00",
+  "created_by": null,
+  "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+  "updated_at": "2026-11-12T15:38:23.791583+00:00",
+  "description": "Calendar 2026, no disruption.",
+  "primary_kpi": "fill_rate",
+  "warmup_days": 350,
+  "warmup_mode": "manual",
+  "demand_model": {
+   "kind": "poisson",
+   "lambda": 50
+  },
+  "from_network": false,
+  "horizon_days": 728,
+  "replications": 10,
+  "stopping_rule": {
+   "kind": "fixed_horizon",
+   "max_wall_seconds": 600
+  },
+  "policy_snapshot_id": null,
+  "recovery_overrides": {},
+  "disruption_schedule": [],
+  "recovery_playbook_id": null,
+  "inherited_validation_id": null
+ },
+ {
+  "id": "6ce9a513-2964-464a-a061-d41a8aece1b7",
+  "crn": true,
+  "name": "Microcontroller outage May 2026 (10 wk)",
+  "role": "experiment",
+  "seed": 1,
+  "time_step": "day",
+  "created_at": "2026-11-12T15:38:24.095839+00:00",
+  "created_by": null,
+  "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+  "updated_at": "2026-11-12T15:38:24.095839+00:00",
+  "description": "Kestrel Microsystems ships nothing for ten weeks from 2026-05-21.",
+  "primary_kpi": "fill_rate",
+  "warmup_days": 350,
+  "warmup_mode": "manual",
+  "demand_model": {
+   "kind": "poisson",
+   "lambda": 50
+  },
+  "from_network": false,
+  "horizon_days": 728,
+  "replications": 10,
+  "stopping_rule": {
+   "kind": "fixed_horizon",
+   "max_wall_seconds": 600
+  },
+  "policy_snapshot_id": null,
+  "recovery_overrides": {},
+  "disruption_schedule": [
+   {
+    "target": "S-MCU",
+    "start_day": 490,
+    "target_type": "node",
+    "duration_days": 70,
+    "magnitude_pct": 100
+   }
+  ],
+  "recovery_playbook_id": null,
+  "inherited_validation_id": null
+ },
+ {
+  "id": "c121cdc8-3ce8-4c32-ba06-1d51fed73724",
+  "crn": true,
+  "name": "Plant shutdown May 2026 (3 wk)",
+  "role": "experiment",
+  "seed": 1,
+  "time_step": "day",
+  "created_at": "2026-11-12T15:38:24.286687+00:00",
+  "created_by": null,
+  "project_id": "71d40a72-f350-44f0-a887-6087713a8df5",
+  "updated_at": "2026-11-12T15:38:24.286687+00:00",
+  "description": "The plant makes nothing for three weeks from 2026-05-21.",
+  "primary_kpi": "fill_rate",
+  "warmup_days": 350,
+  "warmup_mode": "manual",
+  "demand_model": {
+   "kind": "poisson",
+   "lambda": 50
+  },
+  "from_network": false,
+  "horizon_days": 728,
+  "replications": 10,
+  "stopping_rule": {
+   "kind": "fixed_horizon",
+   "max_wall_seconds": 600
+  },
+  "policy_snapshot_id": null,
+  "recovery_overrides": {},
+  "disruption_schedule": [
+   {
+    "target": "plant",
+    "start_day": 490,
+    "target_type": "node",
+    "duration_days": 21,
+    "magnitude_pct": 100
+   }
+  ],
+  "recovery_playbook_id": null,
+  "inherited_validation_id": null
+ }
+]

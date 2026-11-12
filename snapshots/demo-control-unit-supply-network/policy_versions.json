@@ -1,0 +1,708 @@
+[
+ {
+  "id": "04cc6ce9-5d65-4060-9eb6-bceacc170ad9",
+  "version_no": 1,
+  "label": "Baseline policies",
+  "snapshot": {
+   "defaults": {
+    "demand": {
+     "cv": 0.3,
+     "pattern": "stationary",
+     "mean_per_day": 100,
+     "priority_tier": "B",
+     "forecast_method": "exp_smoothing",
+     "delivery_schedule": "",
+     "forecast_bias_pct": 0,
+     "delivery_window_days": 3,
+     "late_penalty_per_day": 5,
+     "trend_pct_per_period": 0,
+     "forecast_horizon_days": 14,
+     "order_size_distribution": "poisson",
+     "seasonality_period_days": 0,
+     "seasonality_amplitude_pct": 0
+    },
+    "recovery": {
+     "enabled": true,
+     "cost_cap": 25000,
+     "response": [],
+     "trigger_geography": "",
+     "detection_lag_days": 1,
+     "recovery_target_days": 21,
+     "trigger_duration_days": 2,
+     "trigger_magnitude_pct": 25
+    },
+    "sourcing": {
+     "ratios": {},
+     "strategy": "single",
+     "supply_share": 0,
+     "contract_type": "contract",
+     "material_price": 0,
+     "primary_source": false,
+     "backup_supplier": "",
+     "min_reliability": 0.85,
+     "failover_trigger": "stockout",
+     "primary_supplier": "",
+     "tertiary_supplier": "",
+     "order_consolidation": "none",
+     "failover_cooldown_days": 7,
+     "failover_threshold_pct": 20,
+     "supplier_capacity_per_day": 0,
+     "max_lead_time_variance_days": 3
+    },
+    "inventory": {
+     "moq": 0,
+     "type": "min_max",
+     "basis": "days_of_supply",
+     "rotation": "FIFO",
+     "abc_class": "B",
+     "max_stock": 500,
+     "min_stock": 0,
+     "order_up_to": 200,
+     "ordering_cost": 100,
+     "reorder_point": 50,
+     "coverage_weeks": 8,
+     "rop_q_quantity": 0,
+     "fg_safety_stock": "none",
+     "shelf_life_days": 0,
+     "holding_cost_pct": 0.2,
+     "safety_stock_days": 7,
+     "review_period_days": 1,
+     "safety_stock_method": "fixed_days",
+     "fg_safety_stock_days": 2,
+     "service_level_target": 0.95,
+     "stockout_cost_per_unit": 5,
+     "fg_service_level_target": 0.95
+    },
+    "transport": {
+     "mode": "road",
+     "routing": "direct",
+     "vehicles": 5,
+     "load_type": "FTL",
+     "cost_per_km": 1.5,
+     "min_fill_pct": 70,
+     "cost_per_unit": 1,
+     "lead_time_max": 2,
+     "lead_time_min": 0,
+     "lead_time_mode": 1,
+     "lead_time_scale": 1,
+     "lead_time_shape": 2,
+     "capacity_volume_m3": 80,
+     "capacity_weight_kg": 20000,
+     "lead_time_std_days": 0.5,
+     "fixed_dispatch_cost": 50,
+     "lead_time_mean_days": 3,
+     "lead_time_distribution": "normal",
+     "carbon_intensity_kg_per_tkm": 0.062
+    },
+    "production": {
+     "lot_policy": "epq",
+     "scheduling": "fifo",
+     "setup_cost": 500,
+     "setup_time_hours": 1,
+     "utilization_cap_pct": 85,
+     "capacity_labor_per_day": 0,
+     "capacity_units_per_day": 1000,
+     "lead_time_distribution": "normal",
+     "capacity_machine_per_day": 0,
+     "production_cost_per_unit": 0,
+     "production_lead_time_max": 2,
+     "production_lead_time_min": 0,
+     "production_lead_time_mode": 1,
+     "allocation_priority_weight": 1,
+     "production_lead_time_scale": 1,
+     "production_lead_time_shape": 2,
+     "production_lead_time_std_days": 0.2,
+     "production_lead_time_mean_days": 1
+    },
+    "fulfillment": {
+     "price": 0,
+     "allocation": "priority",
+     "sourcing_firm": "",
+     "primary_source": false,
+     "tier_overrides": {},
+     "backorder_allowed": true,
+     "max_backorder_days": 14,
+     "service_level_beta": 0.98,
+     "service_level_alpha": 0.95,
+     "backorder_cost_per_day": 2,
+     "lost_sales_cost_per_unit": 20,
+     "order_batching_window_hours": 0
+    }
+   },
+   "overrides": [
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-CONN::M-CONNECTOR"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-FAST::M-SCREW"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-HARNESS::M-HARNESS"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-MCU::M-MCU"
+    },
+    {
+     "patch": {
+      "primary_source": false
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-MCU2::M-MCU"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PASSIVE::M-CAP"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PCB::M-PCB"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PLASTIC::M-SHELL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PRINT::M-LABEL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-SEAL::M-SEAL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-SENS::M-SENSOR"
+    }
+   ],
+   "schema_version": 2,
+   "fulfillment_strategy": "make_to_stock"
+  }
+ },
+ {
+  "id": "bb1e9ac6-1c0d-4c35-ae5f-9277c41397ee",
+  "version_no": 3,
+  "label": "Baseline \u2014 customer terms",
+  "snapshot": {
+   "defaults": {
+    "demand": {
+     "cv": 0.3,
+     "pattern": "stationary",
+     "mean_per_day": 100,
+     "priority_tier": "B",
+     "forecast_method": "exp_smoothing",
+     "delivery_schedule": "",
+     "forecast_bias_pct": 0,
+     "delivery_window_days": 3,
+     "late_penalty_per_day": 5,
+     "trend_pct_per_period": 0,
+     "forecast_horizon_days": 14,
+     "order_size_distribution": "poisson",
+     "seasonality_period_days": 0,
+     "seasonality_amplitude_pct": 0
+    },
+    "recovery": {
+     "enabled": true,
+     "cost_cap": 25000,
+     "response": [],
+     "trigger_geography": "",
+     "detection_lag_days": 1,
+     "recovery_target_days": 21,
+     "trigger_duration_days": 2,
+     "trigger_magnitude_pct": 25
+    },
+    "sourcing": {
+     "ratios": {},
+     "strategy": "single",
+     "supply_share": 0,
+     "contract_type": "contract",
+     "material_price": 0,
+     "primary_source": false,
+     "backup_supplier": "",
+     "min_reliability": 0.85,
+     "failover_trigger": "stockout",
+     "primary_supplier": "",
+     "tertiary_supplier": "",
+     "order_consolidation": "none",
+     "failover_cooldown_days": 7,
+     "failover_threshold_pct": 20,
+     "supplier_capacity_per_day": 0,
+     "max_lead_time_variance_days": 3
+    },
+    "inventory": {
+     "moq": 0,
+     "type": "min_max",
+     "basis": "days_of_supply",
+     "rotation": "FIFO",
+     "abc_class": "B",
+     "max_stock": 500,
+     "min_stock": 0,
+     "order_up_to": 200,
+     "ordering_cost": 100,
+     "reorder_point": 50,
+     "coverage_weeks": 8,
+     "rop_q_quantity": 0,
+     "fg_safety_stock": "none",
+     "shelf_life_days": 0,
+     "holding_cost_pct": 0.2,
+     "safety_stock_days": 7,
+     "review_period_days": 1,
+     "safety_stock_method": "fixed_days",
+     "fg_safety_stock_days": 2,
+     "service_level_target": 0.95,
+     "stockout_cost_per_unit": 5,
+     "fg_service_level_target": 0.95
+    },
+    "transport": {
+     "mode": "road",
+     "routing": "direct",
+     "vehicles": 5,
+     "load_type": "FTL",
+     "cost_per_km": 1.5,
+     "min_fill_pct": 70,
+     "cost_per_unit": 1,
+     "lead_time_max": 2,
+     "lead_time_min": 0,
+     "lead_time_mode": 1,
+     "lead_time_scale": 1,
+     "lead_time_shape": 2,
+     "capacity_volume_m3": 80,
+     "capacity_weight_kg": 20000,
+     "lead_time_std_days": 0.5,
+     "fixed_dispatch_cost": 50,
+     "lead_time_mean_days": 3,
+     "lead_time_distribution": "normal",
+     "carbon_intensity_kg_per_tkm": 0.062
+    },
+    "production": {
+     "lot_policy": "epq",
+     "scheduling": "fifo",
+     "setup_cost": 500,
+     "setup_time_hours": 1,
+     "utilization_cap_pct": 85,
+     "capacity_labor_per_day": 0,
+     "capacity_units_per_day": 1000,
+     "lead_time_distribution": "normal",
+     "capacity_machine_per_day": 0,
+     "production_cost_per_unit": 0,
+     "production_lead_time_max": 2,
+     "production_lead_time_min": 0,
+     "production_lead_time_mode": 1,
+     "allocation_priority_weight": 1,
+     "production_lead_time_scale": 1,
+     "production_lead_time_shape": 2,
+     "production_lead_time_std_days": 0.2,
+     "production_lead_time_mean_days": 1
+    },
+    "fulfillment": {
+     "price": 0,
+     "allocation": "priority",
+     "sourcing_firm": "",
+     "primary_source": false,
+     "tier_overrides": {},
+     "backorder_allowed": true,
+     "max_backorder_days": 14,
+     "service_level_beta": 0.98,
+     "service_level_alpha": 0.95,
+     "backorder_cost_per_day": 2,
+     "lost_sales_cost_per_unit": 20,
+     "order_batching_window_hours": 0
+    }
+   },
+   "overrides": [
+    {
+     "patch": {
+      "backorder_allowed": true,
+      "max_backorder_days": 7
+     },
+     "scope": "node",
+     "family": "fulfillment",
+     "target_key": "C-ASSEMBLY::P-CONTROL"
+    },
+    {
+     "patch": {
+      "backorder_allowed": false
+     },
+     "scope": "node",
+     "family": "fulfillment",
+     "target_key": "C-SERVICE::P-CONTROL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-CONN::M-CONNECTOR"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-FAST::M-SCREW"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-HARNESS::M-HARNESS"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-MCU::M-MCU"
+    },
+    {
+     "patch": {
+      "primary_source": false
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-MCU2::M-MCU"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PASSIVE::M-CAP"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PCB::M-PCB"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PLASTIC::M-SHELL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PRINT::M-LABEL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-SEAL::M-SEAL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-SENS::M-SENSOR"
+    }
+   ],
+   "schema_version": 2,
+   "fulfillment_strategy": "make_to_stock"
+  }
+ },
+ {
+  "id": "876315e9-797d-42e0-84a0-b5c188cc86dd",
+  "version_no": 4,
+  "label": "Safety stock 28 days \u2014 customer terms",
+  "snapshot": {
+   "defaults": {
+    "demand": {
+     "cv": 0.3,
+     "pattern": "stationary",
+     "mean_per_day": 100,
+     "priority_tier": "B",
+     "forecast_method": "exp_smoothing",
+     "delivery_schedule": "",
+     "forecast_bias_pct": 0,
+     "delivery_window_days": 3,
+     "late_penalty_per_day": 5,
+     "trend_pct_per_period": 0,
+     "forecast_horizon_days": 14,
+     "order_size_distribution": "poisson",
+     "seasonality_period_days": 0,
+     "seasonality_amplitude_pct": 0
+    },
+    "recovery": {
+     "enabled": true,
+     "cost_cap": 25000,
+     "response": [],
+     "trigger_geography": "",
+     "detection_lag_days": 1,
+     "recovery_target_days": 21,
+     "trigger_duration_days": 2,
+     "trigger_magnitude_pct": 25
+    },
+    "sourcing": {
+     "ratios": {},
+     "strategy": "single",
+     "supply_share": 0,
+     "contract_type": "contract",
+     "material_price": 0,
+     "primary_source": false,
+     "backup_supplier": "",
+     "min_reliability": 0.85,
+     "failover_trigger": "stockout",
+     "primary_supplier": "",
+     "tertiary_supplier": "",
+     "order_consolidation": "none",
+     "failover_cooldown_days": 7,
+     "failover_threshold_pct": 20,
+     "supplier_capacity_per_day": 0,
+     "max_lead_time_variance_days": 3
+    },
+    "inventory": {
+     "moq": 0,
+     "type": "min_max",
+     "basis": "days_of_supply",
+     "rotation": "FIFO",
+     "abc_class": "B",
+     "max_stock": 500,
+     "min_stock": 0,
+     "order_up_to": 200,
+     "ordering_cost": 100,
+     "reorder_point": 50,
+     "coverage_weeks": 8,
+     "rop_q_quantity": 0,
+     "fg_safety_stock": "none",
+     "shelf_life_days": 0,
+     "holding_cost_pct": 0.2,
+     "safety_stock_days": 28,
+     "review_period_days": 1,
+     "safety_stock_method": "fixed_days",
+     "fg_safety_stock_days": 2,
+     "service_level_target": 0.95,
+     "stockout_cost_per_unit": 5,
+     "fg_service_level_target": 0.95
+    },
+    "transport": {
+     "mode": "road",
+     "routing": "direct",
+     "vehicles": 5,
+     "load_type": "FTL",
+     "cost_per_km": 1.5,
+     "min_fill_pct": 70,
+     "cost_per_unit": 1,
+     "lead_time_max": 2,
+     "lead_time_min": 0,
+     "lead_time_mode": 1,
+     "lead_time_scale": 1,
+     "lead_time_shape": 2,
+     "capacity_volume_m3": 80,
+     "capacity_weight_kg": 20000,
+     "lead_time_std_days": 0.5,
+     "fixed_dispatch_cost": 50,
+     "lead_time_mean_days": 3,
+     "lead_time_distribution": "normal",
+     "carbon_intensity_kg_per_tkm": 0.062
+    },
+    "production": {
+     "lot_policy": "epq",
+     "scheduling": "fifo",
+     "setup_cost": 500,
+     "setup_time_hours": 1,
+     "utilization_cap_pct": 85,
+     "capacity_labor_per_day": 0,
+     "capacity_units_per_day": 1000,
+     "lead_time_distribution": "normal",
+     "capacity_machine_per_day": 0,
+     "production_cost_per_unit": 0,
+     "production_lead_time_max": 2,
+     "production_lead_time_min": 0,
+     "production_lead_time_mode": 1,
+     "allocation_priority_weight": 1,
+     "production_lead_time_scale": 1,
+     "production_lead_time_shape": 2,
+     "production_lead_time_std_days": 0.2,
+     "production_lead_time_mean_days": 1
+    },
+    "fulfillment": {
+     "price": 0,
+     "allocation": "priority",
+     "sourcing_firm": "",
+     "primary_source": false,
+     "tier_overrides": {},
+     "backorder_allowed": true,
+     "max_backorder_days": 14,
+     "service_level_beta": 0.98,
+     "service_level_alpha": 0.95,
+     "backorder_cost_per_day": 2,
+     "lost_sales_cost_per_unit": 20,
+     "order_batching_window_hours": 0
+    }
+   },
+   "overrides": [
+    {
+     "patch": {
+      "backorder_allowed": true,
+      "max_backorder_days": 7
+     },
+     "scope": "node",
+     "family": "fulfillment",
+     "target_key": "C-ASSEMBLY::P-CONTROL"
+    },
+    {
+     "patch": {
+      "backorder_allowed": false
+     },
+     "scope": "node",
+     "family": "fulfillment",
+     "target_key": "C-SERVICE::P-CONTROL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-CONN::M-CONNECTOR"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-FAST::M-SCREW"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-HARNESS::M-HARNESS"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-MCU::M-MCU"
+    },
+    {
+     "patch": {
+      "primary_source": false
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-MCU2::M-MCU"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PASSIVE::M-CAP"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PCB::M-PCB"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PLASTIC::M-SHELL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-PRINT::M-LABEL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-SEAL::M-SEAL"
+    },
+    {
+     "patch": {
+      "primary_source": true
+     },
+     "scope": "node",
+     "family": "sourcing",
+     "target_key": "S-SENS::M-SENSOR"
+    }
+   ],
+   "schema_version": 2,
+   "fulfillment_strategy": "make_to_stock"
+  }
+ }
+]

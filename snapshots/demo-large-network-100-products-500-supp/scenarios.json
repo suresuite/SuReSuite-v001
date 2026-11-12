@@ -1,0 +1,114 @@
+[
+ {
+  "id": "b67e364a-5951-42d7-969b-715530c68992",
+  "crn": true,
+  "name": "Normal 2026",
+  "role": "experiment",
+  "seed": 42,
+  "time_step": "day",
+  "created_at": "2026-11-12T14:44:27.967482+00:00",
+  "created_by": null,
+  "project_id": "6c594fe2-1a50-4dbc-b730-0ac1f50a6d57",
+  "updated_at": "2026-11-12T14:44:27.967482+00:00",
+  "description": "Calendar 2026 (week 34\u201386 of a 104-week run), no disruption.",
+  "primary_kpi": "fill_rate",
+  "warmup_days": 238,
+  "warmup_mode": "manual",
+  "demand_model": {
+   "kind": "poisson",
+   "lambda": 50
+  },
+  "from_network": false,
+  "horizon_days": 728,
+  "replications": 10,
+  "stopping_rule": {
+   "kind": "fixed_horizon",
+   "max_wall_seconds": 600
+  },
+  "policy_snapshot_id": null,
+  "recovery_overrides": {},
+  "disruption_schedule": [],
+  "recovery_playbook_id": null,
+  "inherited_validation_id": null
+ },
+ {
+  "id": "dd70c0bf-c470-408e-a8bc-72b129a30e99",
+  "crn": true,
+  "name": "Sensor supplier outage May 2026 (10 wk)",
+  "role": "experiment",
+  "seed": 42,
+  "time_step": "day",
+  "created_at": "2026-11-12T14:44:28.334997+00:00",
+  "created_by": null,
+  "project_id": "6c594fe2-1a50-4dbc-b730-0ac1f50a6d57",
+  "updated_at": "2026-11-12T14:44:28.334997+00:00",
+  "description": "Husan Sensor Tech (S-0198) ships nothing for ten weeks from 21 May 2026.",
+  "primary_kpi": "fill_rate",
+  "warmup_days": 238,
+  "warmup_mode": "manual",
+  "demand_model": {
+   "kind": "poisson",
+   "lambda": 50
+  },
+  "from_network": false,
+  "horizon_days": 728,
+  "replications": 10,
+  "stopping_rule": {
+   "kind": "fixed_horizon",
+   "max_wall_seconds": 600
+  },
+  "policy_snapshot_id": null,
+  "recovery_overrides": {},
+  "disruption_schedule": [
+   {
+    "target": "S-0198",
+    "start_day": 378,
+    "target_type": "node",
+    "duration_days": 70,
+    "magnitude_pct": 100
+   }
+  ],
+  "recovery_playbook_id": null,
+  "inherited_validation_id": null
+ },
+ {
+  "id": "94753008-4480-47ad-8f08-636c6ed9e89f",
+  "crn": true,
+  "name": "Plant shutdown May 2026 (3 wk)",
+  "role": "experiment",
+  "seed": 42,
+  "time_step": "day",
+  "created_at": "2026-11-12T14:44:28.547624+00:00",
+  "created_by": null,
+  "project_id": "6c594fe2-1a50-4dbc-b730-0ac1f50a6d57",
+  "updated_at": "2026-11-12T14:44:28.547624+00:00",
+  "description": "The plant makes nothing for three weeks from 21 May 2026.",
+  "primary_kpi": "fill_rate",
+  "warmup_days": 238,
+  "warmup_mode": "manual",
+  "demand_model": {
+   "kind": "poisson",
+   "lambda": 50
+  },
+  "from_network": false,
+  "horizon_days": 728,
+  "replications": 10,
+  "stopping_rule": {
+   "kind": "fixed_horizon",
+   "max_wall_seconds": 600
+  },
+  "policy_snapshot_id": null,
+  "recovery_overrides": {},
+  "disruption_schedule": [
+   {
+    "target": "plant",
+    "start_day": 378,
+    "target_type": "node",
+    "duration_days": 21,
+    "magnitude_pct": 100
+   }
+  ],
+  "recovery_playbook_id": null,
+  "inherited_validation_id": null
+ }
+]

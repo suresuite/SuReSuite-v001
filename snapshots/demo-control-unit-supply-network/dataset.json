@@ -1,0 +1,796 @@
+{
+ "id": "d2640b96-4094-40ce-883c-536850fdd805",
+ "version_no": 4,
+ "snapshot": {
+  "inputs": {
+   "bom": [],
+   "inbound": [
+    {
+     "volume": 260,
+     "lead_time": 3,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 0.55,
+     "material_id": "M-CONNECTOR",
+     "supplier_id": "S-CONN",
+     "lead_time_unit": null
+    },
+    {
+     "volume": 780,
+     "lead_time": 1,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 0.04,
+     "material_id": "M-SCREW",
+     "supplier_id": "S-FAST",
+     "lead_time_unit": null
+    },
+    {
+     "volume": 130,
+     "lead_time": 4,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 3.1,
+     "material_id": "M-HARNESS",
+     "supplier_id": "S-HARNESS",
+     "lead_time_unit": null
+    },
+    {
+     "volume": 91,
+     "lead_time": 8,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 4.2,
+     "material_id": "M-MCU",
+     "supplier_id": "S-MCU",
+     "lead_time_unit": null
+    },
+    {
+     "volume": 39,
+     "lead_time": 6,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 4.5,
+     "material_id": "M-MCU",
+     "supplier_id": "S-MCU2",
+     "lead_time_unit": null
+    },
+    {
+     "volume": 130,
+     "lead_time": 4,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 0.8,
+     "material_id": "M-CAP",
+     "supplier_id": "S-PASSIVE",
+     "lead_time_unit": null
+    },
+    {
+     "volume": 130,
+     "lead_time": 5,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 6.5,
+     "material_id": "M-PCB",
+     "supplier_id": "S-PCB",
+     "lead_time_unit": null
+    },
+    {
+     "volume": 130,
+     "lead_time": 2,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 1.9,
+     "material_id": "M-SHELL",
+     "supplier_id": "S-PLASTIC",
+     "lead_time_unit": null
+    },
+    {
+     "volume": 130,
+     "lead_time": 1,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 0.05,
+     "material_id": "M-LABEL",
+     "supplier_id": "S-PRINT",
+     "lead_time_unit": null
+    },
+    {
+     "volume": 130,
+     "lead_time": 2,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 0.35,
+     "material_id": "M-SEAL",
+     "supplier_id": "S-SEAL",
+     "lead_time_unit": null
+    },
+    {
+     "volume": 130,
+     "lead_time": 4,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "unit_price": 2.4,
+     "material_id": "M-SENSOR",
+     "supplier_id": "S-SENS",
+     "lead_time_unit": null
+    }
+   ],
+   "outbound": [
+    {
+     "volume": 100,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "product_id": "P-CONTROL",
+     "unit_price": 60,
+     "customer_id": "C-ASSEMBLY",
+     "expected_lead_time": 1
+    },
+    {
+     "volume": 30,
+     "time_unit": "week",
+     "plant_name": "Stuttgart Plant",
+     "product_id": "P-CONTROL",
+     "unit_price": 72,
+     "customer_id": "C-SERVICE",
+     "expected_lead_time": 2
+    }
+   ],
+   "products": [
+    {
+     "demand_cv": 0.2,
+     "demand_max": null,
+     "demand_min": null,
+     "product_id": "P-CONTROL",
+     "sell_price": 60,
+     "demand_mean": 130,
+     "fulfillment_mode": "mto",
+     "demand_distribution": "triangular",
+     "production_capacity": 150
+    }
+   ],
+   "customers": [],
+   "materials": [
+    {
+     "moq": 1,
+     "cost": 0.8,
+     "material_id": "M-CAP",
+     "lead_time_cv": 0,
+     "lead_time_dist": "deterministic",
+     "initial_on_hand": 260,
+     "holding_cost_pct": 0.2
+    },
+    {
+     "moq": 1,
+     "cost": 0.55,
+     "material_id": "M-CONNECTOR",
+     "lead_time_cv": 0,
+     "lead_time_dist": "deterministic",
+     "initial_on_hand": 520,
+     "holding_cost_pct": 0.2
+    },
+    {
+     "moq": 1,
+     "cost": 3.1,
+     "material_id": "M-HARNESS",
+     "lead_time_cv": 0,
+     "lead_time_dist": "deterministic",
+     "initial_on_hand": 260,
+     "holding_cost_pct": 0.2
+    },
+    {
+     "moq": 1,
+     "cost": 0.05,
+     "material_id": "M-LABEL",
+     "lead_time_cv": 0,
+     "lead_time_dist": "deterministic",
+     "initial_on_hand": 260,
+     "holding_cost_pct": 0.2
+    },
+    {
+     "moq": 1,
+     "cost": 4.2,
+     "material_id": "M-MCU",
+     "lead_time_cv": 0,
+     "lead_time_dist": "deterministic",
+     "initial_on_hand": 260,
+     "holding_cost_pct": 0.2
+    },
+    {
+     "moq": 1,
+     "cost": 6.5,
+     "material_id": "M-PCB",
+     "lead_time_cv": 0,
+     "lead_time_dist": "deterministic",
+     "initial_on_hand": 260,
+     "holding_cost_pct": 0.2
+    },
+    {
+     "moq": 1,
+     "cost": 0.04,
+     "material_id": "M-SCREW",
+     "lead_time_cv": 0,
+     "lead_time_dist": "deterministic",
+     "initial_on_hand": 1560,
+     "holding_cost_pct": 0.2
+    },
+    {
+     "moq": 1,
+     "cost": 0.35,
+     "material_id": "M-SEAL",
+     "lead_time_cv": 0,
+     "lead_time_dist": "deterministic",
+     "initial_on_hand": 260,
+     "holding_cost_pct": 0.2
+    },
+    {
+     "moq": 1,
+     "cost": 2.4,
+     "material_id": "M-SENSOR",
+     "lead_time_cv": 0,
+     "lead_time_dist": "deterministic",
+     "initial_on_hand": 260,
+     "holding_cost_pct": 0.2
+    },
+    {
+     "moq": 1,
+     "cost": 1.9,
+     "material_id": "M-SHELL",
+     "lead_time_cv": 0,
+     "lead_time_dist": "deterministic",
+     "initial_on_hand": 260,
+     "holding_cost_pct": 0.2
+    }
+   ],
+   "suppliers": [
+    {
+     "supplier_id": "S-CONN",
+     "capacity_per_week": 800,
+     "reliability_score": 0.95
+    },
+    {
+     "supplier_id": "S-FAST",
+     "capacity_per_week": 4000,
+     "reliability_score": 0.99
+    },
+    {
+     "supplier_id": "S-HARNESS",
+     "capacity_per_week": 600,
+     "reliability_score": 0.92
+    },
+    {
+     "supplier_id": "S-MCU",
+     "capacity_per_week": 500,
+     "reliability_score": 0.98
+    },
+    {
+     "supplier_id": "S-MCU2",
+     "capacity_per_week": 300,
+     "reliability_score": 0.94
+    },
+    {
+     "supplier_id": "S-PASSIVE",
+     "capacity_per_week": 1200,
+     "reliability_score": 0.93
+    },
+    {
+     "supplier_id": "S-PCB",
+     "capacity_per_week": 900,
+     "reliability_score": 0.97
+    },
+    {
+     "supplier_id": "S-PLASTIC",
+     "capacity_per_week": 500,
+     "reliability_score": 0.97
+    },
+    {
+     "supplier_id": "S-PRINT",
+     "capacity_per_week": 500,
+     "reliability_score": 0.99
+    },
+    {
+     "supplier_id": "S-SEAL",
+     "capacity_per_week": 400,
+     "reliability_score": 0.98
+    },
+    {
+     "supplier_id": "S-SENS",
+     "capacity_per_week": 400,
+     "reliability_score": 0.96
+    }
+   ],
+   "bom_multi_level": [
+    {
+     "level": 2,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "A-BOARD",
+     "consumption_rate": 1,
+     "higher_level_component_id": "A-ELEC"
+    },
+    {
+     "level": 1,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "A-ELEC",
+     "consumption_rate": 1,
+     "higher_level_component_id": "P-CONTROL"
+    },
+    {
+     "level": 1,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "A-HOUSING",
+     "consumption_rate": 1,
+     "higher_level_component_id": "P-CONTROL"
+    },
+    {
+     "level": 3,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "M-CAP",
+     "consumption_rate": 1,
+     "higher_level_component_id": "A-BOARD"
+    },
+    {
+     "level": 2,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "M-CONNECTOR",
+     "consumption_rate": 2,
+     "higher_level_component_id": "A-ELEC"
+    },
+    {
+     "level": 1,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "M-HARNESS",
+     "consumption_rate": 1,
+     "higher_level_component_id": "P-CONTROL"
+    },
+    {
+     "level": 1,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "M-LABEL",
+     "consumption_rate": 1,
+     "higher_level_component_id": "P-CONTROL"
+    },
+    {
+     "level": 3,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "M-MCU",
+     "consumption_rate": 1,
+     "higher_level_component_id": "A-BOARD"
+    },
+    {
+     "level": 3,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "M-PCB",
+     "consumption_rate": 1,
+     "higher_level_component_id": "A-BOARD"
+    },
+    {
+     "level": 2,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "M-SCREW",
+     "consumption_rate": 6,
+     "higher_level_component_id": "A-HOUSING"
+    },
+    {
+     "level": 2,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "M-SEAL",
+     "consumption_rate": 1,
+     "higher_level_component_id": "A-HOUSING"
+    },
+    {
+     "level": 2,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "M-SENSOR",
+     "consumption_rate": 1,
+     "higher_level_component_id": "A-ELEC"
+    },
+    {
+     "level": 2,
+     "plant_name": "Stuttgart Plant",
+     "material_id": "M-SHELL",
+     "consumption_rate": 1,
+     "higher_level_component_id": "A-HOUSING"
+    }
+   ]
+  },
+  "network": {
+   "multi_tier": [],
+   "deep_tier_edges": [
+    {
+     "dst_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+     "src_uid": "1f00b27e-8bd4-5b04-8b2e-302f1c7961ad",
+     "relative_revenue": 1332
+    },
+    {
+     "dst_uid": "71bf84c5-ba5b-5d5b-8480-f62c298b9c13",
+     "src_uid": "1f00b27e-8bd4-5b04-8b2e-302f1c7961ad",
+     "relative_revenue": 45.6
+    },
+    {
+     "dst_uid": "28d458ae-9b69-5705-b866-747676616431",
+     "src_uid": "2152177e-c532-5028-affa-32b97f048988",
+     "relative_revenue": 16.1
+    },
+    {
+     "dst_uid": "a5b0a0f1-fce1-5927-96b2-ff5e4c412461",
+     "src_uid": "2152177e-c532-5028-affa-32b97f048988",
+     "relative_revenue": 31.7
+    },
+    {
+     "dst_uid": "440f02b9-0d17-50a5-a061-9f0500208b3a",
+     "src_uid": "2d2765c9-495e-519b-a354-c191cb346dfb",
+     "relative_revenue": 64.8
+    },
+    {
+     "dst_uid": "66b06245-78c9-5184-ab52-ad3e01a1a819",
+     "src_uid": "2d2765c9-495e-519b-a354-c191cb346dfb",
+     "relative_revenue": 93.6
+    },
+    {
+     "dst_uid": "28609737-f271-5733-81a1-2789cb143c7e",
+     "src_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+     "relative_revenue": 61.6
+    },
+    {
+     "dst_uid": "cf5ad447-231e-59a4-84ea-914f1b75c80f",
+     "src_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+     "relative_revenue": 65.1
+    },
+    {
+     "dst_uid": "f16f1688-71cd-5d74-bed9-ef984eb6a04e",
+     "src_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+     "relative_revenue": 133
+    },
+    {
+     "dst_uid": "1f00b27e-8bd4-5b04-8b2e-302f1c7961ad",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 112.5
+    },
+    {
+     "dst_uid": "2152177e-c532-5028-affa-32b97f048988",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 14.4
+    },
+    {
+     "dst_uid": "7215b7af-9e17-5153-b7c8-07fc43003d7e",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 41.4
+    },
+    {
+     "dst_uid": "82308212-f124-5f1a-927a-e17cccce96b0",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 45.6
+    },
+    {
+     "dst_uid": "89cc1a63-b49a-5c5a-8c86-063d79ff72cc",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 13.7
+    },
+    {
+     "dst_uid": "a7fafd69-058f-51f6-b492-b8827fc1e480",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 37.4
+    },
+    {
+     "dst_uid": "aaa2d8e4-5e65-5992-8727-e698dfb0a8aa",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 29.8
+    },
+    {
+     "dst_uid": "b2a14131-43a4-5051-b11f-682be83b75f3",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 31.2
+    },
+    {
+     "dst_uid": "d7426a6d-fbd4-5cd1-956d-e1e2e5b6f45f",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 134.4
+    },
+    {
+     "dst_uid": "e0899bc2-3726-5bb4-8cc3-244b7dc3c9f1",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 37.2
+    },
+    {
+     "dst_uid": "fd074882-b55e-58b6-ad8a-3423310d5cd9",
+     "src_uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "relative_revenue": 155.8
+    },
+    {
+     "dst_uid": "84f1194f-dd3d-5029-8400-54ddcd92e0d4",
+     "src_uid": "7215b7af-9e17-5153-b7c8-07fc43003d7e",
+     "relative_revenue": 54.4
+    },
+    {
+     "dst_uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+     "src_uid": "7215b7af-9e17-5153-b7c8-07fc43003d7e",
+     "relative_revenue": 78
+    },
+    {
+     "dst_uid": "b7ce81b0-b1e1-5a38-a516-d62bb78866b3",
+     "src_uid": "7d4eaf33-e84d-5423-a653-b8e1e4363658",
+     "relative_revenue": 87
+    },
+    {
+     "dst_uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+     "src_uid": "82308212-f124-5f1a-927a-e17cccce96b0",
+     "relative_revenue": 78
+    },
+    {
+     "dst_uid": "fd368440-206a-5cb9-9a4e-82556ede96bb",
+     "src_uid": "82308212-f124-5f1a-927a-e17cccce96b0",
+     "relative_revenue": 59.5
+    },
+    {
+     "dst_uid": "579ca956-46ef-532b-a6b8-d3c6b7c69a14",
+     "src_uid": "84f1194f-dd3d-5029-8400-54ddcd92e0d4",
+     "relative_revenue": 144
+    },
+    {
+     "dst_uid": "b64e8b61-3a3e-50bb-a959-4fe585aeb1f0",
+     "src_uid": "89cc1a63-b49a-5c5a-8c86-063d79ff72cc",
+     "relative_revenue": 36.9
+    },
+    {
+     "dst_uid": "e08d1d64-79cb-5791-8ec3-45296ff5b429",
+     "src_uid": "a5b0a0f1-fce1-5927-96b2-ff5e4c412461",
+     "relative_revenue": 202.8
+    },
+    {
+     "dst_uid": "71804407-58e0-5393-9ca0-36118e82926f",
+     "src_uid": "a7fafd69-058f-51f6-b492-b8827fc1e480",
+     "relative_revenue": 11.5
+    },
+    {
+     "dst_uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+     "src_uid": "a7fafd69-058f-51f6-b492-b8827fc1e480",
+     "relative_revenue": 117
+    },
+    {
+     "dst_uid": "7d4eaf33-e84d-5423-a653-b8e1e4363658",
+     "src_uid": "aaa2d8e4-5e65-5992-8727-e698dfb0a8aa",
+     "relative_revenue": 39.6
+    },
+    {
+     "dst_uid": "7d62521f-5632-522c-a208-da0e8653cbb0",
+     "src_uid": "aaa2d8e4-5e65-5992-8727-e698dfb0a8aa",
+     "relative_revenue": 27.4
+    },
+    {
+     "dst_uid": "22abfafe-0052-592a-8580-0bfb5d97bbeb",
+     "src_uid": "b2a14131-43a4-5051-b11f-682be83b75f3",
+     "relative_revenue": 30.4
+    },
+    {
+     "dst_uid": "c027b97a-d46e-5025-b138-6b2e267e32ba",
+     "src_uid": "b2a14131-43a4-5051-b11f-682be83b75f3",
+     "relative_revenue": 46.2
+    },
+    {
+     "dst_uid": "ae85c1a9-58ac-5169-8158-37463e8f0d9f",
+     "src_uid": "b64e8b61-3a3e-50bb-a959-4fe585aeb1f0",
+     "relative_revenue": 58.5
+    },
+    {
+     "dst_uid": "442a1de0-7328-5432-86cb-4e661ecea9a9",
+     "src_uid": "c027b97a-d46e-5025-b138-6b2e267e32ba",
+     "relative_revenue": 186.3
+    },
+    {
+     "dst_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+     "src_uid": "d7426a6d-fbd4-5cd1-956d-e1e2e5b6f45f",
+     "relative_revenue": 1924
+    },
+    {
+     "dst_uid": "e9d76569-ef08-59c8-b97a-471c8b481da7",
+     "src_uid": "d7426a6d-fbd4-5cd1-956d-e1e2e5b6f45f",
+     "relative_revenue": 16.8
+    },
+    {
+     "dst_uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+     "src_uid": "e0899bc2-3726-5bb4-8cc3-244b7dc3c9f1",
+     "relative_revenue": 592
+    },
+    {
+     "dst_uid": "bacb3ef6-3b82-5fff-af85-d2eb830ca935",
+     "src_uid": "e0899bc2-3726-5bb4-8cc3-244b7dc3c9f1",
+     "relative_revenue": 52.8
+    },
+    {
+     "dst_uid": "984fa2c0-d4fc-5f3e-930f-1cf217496409",
+     "src_uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+     "relative_revenue": 416
+    },
+    {
+     "dst_uid": "d8ba1cd8-1ddd-587d-a53e-1568e8bd4e8a",
+     "src_uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+     "relative_revenue": 186
+    },
+    {
+     "dst_uid": "2d2765c9-495e-519b-a354-c191cb346dfb",
+     "src_uid": "fd074882-b55e-58b6-ad8a-3423310d5cd9",
+     "relative_revenue": 42
+    },
+    {
+     "dst_uid": "a2c42ff5-a04b-5d1a-b850-cbc2b8f3628d",
+     "src_uid": "fd074882-b55e-58b6-ad8a-3423310d5cd9",
+     "relative_revenue": 84
+    },
+    {
+     "dst_uid": "579ca956-46ef-532b-a6b8-d3c6b7c69a14",
+     "src_uid": "fd368440-206a-5cb9-9a4e-82556ede96bb",
+     "relative_revenue": 96
+    }
+   ],
+   "deep_tier_nodes": [
+    {
+     "uid": "1f00b27e-8bd4-5b04-8b2e-302f1c7961ad",
+     "revenue": 1250000000
+    },
+    {
+     "uid": "2152177e-c532-5028-affa-32b97f048988",
+     "revenue": 24000000
+    },
+    {
+     "uid": "22abfafe-0052-592a-8580-0bfb5d97bbeb",
+     "revenue": 160000000
+    },
+    {
+     "uid": "28609737-f271-5733-81a1-2789cb143c7e",
+     "revenue": 880000000
+    },
+    {
+     "uid": "28d458ae-9b69-5705-b866-747676616431",
+     "revenue": 31000000
+    },
+    {
+     "uid": "2d2765c9-495e-519b-a354-c191cb346dfb",
+     "revenue": 140000000
+    },
+    {
+     "uid": "440f02b9-0d17-50a5-a061-9f0500208b3a",
+     "revenue": 540000000
+    },
+    {
+     "uid": "442a1de0-7328-5432-86cb-4e661ecea9a9",
+     "revenue": 690000000
+    },
+    {
+     "uid": "4c591a0e-2b81-5756-9207-a7c87733931b",
+     "revenue": 7400000000
+    },
+    {
+     "uid": "52cd64f4-bbca-55ee-91f1-39bdb44c8b9c",
+     "revenue": 1650000000
+    },
+    {
+     "uid": "579ca956-46ef-532b-a6b8-d3c6b7c69a14",
+     "revenue": 4800000000
+    },
+    {
+     "uid": "66b06245-78c9-5184-ab52-ad3e01a1a819",
+     "revenue": 260000000
+    },
+    {
+     "uid": "71804407-58e0-5393-9ca0-36118e82926f",
+     "revenue": 46000000
+    },
+    {
+     "uid": "71bf84c5-ba5b-5d5b-8480-f62c298b9c13",
+     "revenue": 380000000
+    },
+    {
+     "uid": "7215b7af-9e17-5153-b7c8-07fc43003d7e",
+     "revenue": 230000000
+    },
+    {
+     "uid": "7d4eaf33-e84d-5423-a653-b8e1e4363658",
+     "revenue": 120000000
+    },
+    {
+     "uid": "7d62521f-5632-522c-a208-da0e8653cbb0",
+     "revenue": 98000000
+    },
+    {
+     "uid": "82308212-f124-5f1a-927a-e17cccce96b0",
+     "revenue": 190000000
+    },
+    {
+     "uid": "84f1194f-dd3d-5029-8400-54ddcd92e0d4",
+     "revenue": 340000000
+    },
+    {
+     "uid": "89cc1a63-b49a-5c5a-8c86-063d79ff72cc",
+     "revenue": 98000000
+    },
+    {
+     "uid": "984fa2c0-d4fc-5f3e-930f-1cf217496409",
+     "revenue": 5200000000
+    },
+    {
+     "uid": "a2c42ff5-a04b-5d1a-b850-cbc2b8f3628d",
+     "revenue": 2100000000
+    },
+    {
+     "uid": "a5b0a0f1-fce1-5927-96b2-ff5e4c412461",
+     "revenue": 72000000
+    },
+    {
+     "uid": "a7fafd69-058f-51f6-b492-b8827fc1e480",
+     "revenue": 170000000
+    },
+    {
+     "uid": "aaa2d8e4-5e65-5992-8727-e698dfb0a8aa",
+     "revenue": 85000000
+    },
+    {
+     "uid": "ae85c1a9-58ac-5169-8158-37463e8f0d9f",
+     "revenue": 130000000
+    },
+    {
+     "uid": "b2a14131-43a4-5051-b11f-682be83b75f3",
+     "revenue": 520000000
+    },
+    {
+     "uid": "b64e8b61-3a3e-50bb-a959-4fe585aeb1f0",
+     "revenue": 410000000
+    },
+    {
+     "uid": "b7ce81b0-b1e1-5a38-a516-d62bb78866b3",
+     "revenue": 150000000
+    },
+    {
+     "uid": "bacb3ef6-3b82-5fff-af85-d2eb830ca935",
+     "revenue": 480000000
+    },
+    {
+     "uid": "c027b97a-d46e-5025-b138-6b2e267e32ba",
+     "revenue": 210000000
+    },
+    {
+     "uid": "cf5ad447-231e-59a4-84ea-914f1b75c80f",
+     "revenue": 210000000
+    },
+    {
+     "uid": "d7426a6d-fbd4-5cd1-956d-e1e2e5b6f45f",
+     "revenue": 640000000
+    },
+    {
+     "uid": "d8ba1cd8-1ddd-587d-a53e-1568e8bd4e8a",
+     "revenue": 3100000000
+    },
+    {
+     "uid": "e0899bc2-3726-5bb4-8cc3-244b7dc3c9f1",
+     "revenue": 310000000
+    },
+    {
+     "uid": "e08d1d64-79cb-5791-8ec3-45296ff5b429",
+     "revenue": 520000000
+    },
+    {
+     "uid": "e356d766-ce67-56f7-883b-4f68ef657a79",
+     "revenue": 3900000000
+    },
+    {
+     "uid": "e9d76569-ef08-59c8-b97a-471c8b481da7",
+     "revenue": 120000000
+    },
+    {
+     "uid": "f16f1688-71cd-5d74-bed9-ef984eb6a04e",
+     "revenue": 950000000
+    },
+    {
+     "uid": "fd074882-b55e-58b6-ad8a-3423310d5cd9",
+     "revenue": 410000000
+    },
+    {
+     "uid": "fd368440-206a-5cb9-9a4e-82556ede96bb",
+     "revenue": 145000000
+    }
+   ],
+   "tier2_suppliers": [],
+   "tier3_suppliers": []
+  },
+  "schema_version": 3
+ }
+}

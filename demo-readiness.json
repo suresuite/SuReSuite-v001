@@ -1,0 +1,17 @@
+{
+  "Demo \u2014 Control Unit Supply Network": [
+    "products has empty production_lead_time, fg_policy"
+  ],
+  "Demo \u2014 Large Network (100 products, 1 000 suppliers)": [
+    "products has empty production_lead_time, fg_policy",
+    "no saved policy version \u2014 a run binds one",
+    "no scenario \u2014 the Lab has nothing to run",
+    "no simulation run \u2014 the Lab and /policies results are empty",
+    "no Validated Model \u2014 Run & Validate baseline never ran; the Nexus battery needs one",
+    "no network analysis run \u2014 centrality/criticality figures are empty"
+  ],
+  "Demo \u2014 Large Network (100 products, 500 suppliers)": [
+    "products has empty production_lead_time, fg_policy",
+    "no Validated Model \u2014 Run & Validate baseline never ran; the Nexus battery needs one"
+  ]
+}
