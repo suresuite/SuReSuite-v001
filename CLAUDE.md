@@ -244,6 +244,17 @@ alone reports a clean data layer that is not clean (PLAN.md §4 D42).
 - **Policy catalog IDs**: `P-S.x` supplier, `P-P.x` plant, `P-T.x` transport, `P-C.x` customer,
   `P-F.x` forecasting, `P-X.x` cross-cutting; `P-W.x` reserved for the warehouse echelon (§4.2).
 
+## Non-platform work — euroFMX (HWR Berlin)
+
+Grant administration, person-month planning and the research positioning for euroFMX
+(GA 101299128) are recorded in `docs/projects/eurofmx-hwr.md`. **Read it before any
+euroFMX task**: it carries HWR's PM per work package, the contract bands, the
+allocation model behind `docs/projects/eurofmx/euroFMX_HWR_PM_v9.xlsx`, the cost check
+against the faculty budget plan, and the standing conventions — including that the
+WSC'26 paper belongs to ACCURATE and not to euroFMX, and that network mapping is
+validated against reference databases and never against simulation. It is not platform
+work, it does not advance `docs/PLAN.md`, and it carries no data-layer evidence.
+
 ## Repo orientation
 
 | Tier | Path | Entry points |
